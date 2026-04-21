@@ -9,7 +9,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#0e0a04}
 body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#f0e6d0}
-#root{height:100vh;display:flex;flex-direction:column}
+#root{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:rgba(0,0,0,0.2)}
 ::-webkit-scrollbar-thumb{background:#5a3a1a;border-radius:3px}
@@ -370,8 +370,15 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#f0e6d
 }
 .electron-titlebar-btn:hover{background:rgba(255,255,255,.1);color:var(--text)}
 .electron-titlebar-btn.close:hover{background:#c0392b;color:#fff}
-/* Electronモード時は上部に余白 */
-body.electron-mode #root{padding-top:32px;}
+/* Electronモード時は上部に余白＆高さをタイトルバー分縮小 */
+body.electron-mode #root{padding-top:0;height:calc(100vh - 32px);margin-top:32px;}
+/* Electronモード時: 各画面のheightも100vhから変更 */
+body.electron-mode .game-screen{height:calc(100vh - 32px);}
+body.electron-mode .db-screen{height:calc(100vh - 32px);}
+body.electron-mode .mulligan-screen{height:calc(100vh - 32px);}
+body.electron-mode .title-screen{height:calc(100vh - 32px);}
+body.electron-mode .saved-screen{height:calc(100vh - 32px);}
+body.electron-mode .mode-select-screen{height:calc(100vh - 32px);}
 </style>
 </head>
 <body>

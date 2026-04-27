@@ -2231,13 +2231,13 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
     ),
 
     // 赤: 自分フィールド (col1 / row2)
-    h('div',{className:'fields-area-self'},renderField(0)),
+    h('div',{className:'fields-area-self'},renderField(isOnline?myOnlinePi:0)),
 
     // オレンジ: カードプレビュー (col2 / row2)
     h(CardDetailPanel,{hovered,ingZone:p.ingZone}),
 
     // 青: 相手フィールド (col3 / row2)
-    h('div',{className:'fields-area-opp'},renderField(1)),
+    h('div',{className:'fields-area-opp'},renderField(isOnline?(1-myOnlinePi):1)),
 
     // ピンク: コントロール＋ログ (全幅 / row3)
     h('div',{className:'g-bottom'},

@@ -783,14 +783,14 @@ function execBlock(G,pi,blk,cardId){
       return mkPending(G,{type:'discardHand',pi,
         title:canSkip?`手札を${multi}枚ごみ箱に送る（任意）`:`手札を${multi}枚ごみ箱へ`,
         desc:canSkip?'送るカードを選んでください（スキップ可）':`${multi}枚選んでください`,
-        filter:blk.filter||(()=>true),source:'hand',multi,canSkip});
+        filter:blk.filter||(()=>true),filterKey:blk.filterKey||null,source:'hand',multi,canSkip});
     }
     case 'retHand':{
       if(p.hand.length<(blk.n||1))return G;
       return mkPending(G,{type:'retHand',pi,
         title:`手札を${blk.n||1}枚山札に戻す`,
         desc:'山札に戻すカードを選んでください',
-        filter:()=>true,source:'hand',multi:blk.n||1});
+        filter:()=>true,filterKey:null,source:'hand',multi:blk.n||1});
     }
     case 'recoverTrash':{
       const filter=blk.filter||(c=>!c._isRec);
@@ -1108,7 +1108,7 @@ const ING_BLOCKS={
   // 味噌: 手札のたんぱく質1枚ごみ箱（任意）→そうしたなら食材2ドロー
   miso:[
     {type:'discardHand',n:1,optional:true,
-     filter:c=>c.cat==='protein'&&!c._isRec},
+     filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
     {type:'ifPrev'},
     {type:'drawIng',n:2},
   ],
@@ -1268,7 +1268,7 @@ const REC_BLOCKS={
 
   // ジャーマンポテト: 手札の脂質1枚ごみ箱（任意）→そうしたなら食材山札1枚ドロー
   germanPotato:[
-    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='fat'&&!c._isRec},
+    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='fat'&&!c._isRec,filterKey:'fat'},
     {type:'ifPrev'},
     {type:'searchIngDeck',title:'食材山札からカードを選んで手札へ'},
   ],
@@ -1308,7 +1308,7 @@ const REC_BLOCKS={
 
   // 麻婆豆腐: 手札のたんぱく質1枚ごみ箱（任意）→そうしたならレシピ2ドロー
   maboTofu:[
-    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec},
+    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
     {type:'ifPrev'},
     {type:'drawRec',n:2},
   ],
@@ -1383,7 +1383,7 @@ const REC_BLOCKS={
 
   // 揚げ出し豆腐: たんぱく質1枚ごみ箱（任意）→そうしたなら食材2ドロー
   agedashi:[
-    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec},
+    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
     {type:'ifPrev'},
     {type:'drawIng',n:2},
   ],
@@ -1585,15 +1585,32 @@ function SelectionModal({G,onResolve,canOperate}){
   const canSkip=!!pd.canSkip;
 
   // 選択肢のカード一覧を source から生成
+  // filter関数はJSONシリアライズで失われる場合があるため、filterKeyで再解決
+  function resolveFilter(c){
+    if(!pd.filter&&!pd.filterKey)return true;
+    if(pd.filter){try{return pd.filter(c);}catch(e){}}
+    const k=pd.filterKey;
+    if(!k)return true;
+    if(k==='ingredient')return !c._isRec;
+    if(k==='recipe')return c._isRec;
+    if(k==='protein')return c.cat==='protein'&&!c._isRec;
+    if(k==='carb')return c.cat==='carb'&&!c._isRec;
+    if(k==='fat')return c.cat==='fat'&&!c._isRec;
+    if(k==='vitamin')return c.cat==='vitamin'&&!c._isRec;
+    if(k==='mineral')return c.cat==='mineral'&&!c._isRec;
+    return true;
+  }
   let candidates=[];
   const p=G.players[pi];
   const opp=G.players[1-pi];
-  if(pd.source==='hand')candidates=p.hand.filter(c=>pd.filter?pd.filter(c):true);
-  else if(pd.source==='ingZone')candidates=p.ingZone.filter(c=>pd.filter?pd.filter(c):true);
-  else if(pd.source==='trash')candidates=p.trash.filter(c=>pd.filter?pd.filter(c):true);
-  else if(pd.source==='oppIngZone')candidates=opp.ingZone.filter(c=>pd.filter?pd.filter(c):true);
-  else if(pd.source==='recDeck')candidates=p.recDeck.filter(c=>pd.filter?pd.filter(c):true);
-  else if(pd.source==='ingDeck')candidates=p.ingDeck.filter(c=>pd.filter?pd.filter(c):true);
+  // _hiddenカード（相手の隠し手札）は候補から除外
+  const visibleHand=p.hand.filter(c=>!c._hidden);
+  if(pd.source==='hand')candidates=visibleHand.filter(resolveFilter);
+  else if(pd.source==='ingZone')candidates=p.ingZone.filter(resolveFilter);
+  else if(pd.source==='trash')candidates=p.trash.filter(resolveFilter);
+  else if(pd.source==='oppIngZone')candidates=opp.ingZone.filter(resolveFilter);
+  else if(pd.source==='recDeck')candidates=Array.isArray(p.recDeck)?p.recDeck.filter(resolveFilter):[];
+  else if(pd.source==='ingDeck')candidates=Array.isArray(p.ingDeck)?p.ingDeck.filter(resolveFilter):[];
 
   function toggle(uid_){
     if(!canOperate)return;

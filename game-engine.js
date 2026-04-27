@@ -774,16 +774,28 @@ function doServeRecipe(G, pi, recUid, ingUids) {
   return { G: checkWin(G2) };
 }
 
-function doDiscard(G, pi, cardUid) {
+function doDiscard(G, pi, cardUid, from) {
   if (G.phase !== 'discard' || G.currentPlayer !== pi) return { error: '操作できません' };
   const p = G.players[pi];
-  const card = p.hand.find(c => c._uid === cardUid);
-  if (!card) return { error: 'カードが見つかりません' };
-  const s = addLog(ovP(G, pi, {
-    hand: p.hand.filter(c => c._uid !== cardUid),
-    trash: [...p.trash, card],
-  }), `P${pi + 1}: ${card.name}を廃棄`);
-  return { G: s };
+  // 手札から廃棄
+  const handCard = p.hand.find(c => c._uid === cardUid);
+  if (handCard) {
+    const s = addLog(ovP(G, pi, {
+      hand: p.hand.filter(c => c._uid !== cardUid),
+      trash: [...p.trash, handCard],
+    }), `P${pi + 1}: ${handCard.name}を廃棄`);
+    return { G: s };
+  }
+  // 食材ゾーンから廃棄
+  const zoneCard = p.ingZone.find(c => c._uid === cardUid);
+  if (zoneCard) {
+    const s = addLog(ovP(G, pi, {
+      ingZone: p.ingZone.filter(c => c._uid !== cardUid),
+      trash: [...p.trash, zoneCard],
+    }), `P${pi + 1}: 食材ゾーンの${zoneCard.name}を廃棄`);
+    return { G: s };
+  }
+  return { error: 'カードが見つかりません' };
 }
 
 function doNextPhase(G, pi) {

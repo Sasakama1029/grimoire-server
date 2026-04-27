@@ -1515,9 +1515,15 @@ function aiTurn(G,pi){
   s={...s,phase:'discard'};
   const dp=s.players[pi];
   if(dp.hand.length>=8){
+    // 手札が多い場合：手札からレシピに不要な食材を優先して廃棄
     const zI=dp.ingZone.map(z=>z.id);
     const dis=dp.hand.find(c=>!c._isRec&&!zI.includes(c.id))||dp.hand[dp.hand.length-1];
     if(dis)s=addLog(ovP(s,pi,{hand:s.players[pi].hand.filter(c=>c._uid!==dis._uid),trash:[...s.players[pi].trash,dis]}),`AI: ${dis.name}を廃棄`,'ai-log');
+  } else if(dp.ingZone.length>4){
+    // 食材ゾーンが多い場合：レシピに不要な食材を食材ゾーンから廃棄
+    const wanted=new Set(dp.hand.filter(c=>c._isRec).flatMap(r=>r.req));
+    const dis=dp.ingZone.find(c=>!wanted.has(c.id));
+    if(dis)s=addLog(ovP(s,pi,{ingZone:s.players[pi].ingZone.filter(c=>c._uid!==dis._uid),trash:[...s.players[pi].trash,dis]}),`AI: 食材ゾーンの${dis.name}を廃棄`,'ai-log');
   }
   return s;
 }
@@ -2067,7 +2073,7 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
     if(isOnline){
       if(G.phase==='place'&&!c._isRec){onAction&&onAction('place',{cardUid:c._uid});return;}
       if(G.phase==='serve'){if(c._isRec){setSelH(c._uid);setSelZ([]);} return;}
-      if(G.phase==='discard'){onAction&&onAction('discard',{cardUid:c._uid});return;}
+      if(G.phase==='discard'){onAction&&onAction('discard',{cardUid:c._uid,from:'hand'});return;}
       return;
     }
     if(G.phase==='place'&&!c._isRec){
@@ -2108,6 +2114,13 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
       if(!still.includes(c.id)){showMsg(`${c.name}はこのレシピに不要`);return;}
       if(selZ.includes(c._uid)){setSelZ(prev=>prev.filter(u=>u!==c._uid));return;}
       setSelZ(prev=>[...prev,c._uid]);
+    }
+    if(G.phase==='discard'){
+      if(isOnline){onAction&&onAction('discard',{cardUid:c._uid,from:'ingZone'});return;}
+      setG(prev=>addLog(ovP(prev,pid,{
+        ingZone:prev.players[pid].ingZone.filter(x=>x._uid!==c._uid),
+        trash:[...prev.players[pid].trash,c]
+      }),`P${pid+1}: ${c.name}を食材ゾーンから廃棄`));
     }
   }
   function serve(){
@@ -2290,7 +2303,7 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
           h('button',{key:'n',className:'btn',onClick:nextPhase},'提供終了 → 廃棄へ')
         ],
         !isAiTurn&&G.phase==='discard'&&[
-          h('span',{key:'h',className:'phase-hint'},'手札から1枚廃棄（任意）'),
+          h('span',{key:'h',className:'phase-hint'},'手札か食材ゾーンのカード1枚を廃棄できます（任意）'),
           h('div',{key:'sp',className:'sp'}),
           h('button',{key:'e',className:'btn primary',onClick:nextPhase},'ターン終了')
         ],

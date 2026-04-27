@@ -159,7 +159,7 @@ io.on('connection', (socket) => {
       case 'return':    result = engine.doReturnCard(room.G, pi, payload.cardUid); break;
       case 'activate':  result = engine.doActivate(room.G, pi, payload.cardUid); break;
       case 'serve':     result = engine.doServeRecipe(room.G, pi, payload.recUid, payload.ingUids); break;
-      case 'discard':   result = engine.doDiscard(room.G, pi, payload.cardUid); break;
+      case 'discard':   result = engine.doDiscard(room.G, pi, payload.cardUid, payload.from); break;
       case 'nextPhase': result = engine.doNextPhase(room.G, pi); break;
       case 'resolve':   result = engine.doResolveChoice(room.G, pi, payload.chosen); break;
       default: socket.emit('error', '不明なアクション'); return;

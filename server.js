@@ -51,13 +51,13 @@ function broadcast(roomId, event, data) {
 }
 
 function sendState(room) {
-  room.players.forEach((pl, pi) => {
+  room.players.forEach((pl) => {
     const sock = io.sockets.sockets.get(pl.socketId);
     if (!sock) return;
-    const pub = room.G ? engine.publicState(room.G, pi) : null;
+    const pub = room.G ? engine.publicState(room.G, pl.pi) : null;
     sock.emit('state', {
       G: pub,
-      myPi: pi,
+      myPi: pl.pi,
       roomPhase: room.phase,
       players: room.players.map(p => ({ name: p.name, ready: p.ready })),
     });

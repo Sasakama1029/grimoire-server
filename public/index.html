@@ -1593,13 +1593,27 @@ function SelectionModal({G,onResolve,canOperate}){
     if(!k)return true;
     if(k==='ingredient')return !c._isRec;
     if(k==='recipe')return c._isRec;
-    if(k==='protein')return c.cat==='protein'&&!c._isRec;
-    if(k==='carb')return c.cat==='carb'&&!c._isRec;
-    if(k==='fat')return c.cat==='fat'&&!c._isRec;
-    if(k==='vitamin')return c.cat==='vitamin'&&!c._isRec;
-    if(k==='mineral')return c.cat==='mineral'&&!c._isRec;
+    if(k==='protein'||k==='protein_ing')return c.cat==='protein'&&!c._isRec;
+    if(k==='carb'||k==='carb_ing')return c.cat==='carb'&&!c._isRec;
+    if(k==='fat'||k==='fat_ing')return c.cat==='fat'&&!c._isRec;
+    if(k==='vitamin'||k==='vitamin_ing')return c.cat==='vitamin'&&!c._isRec;
+    if(k==='mineral'||k==='mineral_ing')return c.cat==='mineral'&&!c._isRec;
     return true;
   }
+  // source が未設定の場合（サーバー側game-engineが生成したpendingなど）、typeから推定
+  function inferSource(type){
+    if(!type)return'hand';
+    if(type==='discardHand'||type==='retHand')return'hand';
+    if(type.startsWith('selectHand'))return'hand';
+    if(type==='trash_to_hand'||type==='trash_to_hand_multi'||type==='trash_to_ingdeck'||type==='trash_to_hand_rec')return'trash';
+    if(type.startsWith('selectIngZone')||type==='pork_step1'||type==='markIngZone')return'ingZone';
+    if(type.startsWith('selectOppZone'))return'oppIngZone';
+    if(type==='searchIngDeck')return'ingDeck';
+    if(type==='searchRecDeck')return'recDeck';
+    return'hand';
+  }
+  const resolvedSource=pd.source||inferSource(pd.type);
+
   let candidates=[];
   const p=G.players[pi];
   const opp=G.players[1-pi];
@@ -1608,13 +1622,13 @@ function SelectionModal({G,onResolve,canOperate}){
   console.log('[SelectionModal] pd=',JSON.stringify({type:pd.type,source:pd.source,filterKey:pd.filterKey,pi:pd.pi,multi:pd.multi}));
   console.log('[SelectionModal] p.hand=',JSON.stringify(p.hand));
   console.log('[SelectionModal] visibleHand=',JSON.stringify(visibleHand));
-  if(pd.source==='hand')candidates=visibleHand.filter(resolveFilter);
-  else if(pd.source==='ingZone')candidates=p.ingZone.filter(resolveFilter);
-  else if(pd.source==='trash')candidates=p.trash.filter(resolveFilter);
-  else if(pd.source==='oppIngZone')candidates=opp.ingZone.filter(resolveFilter);
-  else if(pd.source==='recDeck')candidates=Array.isArray(p.recDeck)?p.recDeck.filter(resolveFilter):[];
-  else if(pd.source==='ingDeck')candidates=Array.isArray(p.ingDeck)?p.ingDeck.filter(resolveFilter):[];
-  console.log('[SelectionModal] candidates=',JSON.stringify(candidates));
+  if(resolvedSource==='hand')candidates=visibleHand.filter(resolveFilter);
+  else if(resolvedSource==='ingZone')candidates=p.ingZone.filter(resolveFilter);
+  else if(resolvedSource==='trash')candidates=p.trash.filter(resolveFilter);
+  else if(resolvedSource==='oppIngZone')candidates=opp.ingZone.filter(resolveFilter);
+  else if(resolvedSource==='recDeck')candidates=Array.isArray(p.recDeck)?p.recDeck.filter(resolveFilter):[];
+  else if(resolvedSource==='ingDeck')candidates=Array.isArray(p.ingDeck)?p.ingDeck.filter(resolveFilter):[];
+  console.log('[SelectionModal] resolvedSource=',resolvedSource,'candidates=',JSON.stringify(candidates));
 
   function toggle(uid_){
     if(!canOperate)return;

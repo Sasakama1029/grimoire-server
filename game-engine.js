@@ -23,7 +23,7 @@ const ING_DEFS = [
   {id:'curryroux',name:'カレールー',cat:'fat',catL:'脂質',eff:null},
   {id:'cabbage',name:'キャベツ',cat:'vitamin',catL:'ビタミン',eff:'ごみ箱から食材カードを1枚選び、食材山札に戻す。'},
   {id:'daikon',name:'大根',cat:'vitamin',catL:'ビタミン',eff:'相手の食材ゾーンが3枚以上なら、レシピ山札から1枚引く。'},
-  {id:'chili',name:'唐辛子',cat:'vitamin',catL:'ビタミン',eff:'相手の満腹度-1。その後、このカードをごみ箱に送る。（1回限定）'},
+  {id:'chili',name:'唐辛子',cat:'vitamin',catL:'ビタミン',eff:'相手が料理を提供した時、自分の満腹度-1。この効果は相手のターン終了時まで有効とする。その後、このカードをごみ箱に送る。'},
   {id:'tomato',name:'トマト',cat:'vitamin',catL:'ビタミン',eff:'自分の食材ゾーンが3枚以下なら、食材山札から2枚引く。'},
   {id:'carrot',name:'にんじん',cat:'vitamin',catL:'ビタミン',eff:'自分の食材ゾーンのカードを1枚選び、手札に戻す。'},
   {id:'broccoli',name:'ブロッコリー',cat:'vitamin',catL:'ビタミン',eff:'食材ゾーンのカードを1枚選び、食材山札から同名カードを1枚手札に加える。その後、このカードをごみ箱に送る。'},
@@ -45,21 +45,29 @@ const ING_DEFS = [
 const REC_DEFS = [
   {id:'onigiri',name:'おにぎり',sat:3,req:['rice','nori'],eff:'食材山札から2枚引く。'},
   {id:'tkgr',name:'卵かけご飯',sat:3,req:['rice','egg'],eff:'レシピ山札から2枚引く。'},
-  {id:'sushiSalmon',name:'サーモン寿司',sat:3,req:['rice','salmon'],eff:'手札を1枚ごみ箱に送ってもよい。そうしたなら、食材山札から2枚引く。'},
+  {id:'pudding',name:'プリン',sat:3,req:['milk','egg'],eff:'相手の食材ゾーンのカードを1枚選ぶ。その後、それと同じカードを自分は食材山札から1枚手札に加える。'},
+  {id:'sushiSalmon',name:'サーモン寿司',sat:4,req:['rice','salmon'],eff:'手札を1枚ごみ箱に送ってもよい。そうしたなら、食材山札から1枚引く。'},
   {id:'jagabata',name:'じゃがバター',sat:4,req:['potato','butter'],eff:null},
+  {id:'teriyakiBuri',name:'ぶりの照り焼き',sat:4,req:['yellowtail','flour'],eff:'自分と相手は食材山札からカードを1枚引く。'},
+  {id:'yakitori',name:'焼き鳥',sat:4,req:['chicken','negi'],eff:null},
   {id:'steak',name:'ステーキ',sat:5,req:['beef','butter'],eff:'次の自分のターン中、料理を提供できない。'},
   {id:'sabaMiso',name:'さばの味噌煮',sat:3,req:['saba','miso','ginger'],eff:'相手の食材ゾーンのカードを1枚選び、ごみ箱に送る。'},
   {id:'buriDaikon',name:'ぶり大根',sat:3,req:['ginger','yellowtail','daikon'],eff:'相手の食材ゾーンのカードを1枚選び、山札に戻す。'},
-  {id:'horenSote',name:'ほうれん草のソテー',sat:4,req:['pork','butter','spinach'],eff:'自分と相手はランダムな手札1枚を山札に戻す。'},
-  {id:'hiyakko',name:'冷やっこ',sat:4,req:['tofu','ginger','negi'],eff:'食材山札から1枚引く。その後、相手の満腹度-2。'},
   {id:'yasaiSalad',name:'温野菜サラダ',sat:4,req:['carrot','potato','broccoli'],eff:'手札を1枚ごみ箱に送ってもよい。そうしたなら、ごみ箱から食材カードを1枚選び手札に加える。'},
   {id:'omelet',name:'オムレツ',sat:4,req:['egg','milk','butter'],eff:'食材山札から2枚引く。その後、手札を1枚ごみ箱に送る。'},
+  {id:'hiyakko',name:'冷やっこ',sat:4,req:['tofu','ginger','negi'],eff:'食材山札から1枚引く。その後、自分の満腹度-2。'},
+  {id:'horenSote',name:'ほうれん草のソテー',sat:4,req:['pork','butter','spinach'],eff:'自分と相手はランダムな手札1枚を山札に戻す。'},
+  {id:'namuL',name:'野菜のナムル',sat:4,req:['spinach','carrot','moyashi'],eff:'自分と相手はランダムな手札1枚を山札に戻す。その後、自分と相手は食材山札からカードを1枚引く。'},
+  {id:'agedashi',name:'揚げ出し豆腐',sat:5,req:['tofu','daikon','negi'],eff:'自分は手札の「たんぱく質」のカードを1枚選び、ごみ箱に送ってもよい。そうしたなら、自分は食材山札からカードを2枚引く。'},
   {id:'cheeseOmelet',name:'チーズオムレツ',sat:5,req:['egg','cheese','butter'],eff:'食材山札から3枚引く。その後、手札を2枚ごみ箱に送る。'},
-  {id:'mashed',name:'マッシュポテト',sat:5,req:['potato','butter','milk'],eff:'次に完成させる料理の満腹度+2。（ターン終了時まで）'},
+  {id:'biscuit',name:'ビスケット',sat:5,req:['flour','butter','milk'],eff:'相手の食材ゾーンのカードが3枚以下なら、自分は食材山札から3枚引く。'},
+  {id:'mashed',name:'マッシュポテト',sat:5,req:['potato','butter','milk'],eff:'自分は次に提供する料理の満腹度+2。この効果は自分のターン終了時まで有効とする。'},
   {id:'peperoncino',name:'ペペロンチーノ',sat:6,req:['flour','garlic','chili'],eff:'相手は手札を全て公開する。その後、自分はごみ箱から食材カードを1枚選び手札に加える。'},
   {id:'germanPotato',name:'ジャーマンポテト',sat:6,req:['potato','pork','onion'],eff:'手札の「脂質」カードを1枚ごみ箱に送ってもよい。そうしたなら、食材山札から食材カードを1枚選び手札に加える。'},
   {id:'gyudon',name:'牛丼',sat:6,req:['rice','beef','onion'],eff:null},
   {id:'butaNinger',name:'豚の生姜焼き',sat:6,req:['ginger','pork','onion'],eff:null},
+  {id:'carpaccio',name:'カルパッチョ',sat:4,req:['yellowtail','lemon','onion','garlic'],eff:'自分は食材山札から食材カードを2枚引き、手札に加える。'},
+  {id:'curryBread',name:'カレーパン',sat:5,req:['flour','curryroux','egg','butter'],eff:'自分は食材山札から食材カードを1枚選ぶ。その後、そのカードを食材ゾーンに出す。'},
   {id:'misoShiru',name:'味噌汁',sat:5,req:['miso','tofu','abura','wakame'],eff:'自分の満腹度-3。'},
   {id:'yakisoba',name:'焼きそば',sat:6,req:['flour','pork','cabbage','moyashi'],eff:'手札を全てごみ箱に送る。その後、食材山札から3枚引き、レシピ山札から2枚引く。'},
   {id:'chickenSalad',name:'チキンサラダ',sat:6,req:['chicken','lettuce','broccoli','tomato'],eff:'レシピ山札から1枚引く。その後、ごみ箱から食材カードを1枚選び手札に加える。'},
@@ -67,22 +75,24 @@ const REC_DEFS = [
   {id:'oyakodon',name:'親子丼',sat:6,req:['rice','chicken','egg','onion'],eff:'食材山札から食材カードを1枚選び手札に加える。'},
   {id:'salmonMeuniere',name:'鮭のムニエル',sat:6,req:['flour','salmon','butter','lemon'],eff:'食材山札から食材カードを1枚選び手札に加える。'},
   {id:'gratin',name:'グラタン',sat:6,req:['flour','cheese','butter','milk'],eff:'次の相手のターン終了時、相手の満腹度+3。'},
-  {id:'frenchToast',name:'フレンチトースト',sat:6,req:['flour','egg','milk','butter'],eff:'食材ゾーンのカードを1枚選ぶ。そのカードを使用した料理完成時、相手の満腹度+2。'},
+  {id:'frenchToast',name:'フレンチトースト',sat:6,req:['flour','egg','milk','butter'],eff:'自分は食材ゾーンのカードを1枚選び、そのカードに【満腹バフ：3】を付与する。'},
   {id:'maboTofu',name:'麻婆豆腐',sat:7,req:['miso','tofu','pork','negi'],eff:'手札の「たんぱく質」カードを1枚ごみ箱に送ってもよい。そうしたなら、レシピ山札から2枚引く。'},
   {id:'hamburg',name:'ハンバーグ',sat:7,req:['beef','pork','egg','onion'],eff:'食材山札から3枚引く。次の自分のターン終了時まで料理を提供できない。'},
   {id:'curryUdon',name:'カレーうどん',sat:7,req:['flour','abura','curryroux','negi'],eff:'食材山札から2枚引き、そのカードを食材ゾーンに出す。'},
   {id:'okonomiyaki',name:'お好み焼き',sat:8,req:['flour','pork','egg','cabbage'],eff:null},
   {id:'yasaiItame',name:'野菜炒め',sat:8,req:['pork','carrot','moyashi','cabbage'],eff:null},
+  {id:'chaahan',name:'チャーハン',sat:9,req:['rice','pork','negi','egg'],eff:'自分は手札を1枚ごみ箱に送ってもよい。そうしないなら、自分の満腹度+1。'},
   {id:'carbonara',name:'カルボナーラ',sat:6,req:['flour','egg','pork','milk','cheese'],eff:'手札を全て山札に戻す。その後、食材山札から4枚引き、レシピ山札から3枚引く。'},
   {id:'butajiru',name:'豚汁',sat:6,req:['pork','miso','carrot','konjac','daikon'],eff:'食材山札から2枚引く。その後、自分の満腹度-4。'},
   {id:'nikujaga',name:'肉じゃが',sat:9,req:['potato','beef','carrot','onion','konjac'],eff:'ごみ箱からレシピカードを1枚選び手札に加える。その後、手札を1枚ごみ箱に送る。'},
   {id:'okosamLunch',name:'お子様ランチ',sat:9,req:['rice','beef','egg','carrot','broccoli'],eff:'レシピ山札から3枚引く。その後、手札を2枚山札に戻す。'},
   {id:'croquette',name:'コロッケ',sat:10,req:['potato','flour','egg','beef','onion'],eff:null},
-  {id:'meatSauce',name:'ミートソースパスタ',sat:6,req:['flour','beef','tomato','carrot','onion','garlic'],eff:'手札を全て山札に戻す。その後、食材山札からX枚引く（X=相手の食材ゾーンの枚数）。'},
   {id:'minestrone',name:'ミネストローネ',sat:7,req:['potato','pork','carrot','cabbage','tomato','onion'],eff:'ごみ箱から食材カードを2枚選び手札に加える。その後、自分の満腹度-4。'},
   {id:'creamStew',name:'クリームシチュー',sat:9,req:['potato','chicken','milk','butter','carrot','onion'],eff:'レシピ山札からレシピカードを2枚選び手札に加える。'},
+  {id:'meatSauce',name:'ミートソースパスタ',sat:9,req:['flour','beef','tomato','carrot','onion','garlic'],eff:'手札を全て山札に戻す。その後、食材山札からX枚引く（X=相手の食材ゾーンの枚数）。'},
+  {id:'omurice',name:'オムライス',sat:10,req:['rice','egg','butter','tomato','onion','chicken'],eff:'前の相手のターン中、相手が料理を提供していたなら、相手の満腹度+2。その後、自分はレシピ山札からカードを3枚引く。'},
   {id:'curryRice',name:'カレーライス',sat:10,req:['rice','potato','beef','curryroux','carrot','onion'],eff:'食材山札から2枚引き、そのカードを食材ゾーンに出す。'},
-  {id:'sukiyaki',name:'すき焼き',sat:12,req:['konjac','beef','tofu','negi','carrot','shiitake'],eff:null},
+  {id:'sukiyaki',name:'すき焼き',sat:12,req:['konjac','beef','tofu','negi','carrot','shiitake'],eff:'相手の手札が7枚以上なら、相手の満腹度+2。そうでないなら、自分の満腹度+2。'},
 ];
 
 const ING_MAP = Object.fromEntries(ING_DEFS.map(d => [d.id, d]));
@@ -171,7 +181,7 @@ function drawToZone(G, pi, n) {
   for (let i = 0; i < n; i++) {
     const p = s.players[pi];
     if (!p.ingDeck.length) break;
-    const c = p.ingDeck[0];
+    const c = { ...p.ingDeck[0], _satBuff: 0 };
     s = p.ingZone.length < 7
       ? ovP(s, pi, { ingDeck: p.ingDeck.slice(1), ingZone: [...p.ingZone, c] })
       : ovP(s, pi, { ingDeck: p.ingDeck.slice(1), trash: [...p.trash, c] });
@@ -240,7 +250,24 @@ function runBlocks(G, pi, blocks, cardId) {
   let s = G; let prevDone = true;
   for (let i = 0; i < blocks.length; i++) {
     const blk = blocks[i];
-    if (blk.type === 'ifPrev') { if (!prevDone) return s; continue; }
+    if (blk.type === 'ifPrev') {
+      if (!prevDone) { continue; }
+      if (blk.blocks && blk.blocks.length) {
+        const res = runBlocks(s, pi, blk.blocks, cardId);
+        if (res && res.pending) { res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId }; return res; }
+        s = res;
+        s = checkWin(s); if (s.winner != null) return s;
+      }
+      continue;
+    }
+    if (blk.type === 'elsePrev') {
+      if (prevDone) { continue; }
+      const res = runBlocks(s, pi, blk.blocks || [], cardId);
+      if (res && res.pending) { res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId }; return res; }
+      s = res; prevDone = false;
+      s = checkWin(s); if (s.winner != null) return s;
+      continue;
+    }
     const res = execBlock(s, pi, blk, cardId);
     if (res && res.pending) {
       res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId };
@@ -257,7 +284,24 @@ function runBlocksFrom(G, pi, blocks, cardId, prevDone) {
   let s = G;
   for (let i = 0; i < blocks.length; i++) {
     const blk = blocks[i];
-    if (blk.type === 'ifPrev') { if (!prevDone) return s; continue; }
+    if (blk.type === 'ifPrev') {
+      if (!prevDone) { continue; }
+      if (blk.blocks && blk.blocks.length) {
+        const res = runBlocks(s, pi, blk.blocks, cardId);
+        if (res && res.pending) { res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId }; return res; }
+        s = res;
+        s = checkWin(s); if (s.winner != null) return s;
+      }
+      continue;
+    }
+    if (blk.type === 'elsePrev') {
+      if (prevDone) { continue; }
+      const res = runBlocks(s, pi, blk.blocks || [], cardId);
+      if (res && res.pending) { res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId }; return res; }
+      s = res; prevDone = false;
+      s = checkWin(s); if (s.winner != null) return s;
+      continue;
+    }
     const res = execBlock(s, pi, blk, cardId);
     if (res && res.pending) {
       res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId };
@@ -282,6 +326,23 @@ function execBlock(G, pi, blk, cardId) {
     case 'redOppSat': return redOpp(G, pi, blk.n || 1);
     case 'redSelfSat': return redSelf(G, pi, blk.n || 1);
     case 'addSelfSat': return addSelf(G, pi, blk.n || 1);
+    case 'addOppSat': {
+      const o = 1 - pi;
+      return addLog(ovP(G, o, { satiety: Math.min(20, G.players[o].satiety + (blk.n || 1)) }), `P${pi + 1}: 相手満腹+${blk.n || 1}`, 'warn');
+    }
+    case 'condOppHand': {
+      const oppHandLen = G.players[1 - pi].hand.length;
+      if (oppHandLen >= (blk.n || 1)) return addLog(G, `P${pi + 1}: 相手手札${oppHandLen}枚（条件成立）`);
+      return null;
+    }
+    case 'drawIngOpp': {
+      return drawI(G, 1 - pi, blk.n || 1);
+    }
+    case 'condOppServedLast': {
+      const opp = 1 - pi;
+      if (G.players[opp].servedLastTurn) return addLog(G, `P${pi + 1}: 相手が前ターンに料理提供（条件成立）`);
+      return null;
+    }
     case 'revealOpp': return revOpp(G, pi);
     case 'rndBounce': return rndBounce(G, pi);
     case 'retAllHand': return retAll(G, pi, blk.ing || 0, blk.rec || 0);
@@ -339,7 +400,10 @@ function execBlock(G, pi, blk, cardId) {
     }
     case 'selectOppZone': {
       if (!G.players[opp].ingZone.length) return addLog(G, '相手食材ゾーンが空');
-      return mkPending(G, { type: 'selectOppZone_' + blk.then, pi });
+      const title = blk.then === 'trash' ? '相手の食材ゾーンから1枚をごみ箱へ'
+        : blk.then === 'deck' ? '相手の食材ゾーンから1枚を山札へ'
+        : '相手の食材ゾーンからカードを選ぶ';
+      return mkPending(G, { type: 'selectOppZone_' + blk.then, pi, title, desc: '対象のカードを選んでください' });
     }
     case 'selectHand': {
       const cands = blk.filterKey ? p.hand.filter(c => matchFilter(c, blk.filterKey)) : p.hand;
@@ -386,7 +450,13 @@ function resumeBlocks(G, chosen) {
   const r = resolveChoice(s, pi, pd, chosen);
   if (r === null) {
     if (!blocks || !blocks.length) return s;
-    if (blocks[0] && blocks[0].type === 'ifPrev') return s;
+    if (blocks[0] && blocks[0].type === 'ifPrev') {
+      return blocks.length > 1 ? runBlocksFrom(s, pi, blocks.slice(1), cardId, false) : s;
+    }
+    if (blocks[0] && blocks[0].type === 'elsePrev') {
+      const res2 = runBlocks(s, pi, blocks[0].blocks || [], cardId);
+      return blocks.length > 1 ? runBlocksFrom(res2, pi, blocks.slice(1), cardId, false) : res2;
+    }
     return runBlocksFrom(s, pi, blocks, cardId, false);
   }
   s = r; s = checkWin(s); if (s.winner != null) return s;
@@ -429,11 +499,13 @@ function resolveChoice(G, pi, pd, chosen) {
   }
   if (pd.type === 'selectIngZone_toHand') {
     const card = p.ingZone.find(c => c._uid === chosen[0]); if (!card) return G;
-    return addLog(ovP(G, pi, { ingZone: p.ingZone.filter(c => c._uid !== card._uid), hand: [...p.hand, card] }), `P${pi + 1}: ${card.name}を手札へ`);
+    const cleanCard = { ...card, _satBuff: 0 };
+    return addLog(ovP(G, pi, { ingZone: p.ingZone.filter(c => c._uid !== card._uid), hand: [...p.hand, cleanCard] }), `P${pi + 1}: ${card.name}を手札へ`);
   }
   if (pd.type === 'selectIngZone_retAndDraw') {
     const card = p.ingZone.find(c => c._uid === chosen[0]); if (!card) return G;
-    let s = ovP(G, pi, { ingZone: p.ingZone.filter(c => c._uid !== card._uid), ingDeck: shuffle([...p.ingDeck, card]) });
+    const cleanCard = { ...card, _satBuff: 0 };
+    let s = ovP(G, pi, { ingZone: p.ingZone.filter(c => c._uid !== card._uid), ingDeck: shuffle([...p.ingDeck, cleanCard]) });
     s = addLog(s, `P${pi + 1}: ${card.name}を山札へ戻した`);
     return drawToZone(s, pi, 1);
   }
@@ -459,7 +531,16 @@ function resolveChoice(G, pi, pd, chosen) {
   if (pd.type === 'selectOppZone_deck') {
     const oppP = G.players[opp];
     const card = oppP.ingZone.find(c => c._uid === chosen[0]); if (!card) return G;
-    return addLog(ovP(G, opp, { ingZone: oppP.ingZone.filter(c => c._uid !== card._uid), ingDeck: shuffle([...oppP.ingDeck, card]) }), `P${pi + 1}: ${card.name}を山札へ！`, 'warn');
+    const cleanCard = { ...card, _satBuff: 0 };
+    return addLog(ovP(G, opp, { ingZone: oppP.ingZone.filter(c => c._uid !== card._uid), ingDeck: shuffle([...oppP.ingDeck, cleanCard]) }), `P${pi + 1}: ${card.name}を山札へ！`, 'warn');
+  }
+  if (pd.type === 'selectOppZone_searchSame') {
+    const oppP = G.players[opp];
+    const ref = oppP.ingZone.find(c => c._uid === chosen[0]); if (!ref) return G;
+    const found = G.players[pi].ingDeck.find(c => c.id === ref.id);
+    if (!found) return addLog(G, `P${pi + 1}: 食材山札に${ref.name}なし`);
+    const p2 = G.players[pi];
+    return addLog(ovP(G, pi, { ingDeck: shuffle(p2.ingDeck.filter(c => c._uid !== found._uid)), ...ph(p2, [found]) }), `P${pi + 1}: ${found.name}をサーチ`);
   }
   if (pd.type === 'pork_step1') {
     if (chosen.length < 2) return addLog(G, '2枚選択してください');
@@ -484,7 +565,7 @@ function resolveChoice(G, pi, pd, chosen) {
   }
   if (pd.type === 'markIngZone') {
     const target = p.ingZone.find(c => c._uid === chosen[0]); if (!target) return G;
-    return addLog(ovP(G, pi, { ingZone: p.ingZone.map(c => c._uid === chosen[0] ? { ...c, _toastMark: true } : c) }), `P${pi + 1}: ${target.name}をマーク`);
+    return addLog(ovP(G, pi, { ingZone: p.ingZone.map(c => c._uid === chosen[0] ? { ...c, _satBuff: 3 } : c) }), `P${pi + 1}: ${target.name}に【満腹バフ：3】を付与`);
   }
   return G;
 }
@@ -508,7 +589,7 @@ const ING_BLOCKS = {
   curryroux: [],
   cabbage: [{ type: 'recoverTrashToDeck' }],
   daikon: [{ type: 'condOppZone', op: 'ge', n: 3, then: [{ type: 'drawRec', n: 1 }] }],
-  chili: [{ type: 'redOppSat', n: 1 }, { type: 'selfTrash' }],
+  chili: [{ type: 'setDebuff', key: 'chiliWatch', val: 1 }, { type: 'selfTrash' }],
   tomato: [{ type: 'condIngZone', op: 'le', n: 3, then: [{ type: 'drawIng', n: 2 }] }],
   carrot: [{ type: 'selectIngZone', then: 'toHand' }],
   broccoli: [{ type: 'selectIngZone', then: 'searchSame' }, { type: 'selfTrash' }],
@@ -526,13 +607,13 @@ const ING_BLOCKS = {
 const REC_BLOCKS = {
   onigiri: [{ type: 'drawIng', n: 2 }],
   tkgr: [{ type: 'drawRec', n: 2 }],
-  sushiSalmon: [{ type: 'discardHand', n: 1, optional: true }, { type: 'ifPrev' }, { type: 'drawIng', n: 2 }],
+  sushiSalmon: [{ type: 'discardHand', n: 1, optional: true }, { type: 'ifPrev' }, { type: 'drawIng', n: 1 }],
   jagabata: [],
   steak: [{ type: 'setDebuff', key: 'noServe', val: 1 }],
   sabaMiso: [{ type: 'selectOppZone', then: 'trash' }],
   buriDaikon: [{ type: 'selectOppZone', then: 'deck' }],
   horenSote: [{ type: 'rndBounce' }],
-  hiyakko: [{ type: 'drawIng', n: 1 }, { type: 'redOppSat', n: 2 }],
+  hiyakko: [{ type: 'drawIng', n: 1 }, { type: 'redSelfSat', n: 2 }],
   yasaiSalad: [{ type: 'discardHand', n: 1, optional: true }, { type: 'ifPrev' }, { type: 'recoverTrash', filterKey: 'ingredient' }],
   omelet: [{ type: 'drawIng', n: 2 }, { type: 'discardHand', n: 1 }],
   cheeseOmelet: [{ type: 'drawIng', n: 3 }, { type: 'discardHand', n: 2 }],
@@ -561,7 +642,21 @@ const REC_BLOCKS = {
   minestrone: [{ type: 'recoverTrash2', n: 2, filterKey: 'ingredient' }, { type: 'redSelfSat', n: 4 }],
   creamStew: [{ type: 'drawRec', n: 2 }],
   curryRice: [{ type: 'drawToZone', n: 2 }],
-  sukiyaki: [],
+  sukiyaki: [
+    { type: 'condOppHand', n: 7 },
+    { type: 'ifPrev', blocks: [{ type: 'addOppSat', n: 2 }] },
+    { type: 'elsePrev', blocks: [{ type: 'redSelfSat', n: 2 }] },
+  ],
+  pudding: [{ type: 'selectOppZone', then: 'searchSame' }],
+  teriyakiBuri: [{ type: 'drawIng', n: 1 }, { type: 'drawIngOpp', n: 1 }],
+  yakitori: [],
+  namuL: [{ type: 'rndBounce' }, { type: 'drawIng', n: 1 }, { type: 'drawIngOpp', n: 1 }],
+  agedashi: [{ type: 'discardHand', n: 1, optional: true, filterKey: 'protein' }, { type: 'ifPrev' }, { type: 'drawIng', n: 2 }],
+  biscuit: [{ type: 'condOppZone', op: 'le', n: 3, then: [{ type: 'drawIng', n: 3 }] }],
+  carpaccio: [{ type: 'drawIng', n: 2 }],
+  curryBread: [{ type: 'drawToZone', n: 1 }],
+  chaahan: [{ type: 'discardHand', n: 1, optional: true }, { type: 'elsePrev', blocks: [{ type: 'redSelfSat', n: 1 }] }],
+  omurice: [{ type: 'condOppServedLast' }, { type: 'ifPrev', blocks: [{ type: 'addOppSat', n: 2 }] }, { type: 'drawRec', n: 3 }],
 };
 
 // filterKey に cheese_or_butter を対応
@@ -654,7 +749,7 @@ function doServeRecipe(G, pi, recUid, ingUids) {
   const used = ingUids.map(u => p.ingZone.find(c => c._uid === u)).filter(Boolean);
   if (used.length !== rec.req.length) return { error: '食材の選択が正しくありません' };
   const buf = p.bufNextRec || 0;
-  const toastBonus = used.some(c => c._toastMark) ? 2 : 0;
+  const toastBonus = used.reduce((a,c)=>a+(c._satBuff||0),0);
   const gain = rec.sat + buf + toastBonus;
   const opp = 1 - pi;
   let G2 = ovP(G, pi, {
@@ -663,9 +758,16 @@ function doServeRecipe(G, pi, recUid, ingUids) {
     trash: [...p.trash, ...used],
     recZone: [...p.recZone, rec],
     bufNextRec: 0,
+    servedLastTurn: true,
   });
   G2 = ovP(G2, opp, { satiety: Math.min(20, G2.players[opp].satiety + gain) });
   G2 = addLog(G2, `P${pi + 1}: 【${rec.name}】完成！相手+${gain}！`, 'hl');
+  // 唐辛子デバフチェック：相手が唐辛子監視中なら自分の満腹度-1
+  if (G2.players[opp].debuffs && G2.players[opp].debuffs.chiliWatch) {
+    G2 = ovP(G2, opp, { debuffs: { ...G2.players[opp].debuffs, chiliWatch: 0 } });
+    G2 = ovP(G2, pi, { satiety: Math.max(0, G2.players[pi].satiety - 1) });
+    G2 = addLog(G2, `P${pi + 1}: 唐辛子の効果！自分満腹-1`, 'warn');
+  }
   G2 = checkWin(G2); if (G2.winner != null) return { G: G2 };
   const blocks = REC_BLOCKS[rec.id];
   if (blocks && blocks.length) G2 = runBlocks(G2, pi, blocks, rec.id);
@@ -711,7 +813,7 @@ function endTurn(G) {
     s = checkWin(s); if (s.winner != null) return s;
   }
   const np = [...s.players];
-  np[pi] = { ...np[pi], activatedThisTurn: false, ingZone: np[pi].ingZone.map(c => ({ ...c, _used: false, _placedThisTurn: false })), revealed: false };
+  np[pi] = { ...np[pi], activatedThisTurn: false, servedLastTurn: false, ingZone: np[pi].ingZone.map(c => ({ ...c, _used: false, _placedThisTurn: false })), revealed: false };
   const od = { ...np[opp].debuffs };
   if (od.noServe) od.noServe = Math.max(0, od.noServe - 1);
   np[opp] = { ...np[opp], debuffs: od };

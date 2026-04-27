@@ -1605,12 +1605,16 @@ function SelectionModal({G,onResolve,canOperate}){
   const opp=G.players[1-pi];
   // _hiddenカード（相手の隠し手札）は候補から除外
   const visibleHand=p.hand.filter(c=>!c._hidden);
+  console.log('[SelectionModal] pd=',JSON.stringify({type:pd.type,source:pd.source,filterKey:pd.filterKey,pi:pd.pi,multi:pd.multi}));
+  console.log('[SelectionModal] p.hand=',JSON.stringify(p.hand));
+  console.log('[SelectionModal] visibleHand=',JSON.stringify(visibleHand));
   if(pd.source==='hand')candidates=visibleHand.filter(resolveFilter);
   else if(pd.source==='ingZone')candidates=p.ingZone.filter(resolveFilter);
   else if(pd.source==='trash')candidates=p.trash.filter(resolveFilter);
   else if(pd.source==='oppIngZone')candidates=opp.ingZone.filter(resolveFilter);
   else if(pd.source==='recDeck')candidates=Array.isArray(p.recDeck)?p.recDeck.filter(resolveFilter):[];
   else if(pd.source==='ingDeck')candidates=Array.isArray(p.ingDeck)?p.ingDeck.filter(resolveFilter):[];
+  console.log('[SelectionModal] candidates=',JSON.stringify(candidates));
 
   function toggle(uid_){
     if(!canOperate)return;

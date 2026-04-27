@@ -2017,6 +2017,7 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
   }
 
   function nextPhase(){
+    if(isOnline&&!isMyTurn)return;
     if(isOnline){onAction&&onAction('nextPhase');return;}
     if(isAiTurn)return;
     const phases=['draw','place','activate','serve','discard'];
@@ -2027,6 +2028,13 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
   }
   function clickHand(c){
     if(isAiTurn)return;
+    if(isOnline&&!isMyTurn)return;
+    if(isOnline){
+      if(G.phase==='place'&&!c._isRec){onAction&&onAction('place',{cardUid:c._uid});return;}
+      if(G.phase==='serve'){if(c._isRec){setSelH(c._uid);setSelZ([]);} return;}
+      if(G.phase==='discard'){onAction&&onAction('discard',{cardUid:c._uid});return;}
+      return;
+    }
     if(G.phase==='place'&&!c._isRec){
       if(p.ingZone.length>=7){showMsg('食材ゾーンは最大7枚！');return;}
       setG(prev=>addLog(ovP(prev,pid,{hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),ingZone:[...prev.players[pid].ingZone,{...c,_placedThisTurn:true,_satBuff:0}]}),`P${pid+1}: ${c.name}を配置`));return;
@@ -2035,10 +2043,10 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
       if(c._isRec){setSelH(c._uid);setSelZ([]);} return;
     }
     if(G.phase==='discard'){setG(prev=>addLog(ovP(prev,pid,{hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),trash:[...prev.players[pid].trash,c]}),`P${pid+1}: ${c.name}廃棄`));return;}
-    // draw / activate / place(recipe) フェーズは手札クリックで何もしない
   }
   function clickZone(c,fpi){
     if(isAiTurn||fpi!==pid)return;
+    if(isOnline&&!isMyTurn)return;
     if(G.phase==='place'){
       if(isOnline){onAction&&onAction('return',{cardUid:c._uid});return;}
       if(!c._placedThisTurn){showMsg('このターンに配置したカードのみ戻せます');return;}
@@ -2051,10 +2059,10 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
       if(c._used){showMsg('起動効果は使用済み');return;}
       if(!ING_FN[c.id]){showMsg(`${c.name}は起動効果なし`);return;}
       if(p.activatedThisTurn){showMsg('起動効果は1ターン1回まで');return;}
+      if(isOnline){onAction&&onAction('activate',{cardUid:c._uid});return;}
       const iz=p.ingZone.map(x=>x._uid===c._uid?{...x,_used:true}:x);
       let s=ovP(G,pid,{ingZone:iz,activatedThisTurn:true});
       try{s=ING_FN[c.id](s,pid);}catch(e){console.error(e);}
-      // pending があればそのままセット（モーダルが出る）
       if(!s.pending)s=addLog(s,`P${pid+1}: ${c.name}の効果発動`);
       setG(checkWin(s));return;
     }
@@ -2069,6 +2077,7 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
   }
   function serve(){
     if(!selH)return;
+    if(isOnline&&!isMyTurn)return;
     if(isOnline){onAction&&onAction('serve',{recUid:selH,ingUids:selZ});setSelH(null);setSelZ([]);return;}
     const rec=p.hand.find(x=>x._uid===selH);if(!rec)return;
     const si=selZ.map(u=>p.ingZone.find(x=>x._uid===u)?.id).filter(Boolean);
@@ -2107,7 +2116,11 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
   }
 
   function renderField(fpi){
-    const fp=G.players[fpi];const isAct=isOnline?(fpi===myOnlinePi&&G.currentPlayer===myOnlinePi):(fpi===pid);const isAIp=isAI&&fpi===1;
+    const fp=G.players[fpi];
+    const isAct=isOnline?(fpi===myOnlinePi&&G.currentPlayer===myOnlinePi):(fpi===pid);
+    // isMine: オンラインでは自分のフィールド、ローカルでは現在のアクティブフィールド
+    const isMine=isOnline?(fpi===myOnlinePi):(fpi===pid);
+    const isAIp=isAI&&fpi===1;
     return h('div',{key:fpi,className:`pfield${isAct?' active':''}${isAIp?' ai-field':''}`},
       h('div',{className:'plabel'},`${isAct?'▶ ':''}${isAIp?'🤖 AI':'👤 P'+(fpi+1)} ${isAct?'['+PHASE_LABELS[G.phase]+']':''} ${fp.debuffs.noServe?'⚠料理不可':''}`),
       h('div',{className:'zlabel'},`食材ゾーン (${fp.ingZone.length}/7)`),
@@ -2146,18 +2159,18 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
         h('div',{className:'zlabel'},`手札 ${fp.hand.length}/10`)
       ),
       h('div',{className:'hand-area',style:{display:'flex',gap:'8px',alignItems:'flex-start'}},
-        isAct&&h('div',{className:'hand-decks'},
+        isMine&&h('div',{className:'hand-decks'},
           h('div',{
-            className:`deck-mini ing-deck${isAct&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.ingDeck.length?' clickable':' disabled-deck'}`,
-            onClick:()=>{if(isAct&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.ingDeck.length)drawCard('ing');},
+            className:`deck-mini ing-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.ingDeck.length?' clickable':' disabled-deck'}`,
+            onClick:()=>{if(isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.ingDeck.length)drawCard('ing');},
           },
             h('div',{className:'dm-icon'},'🥕'),
             h('div',{className:'dm-count'},fp.ingDeck.length),
             h('div',{className:'dm-label'},'食材山')
           ),
           h('div',{
-            className:`deck-mini rec-deck${isAct&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.recDeck.length?' clickable':' disabled-deck'}`,
-            onClick:()=>{if(isAct&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.recDeck.length)drawCard('rec');},
+            className:`deck-mini rec-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.recDeck.length?' clickable':' disabled-deck'}`,
+            onClick:()=>{if(isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.recDeck.length)drawCard('rec');},
           },
             h('div',{className:'dm-icon'},'📖'),
             h('div',{className:'dm-count'},fp.recDeck.length),

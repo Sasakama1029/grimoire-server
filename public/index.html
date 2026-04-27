@@ -2117,6 +2117,9 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
 
   function renderField(fpi){
     const fp=G.players[fpi];
+    // ingDeck/recDeckはオンライン時に数値（length）で届くため両対応
+    const ingDeckLen=Array.isArray(fp.ingDeck)?fp.ingDeck.length:(fp.ingDeck||0);
+    const recDeckLen=Array.isArray(fp.recDeck)?fp.recDeck.length:(fp.recDeck||0);
     const isAct=isOnline?(fpi===myOnlinePi&&G.currentPlayer===myOnlinePi):(fpi===pid);
     // isMine: オンラインでは自分のフィールド、ローカルでは現在のアクティブフィールド
     const isMine=isOnline?(fpi===myOnlinePi):(fpi===pid);
@@ -2161,19 +2164,19 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
       h('div',{className:'hand-area',style:{display:'flex',gap:'8px',alignItems:'flex-start'}},
         isMine&&h('div',{className:'hand-decks'},
           h('div',{
-            className:`deck-mini ing-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.ingDeck.length?' clickable':' disabled-deck'}`,
-            onClick:()=>{if(isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.ingDeck.length)drawCard('ing');},
+            className:`deck-mini ing-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&ingDeckLen?' clickable':' disabled-deck'}`,
+            onClick:()=>{if(isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&ingDeckLen)drawCard('ing');},
           },
             h('div',{className:'dm-icon'},'🥕'),
-            h('div',{className:'dm-count'},fp.ingDeck.length),
+            h('div',{className:'dm-count'},ingDeckLen),
             h('div',{className:'dm-label'},'食材山')
           ),
           h('div',{
-            className:`deck-mini rec-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.recDeck.length?' clickable':' disabled-deck'}`,
-            onClick:()=>{if(isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&fp.recDeck.length)drawCard('rec');},
+            className:`deck-mini rec-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&recDeckLen?' clickable':' disabled-deck'}`,
+            onClick:()=>{if(isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&recDeckLen)drawCard('rec');},
           },
             h('div',{className:'dm-icon'},'📖'),
-            h('div',{className:'dm-count'},fp.recDeck.length),
+            h('div',{className:'dm-count'},recDeckLen),
             h('div',{className:'dm-label'},'レシピ山')
           ),
           h('div',{

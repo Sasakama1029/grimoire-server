@@ -780,20 +780,20 @@ function doDiscard(G, pi, cardUid, from) {
   // 手札から廃棄
   const handCard = p.hand.find(c => c._uid === cardUid);
   if (handCard) {
-    const s = addLog(ovP(G, pi, {
+    let s = addLog(ovP(G, pi, {
       hand: p.hand.filter(c => c._uid !== cardUid),
       trash: [...p.trash, handCard],
     }), `P${pi + 1}: ${handCard.name}を廃棄`);
-    return { G: s };
+    return { G: endTurn(s) };
   }
   // 食材ゾーンから廃棄
   const zoneCard = p.ingZone.find(c => c._uid === cardUid);
   if (zoneCard) {
-    const s = addLog(ovP(G, pi, {
+    let s = addLog(ovP(G, pi, {
       ingZone: p.ingZone.filter(c => c._uid !== cardUid),
       trash: [...p.trash, zoneCard],
     }), `P${pi + 1}: 食材ゾーンの${zoneCard.name}を廃棄`);
-    return { G: s };
+    return { G: endTurn(s) };
   }
   return { error: 'カードが見つかりません' };
 }

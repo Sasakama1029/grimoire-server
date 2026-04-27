@@ -938,7 +938,8 @@ function resolveBlockChoice(G,pi,pd,chosen){
   if(pd.type==='selectIngZone_toHand'){
     const card=p.ingZone.find(c=>c._uid===chosen[0]);if(!card)return G;
     const cleanCard={...card,_satBuff:0};
-    return addLog(ovP(G,pi,{ingZone:p.ingZone.filter(c=>c._uid!==card._uid),hand:[...p.hand,cleanCard]}),`P${pi+1}: ${card.name}を手札へ`);
+    const r=ph(p,[cleanCard]);
+    return addLog(ovP(G,pi,{ingZone:p.ingZone.filter(c=>c._uid!==card._uid),...r}),`P${pi+1}: ${card.name}を手札へ`);
   }
   if(pd.type==='selectIngZone_retAndDraw'){
     const card=p.ingZone.find(c=>c._uid===chosen[0]);if(!card)return G;
@@ -1000,7 +1001,8 @@ function resolveBlockChoice(G,pi,pd,chosen){
     const toDeck=cards.find(c=>c._uid!==chosen[0]);
     if(!toHand||!toDeck)return G;
     const ingZone=p.ingZone.filter(c=>!pd.uids.includes(c._uid));
-    return addLog(ovP(G,pi,{ingZone,hand:[...p.hand,toHand],ingDeck:shuffle([...p.ingDeck,toDeck])}),`P${pi+1}: ${toHand.name}→手札、${toDeck.name}→山札`);
+    const r=ph(p,[toHand]);
+    return addLog(ovP(G,pi,{ingZone,ingDeck:shuffle([...p.ingDeck,toDeck]),...r}),`P${pi+1}: ${toHand.name}→手札、${toDeck.name}→山札`);
   }
   // レシピ山札から選択して手札へ
   if(pd.type==='searchRecDeck'){
@@ -2083,7 +2085,14 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
     if(G.phase==='serve'){
       if(c._isRec){setSelH(c._uid);setSelZ([]);} return;
     }
-    if(G.phase==='discard'){setG(prev=>addLog(ovP(prev,pid,{hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),trash:[...prev.players[pid].trash,c]}),`P${pid+1}: ${c.name}廃棄`));return;}
+    if(G.phase==='discard'){
+      setG(prev=>{
+        const next=addLog(ovP(prev,pid,{hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),trash:[...prev.players[pid].trash,c]}),`P${pid+1}: ${c.name}廃棄`);
+        return endTurn(next);
+      });
+      setSelH(null);setSelZ([]);
+      return;
+    }
   }
   function clickZone(c,fpi){
     if(isAiTurn||fpi!==pid)return;
@@ -2117,10 +2126,14 @@ function GameScreen({initG,isAI,isOnline=false,myOnlinePi=null,onAction=null}){
     }
     if(G.phase==='discard'){
       if(isOnline){onAction&&onAction('discard',{cardUid:c._uid,from:'ingZone'});return;}
-      setG(prev=>addLog(ovP(prev,pid,{
-        ingZone:prev.players[pid].ingZone.filter(x=>x._uid!==c._uid),
-        trash:[...prev.players[pid].trash,c]
-      }),`P${pid+1}: ${c.name}を食材ゾーンから廃棄`));
+      setG(prev=>{
+        const next=addLog(ovP(prev,pid,{
+          ingZone:prev.players[pid].ingZone.filter(x=>x._uid!==c._uid),
+          trash:[...prev.players[pid].trash,c]
+        }),`P${pid+1}: ${c.name}を食材ゾーンから廃棄`);
+        return endTurn(next);
+      });
+      setSelH(null);setSelZ([]);
     }
   }
   function serve(){

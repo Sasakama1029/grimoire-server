@@ -197,16 +197,27 @@ function startMulligan(room) {
   room.G = engine.createGame(configs);
   room.phase = 'mulligan';
   room.mulliganSels = [null, null];
-  // 各プレイヤーに初期手札を送信
-  room.players.forEach((pl, pi) => {
+  // createGame内でfirstが決まっているのでG.currentPlayerを使う
+  const first = room.G.currentPlayer;
+  // 各プレイヤーにコインフリップ結果と初期手札を送信
+  room.players.forEach((pl) => {
     const sock = io.sockets.sockets.get(pl.socketId);
     if (!sock) return;
-    sock.emit('mulliganStart', {
-      hand: room.G.players[pi].hand,
-      myPi: pi,
-    });
+    sock.emit('coinFlip', { first, myPi: pl.pi });
   });
-  console.log('mulligan started', room.id);
+  // 少し遅延してからマリガン手札を送信（コインフリップ演出の時間）
+  setTimeout(() => {
+    room.players.forEach((pl) => {
+      const sock = io.sockets.sockets.get(pl.socketId);
+      if (!sock) return;
+      sock.emit('mulliganStart', {
+        hand: room.G.players[pl.pi].hand,
+        myPi: pl.pi,
+      });
+    });
+    console.log('mulligan started', room.id);
+  }, 2400);
+  console.log('coin flip: first =', first, room.id);
 }
 
 const PORT = process.env.PORT || 3000;

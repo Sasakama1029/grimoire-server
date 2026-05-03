@@ -145,8 +145,8 @@ function buildFromConfig(ic, rc) {
 function initPlayer(cfg) {
   const { i, r } = cfg ? buildFromConfig(cfg.ingDeck, cfg.recDeck) : buildRandom();
   return {
-    ingDeck: i.slice(3), recDeck: r.slice(2),
-    hand: [...i.slice(0, 3), ...r.slice(0, 2)],
+    ingDeck: i.slice(5), recDeck: r.slice(2),
+    hand: [...i.slice(0, 5), ...r.slice(0, 2)],
     ingZone: [], recZone: [], trash: [],
     satiety: 0, bufNextRec: 0, debuffs: {},
     revealed: false, activatedThisTurn: false,
@@ -251,7 +251,10 @@ function runBlocks(G, pi, blocks, cardId) {
   for (let i = 0; i < blocks.length; i++) {
     const blk = blocks[i];
     if (blk.type === 'ifPrev') {
-      if (!prevDone) { continue; }
+      if (!prevDone) {
+        if (!blk.blocks || !blk.blocks.length) i++;
+        prevDone = false; continue;
+      }
       if (blk.blocks && blk.blocks.length) {
         const res = runBlocks(s, pi, blk.blocks, cardId);
         if (res && res.pending) { res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId }; return res; }
@@ -285,7 +288,10 @@ function runBlocksFrom(G, pi, blocks, cardId, prevDone) {
   for (let i = 0; i < blocks.length; i++) {
     const blk = blocks[i];
     if (blk.type === 'ifPrev') {
-      if (!prevDone) { continue; }
+      if (!prevDone) {
+        if (!blk.blocks || !blk.blocks.length) i++;
+        prevDone = false; continue;
+      }
       if (blk.blocks && blk.blocks.length) {
         const res = runBlocks(s, pi, blk.blocks, cardId);
         if (res && res.pending) { res.pending.resume = { pi, blocks: blocks.slice(i + 1), cardId }; return res; }
@@ -451,7 +457,8 @@ function resumeBlocks(G, chosen) {
   if (r === null) {
     if (!blocks || !blocks.length) return s;
     if (blocks[0] && blocks[0].type === 'ifPrev') {
-      return blocks.length > 1 ? runBlocksFrom(s, pi, blocks.slice(1), cardId, false) : s;
+      const skip = (!blocks[0].blocks || !blocks[0].blocks.length) ? 2 : 1;
+      return blocks.length > skip ? runBlocksFrom(s, pi, blocks.slice(skip), cardId, false) : s;
     }
     if (blocks[0] && blocks[0].type === 'elsePrev') {
       const res2 = runBlocks(s, pi, blocks[0].blocks || [], cardId);
@@ -693,6 +700,10 @@ function publicState(G, myPi) {
 // ── ゲーム操作API ──
 function doDrawCard(G, pi, type) {
   if (G.phase !== 'draw' || G.currentPlayer !== pi) return { error: '操作できません' };
+  // 先攻1ターン目はドロースキップ
+  if (G.firstTurn && G.turn === 1) {
+    return { G: { ...G, phase: 'place' } };
+  }
   let s = type === 'ing' ? drawI(G, pi, 1) : drawR(G, pi, 1);
   return { G: { ...s, phase: 'place' } };
 }
@@ -802,6 +813,10 @@ function doNextPhase(G, pi) {
   if (G.currentPlayer !== pi) return { error: '相手のターンです' };
   const phases = ['draw', 'place', 'activate', 'serve', 'discard'];
   const idx = phases.indexOf(G.phase);
+  // 先攻1ターン目はactivate→serveをスキップしてdiscardへ
+  if (G.firstTurn && G.turn === 1 && G.phase === 'activate') {
+    return { G: { ...G, phase: 'discard' } };
+  }
   if (idx < phases.length - 1) {
     return { G: { ...G, phase: phases[idx + 1] } };
   }
@@ -829,7 +844,7 @@ function endTurn(G) {
   const od = { ...np[opp].debuffs };
   if (od.noServe) od.noServe = Math.max(0, od.noServe - 1);
   np[opp] = { ...np[opp], debuffs: od };
-  return addLog({ ...s, players: np, currentPlayer: opp, phase: 'draw', turn: s.turn + 1 }, `Turn ${s.turn + 1} - P${opp + 1}のターン`);
+  return addLog({ ...s, players: np, currentPlayer: opp, phase: 'draw', turn: s.turn + 1, firstTurn: false }, `Turn ${s.turn + 1} - P${opp + 1}のターン`);
 }
 
 function doMulligan(players, sels) {
@@ -845,13 +860,15 @@ function doMulligan(players, sels) {
 
 function createGame(configs) {
   const players = configs.map(cfg => initPlayer(cfg));
+  const first = Math.random() < 0.5 ? 0 : 1;
   return {
     players,
-    currentPlayer: 0,
+    currentPlayer: first,
     phase: 'draw',
     turn: 1,
+    firstTurn: true,
     winner: null,
-    log: [{ msg: 'ゲーム開始！P1の先攻です', type: 'hl', id: uid() }],
+    log: [{ msg: `ゲーム開始！${first === 0 ? 'P1' : 'P2'}の先攻です`, type: 'hl', id: uid() }],
   };
 }
 

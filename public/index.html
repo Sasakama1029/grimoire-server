@@ -2009,8 +2009,16 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
   const [name,setName]=useState('マイデッキ');
   const [viewSaved,setViewSaved]=useState(false);
   const [showBackConfirm,setShowBackConfirm]=useState(false);
-  // デッキが編集されているかどうか（食材or食材の枚数がある場合）
-  const isDirty=(Object.values(ing).some(v=>v>0)||Object.values(rec).some(v=>v>0));
+  // 最後に保存した状態のスナップショット（保存後に変更がなければダイアログ不要）
+  const [savedSnap,setSavedSnap]=useState(null); // {ing,rec,name} or null
+
+  // 現在の状態が保存済みスナップショットと一致するか
+  const isSaved=savedSnap!==null
+    &&JSON.stringify(savedSnap.ing)===JSON.stringify(ing)
+    &&JSON.stringify(savedSnap.rec)===JSON.stringify(rec)
+    &&savedSnap.name===name;
+  // デッキが編集されているかどうか（1枚以上あり、かつ未保存）
+  const isDirty=(Object.values(ing).some(v=>v>0)||Object.values(rec).some(v=>v>0))&&!isSaved;
 
   const iT=Object.values(ing).reduce((a,b)=>a+b,0);
   const rT=Object.values(rec).reduce((a,b)=>a+b,0);
@@ -2070,6 +2078,7 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
   function save(silent=false){
     const d={name,ingDeck:ing,recDeck:rec,savedAt:new Date().toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};
     onSaveDecks([...savedDecks,d]);
+    setSavedSnap({ing,rec,name});
     if(!silent)alert(`「${name}」を保存しました`);
   }
   function loadD(d){setIng(d.ingDeck);setRec(d.recDeck);setName(d.name);setViewSaved(false);}
@@ -3062,8 +3071,9 @@ function App(){
   const [isAI,setIsAI]=useState(false);
   const [aiPi,setAiPi]=useState(1);
   const [firstPi,setFirstPi]=useState(0);
-  const [myLocalPi,setMyLocalPi]=useState(0); // プレイヤー自身のpi（表示用） // 先攻のpi
+  const [myLocalPi,setMyLocalPi]=useState(0);
   const [playerDeck,setPlayerDeck]=useState(null);
+  const [myDeck,setMyDeck]=useState(null);   // クイックスタートで選んだ自分のデッキ
   const [aiDeck,setAiDeck]=useState(null);
   const [mulPl,setMulPl]=useState(null);
   const [gameG,setGameG]=useState(null);
@@ -3071,24 +3081,19 @@ function App(){
 
   function handleSave(d){setSavedDecks(d);LS.save(d);}
 
-  // ① 先攻後攻決定 → コインフリップ画面へ
   function startCoinFlip(c0,c1,ai){
     const pl=initPlayers(c0,c1);
     const first=Math.random()<0.5?0:1;
-    // プレイヤーは常にpi=0、AIは常にpi=1に固定
-    // firstは先攻のpi（0=プレイヤー先攻、1=AI先攻）
     setMulPl(pl);
     setIsAI(ai);
-    setAiPi(1); // AIは常にpi=1
+    setAiPi(1);
     setFirstPi(first);
-    setMyLocalPi(0); // プレイヤーは常にpi=0
+    setMyLocalPi(0);
     setScreen('coin-flip');
   }
 
-  // ② コインフリップ後 → マリガン画面へ
   function onCoinFlipDone(){setScreen('mulligan');}
 
-  // ③ マリガン確定 → ゲーム画面へ
   function onMulConfirm(sel){
     const pl=doMulligan(mulPl,sel);
     setGameG({players:pl,currentPlayer:firstPi,phase:'place',turn:1,firstTurn:true,winner:null,
@@ -3096,8 +3101,9 @@ function App(){
     setScreen('game');
   }
 
+  // クイックスタート：①自分のデッキ選択 → ②AIのデッキ選択
+  function openMySelect(){setMyDeck(null);setAiDeck(null);setScreen('my-deck-select');}
   function openAiSelect(from){setAiSelectFrom(from);setScreen('ai-deck-select');}
-  // startMulは後方互換のため残す
   function startMul(c0,c1,ai){startCoinFlip(c0,c1,ai);}
 
   // Electronメニューからのタイトル遷移フック
@@ -3107,7 +3113,7 @@ function App(){
     h('div',{className:'logo'},h('h1',null,'調理魔導書'),h('div',{className:'logo-en'},'《 RECIPE GRIMOIRE 》'),h('div',{className:'logo-tagline'},'食材とレシピを集め、先に"満腹"を叩き込め')),
     h('div',{className:'title-menu'},
       h('button',{className:'mbtn primary',onClick:()=>setScreen('deckbuild')},'🃏 デッキを構築して対戦'),
-      h('button',{className:'mbtn',onClick:()=>openAiSelect('title')},'🤖 クイックスタート（VS AI）'),
+      h('button',{className:'mbtn',onClick:()=>openMySelect()},'🤖 クイックスタート（VS AI）'),
       h('button',{className:'mbtn',style:{borderColor:'#4a8a4a',color:'#8ada8a'},onClick:()=>setScreen('online')},'🌐 オンライン対戦')
     ),
     h('div',{className:'title-note'},'食材デッキ30枚 ＋ レシピデッキ15枚　同名カードは最大4枚まで\n相手の満腹度を20にすると勝利！'),
@@ -3115,9 +3121,63 @@ function App(){
   );
 
   // ── AI デッキ選択画面 ──
+  // ── 自分のデッキ選択画面 ──
+  if(screen==='my-deck-select'){
+    function DeckBtn({d,selected,onClick}){
+      return h('button',{
+        className:`mbtn${selected?' primary':''}`,
+        style:{width:'360px',textAlign:'left',padding:'12px 18px'},
+        onClick,
+      },
+        h('span',{style:{marginRight:'10px'}},'🃏'),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:'2px',flex:1}},
+          h('span',{style:{fontWeight:'bold',fontSize:'13px'}},d.name||'デッキ'),
+          h('span',{style:{fontSize:'10px',color:'#c8a878'}},`保存日: ${d.savedAt||''}`)
+        ),
+        selected&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}},'✓ 選択中')
+      );
+    }
+    return h('div',{className:'title-screen'},
+      h('div',{className:'logo',style:{marginBottom:'16px'}},
+        h('h1',null,'🃏 自分のデッキを選択'),
+        h('div',{className:'logo-en'},'YOUR DECK SELECT')
+      ),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:'10px',alignItems:'center',width:'100%',maxWidth:'420px',maxHeight:'55vh',overflowY:'auto',padding:'4px 8px'}},
+        h('button',{
+          className:`mbtn${myDeck===null?' primary':''}`,
+          style:{width:'360px',textAlign:'left',padding:'12px 18px'},
+          onClick:()=>setMyDeck(null)
+        },
+          h('span',{style:{marginRight:'10px'}},'🎲'),
+          h('span',{style:{fontWeight:'bold'}},'ランダムデッキ'),
+          myDeck===null&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}},' ✓ 選択中')
+        ),
+        savedDecks.length===0
+          ? h('div',{style:{fontSize:'12px',color:'#a08868',padding:'12px',textAlign:'center'}},
+              '保存済みデッキがありません\nデッキ構築画面でデッキを保存してください')
+          : savedDecks.map((d,i)=>h('button',{
+              key:i,
+              className:`mbtn${myDeck===d?' primary':''}`,
+              style:{width:'360px',textAlign:'left',padding:'12px 18px'},
+              onClick:()=>setMyDeck(d)
+            },
+              h('span',{style:{marginRight:'10px'}},'🃏'),
+              h('div',{style:{display:'flex',flexDirection:'column',gap:'2px',flex:1}},
+                h('span',{style:{fontWeight:'bold',fontSize:'13px'}},d.name||`デッキ${i+1}`),
+                h('span',{style:{fontSize:'10px',color:'#c8a878'}},`保存日: ${d.savedAt||''}`)
+              ),
+              myDeck===d&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}},'✓ 選択中')
+            ))
+      ),
+      h('div',{className:'title-menu',style:{marginTop:'16px'}},
+        h('button',{className:'mbtn primary',onClick:()=>openAiSelect('title')},'次へ → AIのデッキを選択'),
+        h('button',{className:'mbtn sm',onClick:()=>setScreen('title')},'← 戻る')
+      )
+    );
+  }
+
   if(screen==='ai-deck-select'){
     const backScreen='title';
-    const p0deck=null;
     return h('div',{className:'title-screen'},
       h('div',{className:'logo',style:{marginBottom:'16px'}},
         h('h1',null,'🤖 AIのデッキを選択'),
@@ -3128,7 +3188,6 @@ function App(){
         width:'100%',maxWidth:'420px',maxHeight:'55vh',overflowY:'auto',
         padding:'4px 8px',
       }},
-        // ランダムデッキ（常に先頭）
         h('button',{
           className:`mbtn${aiDeck===null?' primary':''}`,
           style:{width:'360px',textAlign:'left',padding:'12px 18px'},
@@ -3138,7 +3197,6 @@ function App(){
           h('span',{style:{fontWeight:'bold'}},'ランダムデッキ'),
           aiDeck===null&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}}, ' ✓ 選択中')
         ),
-        // 保存済みデッキ一覧
         savedDecks.length===0
           ? h('div',{style:{fontSize:'12px',color:'#a08868',padding:'12px',textAlign:'center'}},
               '保存済みデッキがありません\nデッキ構築画面でデッキを保存してください')
@@ -3157,9 +3215,9 @@ function App(){
             ))
       ),
       h('div',{className:'title-menu',style:{marginTop:'16px'}},
-        h('button',{className:'mbtn primary',onClick:()=>startMul(p0deck,aiDeck,true)},
-          `🤖 このデッキで対戦開始`),
-        h('button',{className:'mbtn sm',onClick:()=>setScreen(backScreen)},'← 戻る')
+        h('button',{className:'mbtn primary',onClick:()=>startMul(myDeck,aiDeck,true)},
+          '🤖 対戦開始！'),
+        h('button',{className:'mbtn sm',onClick:()=>setScreen('my-deck-select')},'← 自分のデッキ選択へ戻る')
       )
     );
   }

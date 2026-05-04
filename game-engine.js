@@ -124,10 +124,27 @@ function ph(p, cards) {
   return { hand: h, trash: t };
 }
 
+const PRESET_DECKS = [
+  {
+    name: 'お米祭り',
+    ingDeck: { rice:4, butter:4, nori:4, chicken:4, egg:4, tofu:2, onion:4, tomato:4 },
+    recDeck: { omuraisu:3, oyakodon:4, tkg:4, onigiri:4 },
+  },
+  {
+    name: 'パスタパラダイス',
+    ingDeck: { flour:4, milk:3, cheese:3, egg:3, beef:2, pork:3, tomato:2, garlic:3, onion:2, carrot:2, chili:2, lettuce:1 },
+    recDeck: { meatPasta:3, peperoncino:4, carbonara:3, caesarSalad:1, pudding:4 },
+  },
+  {
+    name: 'じゃがパーティ',
+    ingDeck: { potato:4, butter:4, pork:4, carrot:4, broccoli:4, onion:4, cabbage:2, tomato:4 },
+    recDeck: { minestrone:3, germanPotato:4, jagaButter:4, warmSalad:4 },
+  },
+];
+
 function buildRandom() {
-  const i = shuffle([...ING_DEFS, ...ING_DEFS, ...ING_DEFS]).slice(0, 30).map(d => mkI(d));
-  const r = shuffle([...REC_DEFS, ...REC_DEFS]).slice(0, 15).map(d => mkR(d));
-  return { i, r };
+  const preset = PRESET_DECKS[Math.floor(Math.random() * PRESET_DECKS.length)];
+  return buildFromConfig(preset.ingDeck, preset.recDeck);
 }
 
 function buildFromConfig(ic, rc) {

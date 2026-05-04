@@ -598,8 +598,8 @@ const REC_DEFS=[
   {id:'tkgr',name:'卵かけご飯',sat:3,req:['rice','egg'],eff:'レシピ山札から2枚引く。',icon:'🍳'},
   {id:'pudding',name:'プリン',sat:3,req:['milk','egg'],eff:'相手の食材ゾーンのカードを1枚選ぶ。その後、それと同じカードを自分は食材山札から1枚手札に加える。',icon:'🍮'},
   {id:'sushiSalmon',name:'サーモン寿司',sat:4,req:['rice','salmon'],eff:'手札を1枚ごみ箱に送ってもよい。そうしたなら、食材山札から1枚引く。',icon:'🍣'},
-  {id:'jagabata',name:'じゃがバター',sat:4,req:['potato','butter'],eff:null,icon:'🥔'},
   {id:'teriyakiBuri',name:'ぶりの照り焼き',sat:4,req:['yellowtail','flour'],eff:'自分と相手は食材山札からカードを1枚引く。',icon:'🐟'},
+  {id:'jagabata',name:'じゃがバター',sat:4,req:['potato','butter'],eff:null,icon:'🥔'},
   {id:'yakitori',name:'焼き鳥',sat:4,req:['chicken','negi'],eff:null,icon:'🍢'},
   {id:'steak',name:'ステーキ',sat:5,req:['beef','butter'],eff:'次の自分のターン中、料理を提供できない。',icon:'🥩'},
   {id:'sabaMiso',name:'さばの味噌煮',sat:3,req:['saba','miso','ginger'],eff:'相手の食材ゾーンのカードを1枚選び、ごみ箱に送る。',icon:'🐟'},
@@ -676,10 +676,28 @@ function buildDeckFromCfg(ic,rc){
   const r=[];Object.entries(rc).forEach(([id,n])=>{const d=REC_MAP[id];if(d)for(let k=0;k<n;k++)r.push(mkR(d));});
   return{i:shuffle(i),r:shuffle(r)};
 }
+// ── プリセットデッキ定義 ──
+const PRESET_DECKS=[
+  {
+    name:'お米祭り',
+    ingDeck:{rice:4,butter:4,nori:4,chicken:4,egg:4,tofu:2,onion:4,tomato:4},
+    recDeck:{omuraisu:3,oyakodon:4,tkg:4,onigiri:4},
+  },
+  {
+    name:'パスタパラダイス',
+    ingDeck:{flour:4,milk:3,cheese:3,egg:3,beef:2,pork:3,tomato:2,garlic:3,onion:2,carrot:2,chili:2,lettuce:1},
+    recDeck:{meatPasta:3,peperoncino:4,carbonara:3,caesarSalad:1,pudding:4},
+  },
+  {
+    name:'じゃがパーティ',
+    ingDeck:{potato:4,butter:4,pork:4,carrot:4,broccoli:4,onion:4,cabbage:2,tomato:4},
+    recDeck:{minestrone:3,germanPotato:4,jagaButter:4,warmSalad:4},
+  },
+];
+
 function buildRandom(){
-  const i=shuffle([...ING_DEFS,...ING_DEFS,...ING_DEFS]).slice(0,30).map(d=>mkI(d));
-  const r=shuffle([...REC_DEFS,...REC_DEFS]).slice(0,15).map(d=>mkR(d));
-  return{i,r};
+  const preset=PRESET_DECKS[Math.floor(Math.random()*PRESET_DECKS.length)];
+  return buildDeckFromCfg(preset.ingDeck,preset.recDeck);
 }
 function initPlayers(c0,c1){
   function mp(cfg){
@@ -1981,14 +1999,18 @@ function CardDetailPanel({hovered,ingZone}){
 // ============================================================
 // DECK BUILDER
 // ============================================================
-function DeckBuilder({onBack,onPlay,savedDecks,onSaveDecks}){
+function DeckBuilder({onBack,savedDecks,onSaveDecks}){
   const [tab,setTab]=useState('ing');
   const [filter,setFilter]=useState('all');
   const [search,setSearch]=useState('');
+  const [recSort,setRecSort]=useState('default'); // 'default'|'sat'|'kana'
   const [ing,setIng]=useState({});
   const [rec,setRec]=useState({});
   const [name,setName]=useState('マイデッキ');
   const [viewSaved,setViewSaved]=useState(false);
+  const [showBackConfirm,setShowBackConfirm]=useState(false);
+  // デッキが編集されているかどうか（食材or食材の枚数がある場合）
+  const isDirty=(Object.values(ing).some(v=>v>0)||Object.values(rec).some(v=>v>0));
 
   const iT=Object.values(ing).reduce((a,b)=>a+b,0);
   const rT=Object.values(rec).reduce((a,b)=>a+b,0);
@@ -1996,7 +2018,44 @@ function DeckBuilder({onBack,onPlay,savedDecks,onSaveDecks}){
   const isOk=!errs.length;
 
   const iShow=useMemo(()=>ING_DEFS.filter(d=>(filter==='all'||d.cat===filter)&&(!search||d.name.includes(search)||(d.eff||'').includes(search))),[filter,search]);
-  const rShow=useMemo(()=>REC_DEFS.filter(d=>!search||d.name.includes(search)||(d.eff||'').includes(search)),[search]);
+  const rShow=useMemo(()=>{
+    const filtered=REC_DEFS.filter(d=>{
+      if(!search)return true;
+      if(d.name.includes(search)||(d.eff||'').includes(search))return true;
+      const matchIngId=ING_DEFS.find(i=>i.name.includes(search))?.id;
+      if(matchIngId&&d.req&&d.req.includes(matchIngId))return true;
+      return false;
+    });
+    // 五十音ソート用の読みマップ（漢字カード）
+    const YOMI={
+      '卵かけご飯':'たまごかけごはん',
+      '焼き鳥':'やきとり',
+      'ステーキ':'すてーき',
+      'さばの味噌煮':'さばのみそに',
+      'ぶり大根':'ぶりだいこん',
+      '温野菜サラダ':'おんやさいさらだ',
+      '冷やっこ':'ひやっこ',
+      'ほうれん草のソテー':'ほうれんそうのそてー',
+      '野菜のナムル':'やさいのなむる',
+      '揚げ出し豆腐':'あげだしどうふ',
+      '牛丼':'ぎゅうどん',
+      '豚の生姜焼き':'ぶたのしょうがやき',
+      '味噌汁':'みそしる',
+      '焼きそば':'やきそば',
+      '親子丼':'おやこどん',
+      '鮭のムニエル':'さけのむにえる',
+      '麻婆豆腐':'まーぼーどうふ',
+      '野菜炒め':'やさいいため',
+      '豚汁':'とんじる',
+      '肉じゃが':'にくじゃが',
+      'お好み焼き':'おこのみやき',
+      'お子様ランチ':'おこさまらんち',
+    };
+    function yomi(name){return YOMI[name]||name;}
+    if(recSort==='sat')return [...filtered].sort((a,b)=>a.sat-b.sat);
+    if(recSort==='kana')return [...filtered].sort((a,b)=>yomi(a.name).localeCompare(yomi(b.name),'ja'));
+    return filtered;
+  },[search,recSort]);
 
   function add(id,isR){const dk=isR?rec:ing;const set=isR?setRec:setIng;const cur=dk[id]||0;if(cur>=4)return;const tot=Object.values(dk).reduce((a,b)=>a+b,0);if(tot>=(isR?15:30))return;set({...dk,[id]:cur+1});}
   function rm(id,isR){const dk=isR?rec:ing;const set=isR?setRec:setIng;const cur=dk[id]||0;if(!cur)return;const n={...dk};if(cur===1)delete n[id];else n[id]=cur-1;set(n);}
@@ -2008,8 +2067,17 @@ function DeckBuilder({onBack,onPlay,savedDecks,onSaveDecks}){
     a=0;while(rN<15&&a<600){a++;const id=rP[0|Math.random()*rP.length];if((nr[id]||0)<4){nr[id]=(nr[id]||0)+1;rN++;}}
     setIng(ni);setRec(nr);
   }
-  function save(){const d={name,ingDeck:ing,recDeck:rec,savedAt:new Date().toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};onSaveDecks([...savedDecks,d]);alert(`「${name}」を保存しました`);}
+  function save(silent=false){
+    const d={name,ingDeck:ing,recDeck:rec,savedAt:new Date().toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};
+    onSaveDecks([...savedDecks,d]);
+    if(!silent)alert(`「${name}」を保存しました`);
+  }
   function loadD(d){setIng(d.ingDeck);setRec(d.recDeck);setName(d.name);setViewSaved(false);}
+  // タイトルへ戻るボタン処理
+  function handleBack(){
+    if(isDirty){setShowBackConfirm(true);}
+    else{onBack();}
+  }
   function delD(i){onSaveDecks(savedDecks.filter((_,j)=>j!==i));}
 
   const iEnt=Object.entries(ing).sort(([a],[b])=>(ING_MAP[a]?.cat||'').localeCompare(ING_MAP[b]?.cat||''));
@@ -2057,7 +2125,15 @@ function DeckBuilder({onBack,onPlay,savedDecks,onSaveDecks}){
             h('button',{key:f,className:`filter-btn f-${f}${filter===f?' active':''}`,onClick:()=>setFilter(f)},
               f==='all'?'すべて':CAT_LABELS[f]||f)
           ),
-          tab==='rec'&&h('span',{style:{fontSize:'10px',color:'#c8a878'}},`全${REC_DEFS.length}種`),
+          tab==='rec'&&[
+            h('span',{key:'cnt',style:{fontSize:'10px',color:'#c8a878',marginRight:'4px'}},`全${REC_DEFS.length}種`),
+            h('span',{key:'lbl',style:{fontSize:'10px',color:'#c8a878'}},'ソート:'),
+            ...[['default','デフォルト'],['sat','満腹度'],['kana','五十音']].map(([v,label])=>
+              h('button',{key:v,className:`filter-btn${recSort===v?' active':''}`,
+                style:recSort===v?{background:'#7a5020',borderColor:'transparent',color:'#fff'}:{},
+                onClick:()=>setRecSort(v)},label)
+            ),
+          ],
           h('input',{className:'search-input',value:search,onChange:e=>setSearch(e.target.value),placeholder:'カード検索...'})
         ),
         h('div',{className:'card-grid'},
@@ -2128,15 +2204,35 @@ function DeckBuilder({onBack,onPlay,savedDecks,onSaveDecks}){
       )
     ),
     h('div',{className:'db-footer'},
-      h('button',{className:'btn sm',onClick:onBack},'← タイトル'),
+      h('button',{className:'btn sm',onClick:handleBack},'← タイトル'),
       h('button',{className:'btn sm',onClick:()=>setViewSaved(true)},`保存済み(${savedDecks.length})`),
       h('button',{className:'btn sm',onClick:auto},'オートフィル'),
       h('button',{className:'btn sm danger',onClick:()=>{setIng({});setRec({});}},'クリア'),
       h('div',{className:'sp'}),
       !isOk&&h('span',{className:'validation-msg'},errs[0]),
       isOk&&h('span',{className:'validation-ok'},'✓ デッキ完成'),
-      h('button',{className:'btn sm',onClick:save,disabled:!isOk},'保存'),
-      h('button',{className:'btn primary',onClick:()=>isOk&&onPlay({ingDeck:ing,recDeck:rec}),disabled:!isOk},'このデッキで対戦 →')
+      h('button',{className:'btn sm',onClick:()=>save(false),disabled:!isOk},'保存')
+    ),
+
+    // 未保存確認ダイアログ
+    showBackConfirm&&h('div',{className:'trash-modal-overlay',onClick:()=>setShowBackConfirm(false)},
+      h('div',{className:'trash-modal',style:{maxWidth:'360px'},onClick:e=>e.stopPropagation()},
+        h('div',{className:'trash-modal-header'},
+          h('h3',null,'⚠️ デッキが保存されていません'),
+          h('button',{className:'trash-modal-close',onClick:()=>setShowBackConfirm(false)},'✕')
+        ),
+        h('div',{style:{padding:'16px',fontSize:'13px',color:'var(--text)',lineHeight:1.7}},
+          'デッキが保存されていません。保存しますか？'
+        ),
+        h('div',{style:{display:'flex',gap:'10px',padding:'0 16px 16px',justifyContent:'flex-end'}},
+          h('button',{className:'btn sm',onClick:()=>{setShowBackConfirm(false);onBack();}},'保存しない'),
+          h('button',{className:'btn sm primary',disabled:!isOk,onClick:()=>{
+            if(isOk){save(true);}
+            setShowBackConfirm(false);
+            onBack();
+          }},isOk?'保存する':'保存する（デッキ未完成）')
+        )
+      )
     )
   );
 }
@@ -2882,7 +2978,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function doReady(){emit('ready',{deck:playerDeck});}
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
 
-  if(deckScreen)return h(DeckBuilder,{onBack:()=>setDeckScreen(false),onPlay:(d)=>{setPlayerDeck(d);setDeckScreen(false);},savedDecks,onSaveDecks});
+  if(deckScreen)return h(DeckBuilder,{onBack:()=>setDeckScreen(false),savedDecks,onSaveDecks});
   if(mode==='game'&&onlineG)return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction});
   if(mode==='coin-flip')return h(CoinFlipScreen,{first:coinFirst,myPi:onlineMyPi,onDone:()=>{}});
   if(mode==='mulligan')return h(OnlineMulliganScreen,{hand:mulHand,sel:mulSel,setSel:setMulSel,onConfirm:doMulConfirm,myPi:onlineMyPi});
@@ -3020,8 +3116,8 @@ function App(){
 
   // ── AI デッキ選択画面 ──
   if(screen==='ai-deck-select'){
-    const backScreen=aiSelectFrom==='deckbuild-mode'?'deckbuild-mode':'title';
-    const p0deck=aiSelectFrom==='deckbuild-mode'?playerDeck:null;
+    const backScreen='title';
+    const p0deck=null;
     return h('div',{className:'title-screen'},
       h('div',{className:'logo',style:{marginBottom:'16px'}},
         h('h1',null,'🤖 AIのデッキを選択'),
@@ -3068,14 +3164,7 @@ function App(){
     );
   }
 
-  if(screen==='deckbuild')return h(DeckBuilder,{onBack:()=>setScreen('title'),onPlay:(deck)=>{setPlayerDeck(deck);setScreen('deckbuild-mode');},savedDecks,onSaveDecks:handleSave});
-  if(screen==='deckbuild-mode')return h('div',{className:'mode-select-screen'},
-    h('div',{className:'logo',style:{marginBottom:'20px'}},h('h1',null,'対戦モード選択')),
-    h('div',{className:'title-menu'},
-      h('button',{className:'mbtn primary',onClick:()=>openAiSelect('deckbuild-mode')},'🤖 VS AI で対戦'),
-      h('button',{className:'mbtn sm',onClick:()=>setScreen('deckbuild')},'← デッキ編集に戻る')
-    )
-  );
+  if(screen==='deckbuild')return h(DeckBuilder,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave});
   // コインフリップ画面：自分のpiは ローカル=1-aiPi、オンラインはonlineMyPi
   if(screen==='coin-flip')return h(CoinFlipScreen,{first:firstPi,myPi:myLocalPi,onDone:onCoinFlipDone});
   if(screen==='mulligan')return h(MulliganScreen,{players:mulPl,onConfirm:onMulConfirm,isAI,aiPi});

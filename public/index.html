@@ -187,10 +187,42 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#f0e6d
 .sat-fill.p1{background:linear-gradient(90deg,#b84018,#e06030)}
 .sat-num{font-size:11px;font-weight:bold;width:34px;text-align:right}
 
+.game-screen{
+  display:grid;
+  grid-template-rows:40px 1fr 50px;
+  grid-template-columns:1fr 220px 1fr;
+  gap:3px;
+  padding:3px;
+  height:100vh;
+  overflow:hidden;
+}
+/* 黄: 全幅ヘッダー */
+.g-header{
+  grid-column:1/4;grid-row:1/2;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  padding:3px 12px;gap:8px;
+  background:var(--bg2);border-radius:5px;border:1px solid var(--borderG);
+}
+.g-header-center{display:flex;flex-direction:column;align-items:center;gap:2px}
+.g-title{font-size:12px;color:var(--goldL);font-weight:bold;letter-spacing:2px;white-space:nowrap}
+.phase-badge{font-size:10px;padding:2px 10px;border-radius:10px;border:1px solid var(--goldD);color:var(--gold);background:rgba(90,56,0,.45);white-space:nowrap}
+.turn-info{font-size:10px;color:var(--muted);white-space:nowrap}
+/* 満腹度バー：左右対称配置 */
+.sat-bar-left{display:flex;align-items:center;gap:5px;padding:2px 6px;background:rgba(0,0,0,.25);border-radius:4px;border:1px solid var(--border);justify-content:flex-start}
+.sat-bar-right{display:flex;align-items:center;gap:5px;padding:2px 6px;background:rgba(0,0,0,.25);border-radius:4px;border:1px solid var(--border);justify-content:flex-end}
+.sat-label{font-size:9px;color:var(--muted);width:auto;flex-shrink:0}
+.sat-track{flex:1;height:8px;background:rgba(0,0,0,.5);border-radius:4px;overflow:hidden;min-width:60px}
+.sat-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.sat-fill.p0{background:linear-gradient(90deg,#208850,#40b870)}
+.sat-fill.p1{background:linear-gradient(90deg,#b84018,#e06030)}
+.sat-num{font-size:11px;font-weight:bold;width:34px;text-align:right;flex-shrink:0}
+
 /* 赤: 自分フィールド（col1 / row2） */
 /* 青: 相手フィールド（col3 / row2） */
-.fields-area-self{grid-column:1/2;grid-row:2/3;overflow:hidden;display:flex;flex-direction:column;gap:0}
-.fields-area-opp{grid-column:3/4;grid-row:2/3;overflow:hidden;display:flex;flex-direction:column;gap:0}
+.fields-area-self{grid-column:1/2;grid-row:2/3;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
+.fields-area-opp{grid-column:3/4;grid-row:2/3;overflow:hidden;display:flex;flex-direction:column;gap:0;min-height:0}
 /* pfield は各エリアの全体を使う */
 .pfield{display:flex;flex-direction:column;gap:2px;background:var(--bg2);border-radius:5px;padding:5px;border:1px solid var(--border);overflow:hidden;min-height:0;height:100%}
 .pfield.active{border-color:var(--goldD);background:rgba(40,24,8,.95)}
@@ -198,11 +230,42 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#f0e6d
 .plabel{font-size:10px;color:var(--muted);text-align:center;padding:1px 0;letter-spacing:1px;font-weight:bold;flex-shrink:0}
 .zlabel{font-size:8px;color:var(--dim);margin-bottom:1px;padding-left:2px;letter-spacing:.5px;flex-shrink:0}
 
-/* ingredient zone */
-.ing-zone{background:rgba(0,0,0,.25);border-radius:4px;padding:4px;border:1px solid var(--border);flex:2;min-height:0;overflow:hidden}
+/* 食材ゾーン：スロット枠 */
+.ing-zone{background:rgba(0,0,0,.25);border-radius:4px;padding:4px;border:1px solid var(--border);flex:2;min-height:0;overflow-y:auto}
+.ing-slots{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;justify-content:center}
+.ing-slot-empty{
+  width:72px;height:88px;border-radius:5px;
+  border:1px dashed rgba(100,72,34,.6);
+  background:rgba(0,0,0,.1);flex-shrink:0;
+}
 .card-row{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;justify-content:center}
-.hand-area .card-row{display:grid;grid-template-columns:repeat(5,102px);grid-template-rows:repeat(2,123px);gap:4px;justify-content:center;align-content:start;overflow:hidden}
+/* 手札グリッド：固定ではなくauto-fillで画面幅に応じて調整 */
+.hand-area .card-row{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-start;align-content:flex-start;overflow-y:auto}
 .empty-hint{font-size:9px;color:var(--faint);padding:6px}
+
+/* 手札スロット枠 */
+.hand-slots{display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start}
+.hand-slot-empty{
+  width:102px;height:123px;border-radius:6px;
+  border:1px dashed rgba(74,142,216,.35);
+  background:rgba(0,0,0,.08);flex-shrink:0;
+}
+
+/* 中央パネル：上段=カードプレビュー、下段=ボタン */
+.center-panel{grid-column:2/3;grid-row:2/3;display:flex;flex-direction:column;gap:3px;min-height:0;overflow:hidden}
+.center-btns{background:var(--bg2);border-radius:6px;border:1px solid var(--border);padding:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.center-btn{font-size:15px;padding:10px 12px;border-radius:6px;border:1px solid var(--borderG);background:rgba(60,36,10,.7);color:var(--goldL);cursor:pointer;font-family:inherit;font-weight:bold;transition:all .15s;width:100%;text-align:center}
+.center-btn:hover{background:rgba(90,56,16,.9);border-color:var(--gold)}
+.center-btn.primary{background:rgba(120,72,0,.85);border-color:var(--goldL);color:#fff8e8}
+.center-btn.primary:hover{background:rgba(160,100,10,.95)}
+.center-btn:disabled{opacity:.4;cursor:not-allowed}
+.center-hint{font-size:11px;color:var(--muted);text-align:center;padding:2px 4px;line-height:1.5}
+.center-missing{font-size:11px;color:#f84;text-align:center;padding:2px 4px}
+
+/* 相手山札・ごみ箱ミニ表示（相手フィールド上部） */
+.opp-deck-row{display:flex;gap:4px;justify-content:center;margin-bottom:3px;flex-shrink:0}
+.opp-deck-chip{font-size:9px;color:var(--muted);background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;cursor:pointer;transition:background .1s}
+.opp-deck-chip:hover{background:rgba(255,255,255,.06);color:var(--text)}
 
 /* ingredient card in zone */
 .ing-card{
@@ -231,7 +294,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#f0e6d
 .ing-card.mineral{border-top:3px solid var(--mineral)}
 
 /* recipe zone */
-.recipe-zone{background:rgba(0,0,0,.18);border-radius:4px;padding:4px;border:1px solid var(--border);flex:2;min-height:0;overflow:hidden}
+.recipe-zone{background:rgba(0,0,0,.18);border-radius:4px;padding:4px;border:1px solid var(--border);flex:1;min-height:0;overflow-y:auto}
 .rcard-done{
   width:72px;height:58px;
   background:rgba(80,46,6,.55);border:1px solid var(--goldD);border-radius:5px;
@@ -244,7 +307,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#f0e6d
 
 /* hand */
 .hand-row-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;flex-shrink:0}
-.hand-area{background:rgba(0,0,0,.18);border-radius:4px;padding:10px 6px;border:1px solid var(--border);flex:6;min-height:0;overflow:hidden}
+.hand-area{background:rgba(0,0,0,.18);border-radius:4px;padding:6px;border:1px solid var(--border);flex:4;min-height:0;overflow-y:auto}
 .hcard{
   width:102px;height:123px;
   border-radius:6px;border:1px solid var(--borderG);background:var(--bg3);
@@ -414,12 +477,11 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#f0e6d
 .log-line.ai-log{color:#b090e0}
 .msg-toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(140,50,0,.85);border:1px solid #e84;border-radius:6px;padding:5px 16px;font-size:11px;color:#fca;z-index:300;pointer-events:none}
 
-/* ── CARD DETAIL PANEL (right side, always visible) ── */
+/* ── CARD DETAIL PANEL ── */
 .detail-panel{
-  grid-column:2/3;grid-row:2/3;
   display:flex;flex-direction:column;gap:0;
   background:var(--bg2);border-radius:6px;border:1px solid var(--border);
-  padding:0;overflow:hidden;
+  padding:0;overflow:hidden;flex:1;min-height:0;
 }
 .dp-empty{display:flex;align-items:center;justify-content:center;flex:1;flex-direction:column;gap:6px}
 .dp-empty-icon{font-size:32px;opacity:.25}
@@ -966,11 +1028,13 @@ function execBlock(G,pi,blk,cardId){
     }
     case 'searchIngDeck':{
       const filter2=blk.filter||(()=>true);
-      const cands2=p.ingDeck.filter(filter2);
+      const ingArr=Array.isArray(p.ingDeck)?p.ingDeck:[];
+      const cands2=ingArr.filter(filter2);
       if(!cands2.length)return addLog(G,`P${pi+1}: 食材山札に対象なし`);
       return mkPending(G,{type:'searchIngDeck',pi,
         title:blk.title||'食材山札からカードを選ぶ',
         desc:'手札に加えるカードを選んでください',
+        candidates:cands2,
         filter:filter2,source:'ingDeck'});
     }
     case 'addSelfSat':{
@@ -1863,7 +1927,10 @@ function SelectionModal({G,onResolve,canOperate}){
   const opp=G.players[1-pi];
   // _hiddenカード（相手の隠し手札）は候補から除外
   const visibleHand=p.hand.filter(c=>!c._hidden);
-  if(resolvedSource==='hand')candidates=visibleHand.filter(resolveFilter);
+  // pd.candidatesが直接渡されている場合はそれを優先（ingDeck/recDeckがオンライン時に数値になる問題対策）
+  if(pd.candidates&&pd.candidates.length){
+    candidates=pd.candidates;
+  } else if(resolvedSource==='hand')candidates=visibleHand.filter(resolveFilter);
   else if(resolvedSource==='ingZone')candidates=p.ingZone.filter(resolveFilter);
   else if(resolvedSource==='trash')candidates=p.trash.filter(resolveFilter);
   else if(resolvedSource==='oppIngZone')candidates=opp.ingZone.filter(resolveFilter);
@@ -2081,7 +2148,7 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
     setIng(ni);setRec(nr);
   }
   function save(silent=false){
-    const d={name,ingDeck:ing,recDeck:rec,savedAt:new Date().toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};
+    const d={name,ingDeck:ing,recDeck:rec,savedAt:new Date().toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};
     onSaveDecks([...savedDecks,d]);
     setSavedSnap({ing,rec,name});
     if(!silent)alert(`「${name}」を保存しました`);
@@ -2336,7 +2403,7 @@ function MulliganScreen({players,onConfirm,isAI,aiPi=1}){
 // ============================================================
 const PHASE_LABELS={draw:'ドロー',place:'食材配置',activate:'起動',serve:'料理提供',discard:'廃棄'};
 
-function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=null}){
+function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=null,myName='あなた',oppName=null}){
   const [G,setG]=useState(initG);
   const [selH,setSelH]=useState(null);
   const [selZ,setSelZ]=useState([]);
@@ -2603,13 +2670,17 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     const isAct=isOnline?(fpi===myOnlinePi&&G.currentPlayer===myOnlinePi):(fpi===pid);
     const isMine=fpi===myPiLocal;
     const isAIp=isAI&&fpi===aiPi;
-    const fieldLabel=isAIp?'🤖 AI':isMine?'👤 あなた':`👤 P${fpi+1}`;
+    // 表示名：自分=myName、相手=oppName or AI
+    const fieldLabel=isAIp?'🤖 AI':isMine?`👤 ${myName}`:(oppName?`👤 ${oppName}`:`👤 相手`);
+    // 空き食材スロット数
+    const ingSlotEmpty=Math.max(0,7-fp.ingZone.length);
+    // 空き手札スロット数
+    const handSlotEmpty=Math.max(0,10-fp.hand.length);
     return h('div',{key:fpi,className:`pfield${isAct?' active':''}${isAIp?' ai-field':''}`},
       h('div',{className:'plabel'},`${isAct?'▶ ':''}${fieldLabel} ${isAct?'['+PHASE_LABELS[G.phase]+']':''} ${fp.debuffs.noServe?'⚠料理不可':''}`),
       h('div',{className:'zlabel'},`食材ゾーン (${fp.ingZone.length}/7)`),
       h('div',{className:'ing-zone'},
-        h('div',{className:'card-row'},
-          !fp.ingZone.length&&h('div',{className:'empty-hint'},'食材なし'),
+        h('div',{className:'ing-slots'},
           fp.ingZone.map(c=>{
             const isSel=selZ.includes(c._uid);
             const isHi=isAct&&G.phase==='serve'&&selH&&needed.includes(c.id)&&!sZids.includes(c.id);
@@ -2625,7 +2696,9 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
               c._used&&h('div',{className:'ic-act'},'使用済'),
               c._satBuff>0&&h('div',{className:'ic-satbuff'},`★+${c._satBuff}`)
             );
-          })
+          }),
+          // 空きスロット枠（最大7枚）
+          Array.from({length:ingSlotEmpty},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
         )
       ),
       h('div',{className:'zlabel'},'完成料理'),
@@ -2641,7 +2714,8 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       h('div',{className:'hand-row-hdr'},
         h('div',{className:'zlabel'},`手札 ${fp.hand.length}/10`)
       ),
-      h('div',{className:'hand-area',style:{display:'flex',gap:'8px',alignItems:'flex-start'}},
+      h('div',{className:'hand-area',style:{display:'flex',gap:'6px',alignItems:'flex-start',flexWrap:'wrap'}},
+        // 自分：クリック可能な山札・ごみ箱
         isMine&&h('div',{className:'hand-decks'},
           h('div',{
             className:`deck-mini ing-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&ingDeckLen?' clickable':' disabled-deck'}`,
@@ -2649,7 +2723,7 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
           },
             h('div',{className:'dm-icon'},'🥕'),
             h('div',{className:'dm-count'},ingDeckLen),
-            h('div',{className:'dm-label'},'食材山')
+            h('div',{className:'dm-label'},'食材山札')
           ),
           h('div',{
             className:`deck-mini rec-deck${isMine&&G.phase==='draw'&&(!isOnline||isMyTurn)&&recDeckLen?' clickable':' disabled-deck'}`,
@@ -2657,12 +2731,30 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
           },
             h('div',{className:'dm-icon'},'📖'),
             h('div',{className:'dm-count'},recDeckLen),
-            h('div',{className:'dm-label'},'レシピ山')
+            h('div',{className:'dm-label'},'レシピ山札')
           ),
           h('div',{
             className:'deck-mini trash-pile clickable',
             onClick:()=>setShowTrash({pi:fpi}),
           },
+            h('div',{className:'dm-icon'},'🗑'),
+            h('div',{className:'dm-count'},fp.trash.length),
+            h('div',{className:'dm-label'},'ごみ箱')
+          )
+        ),
+        // 相手：表示のみ（操作不可）の山札・ごみ箱
+        !isMine&&h('div',{className:'hand-decks'},
+          h('div',{className:'deck-mini ing-deck disabled-deck'},
+            h('div',{className:'dm-icon'},'🥕'),
+            h('div',{className:'dm-count'},ingDeckLen),
+            h('div',{className:'dm-label'},'食材山札')
+          ),
+          h('div',{className:'deck-mini rec-deck disabled-deck'},
+            h('div',{className:'dm-icon'},'📖'),
+            h('div',{className:'dm-count'},recDeckLen),
+            h('div',{className:'dm-label'},'レシピ山札')
+          ),
+          h('div',{className:'deck-mini trash-pile clickable',onClick:()=>setShowTrash({pi:fpi})},
             h('div',{className:'dm-icon'},'🗑'),
             h('div',{className:'dm-count'},fp.trash.length),
             h('div',{className:'dm-label'},'ごみ箱')
@@ -2683,7 +2775,9 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
                 c._isRec&&h('div',{key:'s',className:'hc-sat'},`+${c.sat}`)
               ]
             );
-          })
+          }),
+          // 空き手札スロット枠（最大10枚）
+          isMine&&Array.from({length:handSlotEmpty},(_,i)=>h('div',{key:'hs'+i,className:'hand-slot-empty'}))
         )
       )
     );
@@ -2715,62 +2809,64 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
   return h('div',{className:'game-screen',style:{position:'relative'}},
     aiThink&&h('div',{className:'ai-thinking-overlay'},h('p',null,'🤖 AIが思考中...'),h('div',null,h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}))),
 
-    // 黄: ヘッダー全幅（タイトル・フェーズ・満腹度）
+    // 黄: ヘッダー全幅（タイトル・満腹度）
     h('div',{className:'g-header'},
-      h('div',{className:'g-title'},'調理魔導書《レシピグリモワール》'),
-      h('div',{className:'phase-badge'},PHASE_LABELS[G.phase]+'フェイズ'),
-      h('div',{className:'turn-info',style:{marginLeft:'8px'}},`Turn ${G.turn} | ${
-        isAI&&G.currentPlayer===aiPi?'AIのターン':
-        G.currentPlayer===myPiLocal?'あなたのターン':'相手のターン'
-      }`),
-      h('div',{className:'sp'}),
-      h('div',{className:'sat-bars'},
-        // 自分を左、相手を右に固定表示
-        [myPiLocal, 1-myPiLocal].map(pi=>h('div',{key:pi,className:'sat-bar'},
-          h('div',{className:'sat-label'},
-            pi===myPiLocal
-              ? '👤 あなた 満腹度'
-              : (isAI?'🤖 AI 満腹度':'👤 相手 満腹度')
-          ),
-          h('div',{className:'sat-track'},h('div',{className:`sat-fill p${pi}`,style:{width:Math.min(100,G.players[pi].satiety/20*100)+'%'}})),
-          h('div',{className:'sat-num',style:{color:G.players[pi].satiety>=16?'#f44':G.players[pi].satiety>=10?'#f84':'var(--gold)'}},`${G.players[pi].satiety}/20`)
-        ))
+      // 左：自分の満腹度
+      h('div',{className:'sat-bar-left'},
+        h('div',{className:'sat-label'},`👤 ${myName} 満腹度`),
+        h('div',{className:'sat-track'},h('div',{className:`sat-fill p${myPiLocal}`,style:{width:Math.min(100,G.players[myPiLocal].satiety/20*100)+'%'}})),
+        h('div',{className:'sat-num',style:{color:G.players[myPiLocal].satiety>=16?'#f44':G.players[myPiLocal].satiety>=10?'#f84':'var(--gold)'}},`${G.players[myPiLocal].satiety}/20`)
+      ),
+      // 中央：タイトルのみ
+      h('div',{className:'g-header-center'},
+        h('div',{className:'g-title'},'調理魔導書《レシピグリモワール》')
+      ),
+      // 右：相手の満腹度
+      h('div',{className:'sat-bar-right'},
+        h('div',{className:'sat-num',style:{color:G.players[1-myPiLocal].satiety>=16?'#f44':G.players[1-myPiLocal].satiety>=10?'#f84':'var(--gold)'}},`${G.players[1-myPiLocal].satiety}/20`),
+        h('div',{className:'sat-track'},h('div',{className:`sat-fill p${1-myPiLocal}`,style:{width:Math.min(100,G.players[1-myPiLocal].satiety/20*100)+'%'}})),
+        h('div',{className:'sat-label',style:{textAlign:'right'}},`${isAI?'🤖 AI':oppName?`👤 ${oppName}`:'👤 相手'} 満腹度`)
       )
     ),
 
     // 赤: 自分フィールド (col1 / row2) — 常に左側
     h('div',{className:'fields-area-self'},renderField(myPiLocal)),
 
-    // オレンジ: カードプレビュー (col2 / row2)
-    h(CardDetailPanel,{hovered,ingZone:p.ingZone}),
+    // 中央パネル：フェーズ情報＋カードプレビュー＋ボタン
+    h('div',{className:'center-panel'},
+      h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'3px',padding:'4px 0',flexShrink:0}},
+        h('div',{className:'phase-badge'},PHASE_LABELS[G.phase]+'フェイズ'),
+        h('div',{className:'turn-info'},`Turn ${G.turn} | ${
+          isAI&&G.currentPlayer===aiPi?'AIのターン':
+          G.currentPlayer===myPiLocal?'あなたのターン':'相手のターン'
+        }`)
+      ),
+      h(CardDetailPanel,{hovered,ingZone:p.ingZone}),
+      h('div',{className:'center-btns'},
+        !isAiTurn&&G.phase==='place'&&
+          h('button',{className:'center-btn',onClick:nextPhase},'配置完了 →'),
+        !isAiTurn&&G.phase==='activate'&&
+          h('button',{className:'center-btn',onClick:nextPhase},'起動完了 →'),
+        !isAiTurn&&G.phase==='serve'&&[
+          selH&&canServe&&h('button',{key:'s',className:'center-btn primary',onClick:serve},'🍽 料理を提供！'),
+          h('button',{key:'n',className:'center-btn',onClick:nextPhase},'提供終了 →'),
+          selH&&!canServe&&h('div',{key:'m',className:'center-missing'},`不足: ${needed.filter(r=>!sZids.includes(r)).map(r=>ING_NAME[r]||r).join('・')}`),
+          !selH&&h('div',{key:'h',className:'center-hint'},'レシピカードを選択'),
+        ],
+        !isAiTurn&&G.phase==='discard'&&[
+          h('button',{key:'e',className:'center-btn primary',onClick:nextPhase},'ターン終了'),
+          h('div',{key:'h',className:'center-hint'},'手札か食材ゾーンから1枚廃棄できます'),
+        ],
+        !isAiTurn&&G.phase==='draw'&&h('div',{className:'center-hint'},'山札をクリックしてドロー'),
+        isAiTurn&&h('div',{className:'center-hint'},'🤖 AIのターン...')
+      )
+    ),
 
     // 青: 相手フィールド (col3 / row2) — 常に右側
     h('div',{className:'fields-area-opp'},renderField(1-myPiLocal)),
 
-    // ピンク: コントロール＋ログ (全幅 / row3)
+    // ログ (全幅 / row3)
     h('div',{className:'g-bottom'},
-      h('div',{className:'g-controls'},
-        !isAiTurn&&G.phase==='place'&&[
-          h('button',{key:'b',className:'btn',onClick:nextPhase},'配置完了 → 起動フェイズへ'),
-        ],
-        !isAiTurn&&G.phase==='activate'&&[
-          h('button',{key:'b',className:'btn',onClick:nextPhase},'起動完了 → 料理提供へ'),
-        ],
-        !isAiTurn&&G.phase==='serve'&&[
-          selH&&canServe&&h('button',{key:'s',className:'btn primary',onClick:serve},'🍽 料理を提供！'),
-          h('button',{key:'n',className:'btn',onClick:nextPhase},'提供終了 → 廃棄へ'),
-          h('div',{key:'sp',className:'sp'}),
-          selH&&!canServe&&h('span',{key:'m',className:'missing-hint'},`必要: ${needed.filter(r=>!sZids.includes(r)).map(r=>ING_NAME[r]||r).join('・')}`),
-          !selH&&h('span',{key:'h',className:'phase-hint'},'手札のレシピカードを選択してください'),
-        ],
-        !isAiTurn&&G.phase==='discard'&&[
-          h('button',{key:'e',className:'btn primary',onClick:nextPhase},'ターン終了'),
-          h('div',{key:'sp',className:'sp'}),
-          h('span',{key:'h',className:'phase-hint'},'手札か食材ゾーンのカード1枚を廃棄できます（任意）'),
-        ],
-        !isAiTurn&&G.phase==='draw'&&h('span',{className:'phase-hint'},'食材山札かレシピ山札からどちらかを選んでドロー'),
-        isAiTurn&&h('span',{className:'phase-hint'},'🤖 AIのターンです。しばらくお待ちください...')
-      ),
       h('div',{className:'g-log'},
         G.log.slice(0,6).map(l=>h('div',{key:l.id,className:`log-line${l.type==='hl'?' hl':l.type==='warn'?' warn':l.type==='ai-log'?' ai-log':''}`},l.msg))
       )
@@ -2974,7 +3070,12 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function doReady(){emit('ready',{deck:playerDeck});}
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
 
-  if(mode==='game'&&onlineG)return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction});
+  if(mode==='game'&&onlineG){
+    // roomInfoから自分と相手の名前を取得
+    const myNameOnline=playerName||'あなた';
+    const oppNameOnline=roomInfo?.players?.find((_,i)=>i!==onlineMyPi)?.name||'相手';
+    return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction,myName:myNameOnline,oppName:oppNameOnline});
+  }
   if(mode==='coin-flip')return h(CoinFlipScreen,{first:coinFirst,myPi:onlineMyPi,onDone:()=>{}});
   if(mode==='mulligan')return h(OnlineMulliganScreen,{hand:mulHand,sel:mulSel,setSel:setMulSel,onConfirm:doMulConfirm,myPi:onlineMyPi});
 

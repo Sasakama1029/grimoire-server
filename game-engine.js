@@ -442,13 +442,14 @@ function execBlock(G, pi, blk, cardId) {
     }
     case 'searchIngDeck': {
       const f = blk.filterKey;
-      const cands = f ? p.ingDeck.filter(c => matchFilter(c, f)) : p.ingDeck;
+      const cands = f ? p.ingDeck.filter(c => matchFilter(c, f)) : [...p.ingDeck];
       if (!cands.length) return addLog(G, `P${pi + 1}: 食材山札に対象なし`);
-      return mkPending(G, { type: 'searchIngDeck', pi, filterKey: f });
+      return mkPending(G, { type: 'searchIngDeck', pi, filterKey: f, candidates: cands });
     }
     case 'searchRecDeck': {
       if (!p.recDeck.length) return addLog(G, `P${pi + 1}: レシピ山札が空`);
-      return mkPending(G, { type: 'searchRecDeck', pi });
+      const recCands = [...p.recDeck];
+      return mkPending(G, { type: 'searchRecDeck', pi, candidates: recCands });
     }
     case 'markIngZone': {
       if (!p.ingZone.length) return addLog(G, '食材ゾーンが空');

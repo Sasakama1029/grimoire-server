@@ -173,8 +173,11 @@ function initPlayer(cfg) {
 function checkWin(G) {
   if (G.players[0].satiety >= 20) return { ...G, winner: 1 };
   if (G.players[1].satiety >= 20) return { ...G, winner: 0 };
+  function deckLen(d) { return Array.isArray(d) ? d.length : (typeof d === 'number' ? d : 0); }
   const p = G.players[G.currentPlayer];
-  if (!p.ingDeck.length && !p.recDeck.length) return { ...G, winner: 1 - G.currentPlayer };
+  if (deckLen(p.ingDeck) === 0 && deckLen(p.recDeck) === 0 && p.hand.length === 0) {
+    return { ...G, winner: 1 - G.currentPlayer };
+  }
   return G;
 }
 

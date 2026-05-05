@@ -710,8 +710,13 @@ function initPlayers(c0,c1){
 function checkWin(G){
   if(G.players[0].satiety>=20)return{...G,winner:1};
   if(G.players[1].satiety>=20)return{...G,winner:0};
+  // ingDeck/recDeckは数値（オンライン）または配列（ローカル）の両方に対応
+  function deckLen(d){return Array.isArray(d)?d.length:(typeof d==='number'?d:0);}
+  // 両方の山札が切れたプレイヤーが負け（引こうとした側＝currentPlayerが負け）
   const p=G.players[G.currentPlayer];
-  if(!p.ingDeck.length&&!p.recDeck.length)return{...G,winner:1-G.currentPlayer};
+  if(deckLen(p.ingDeck)===0&&deckLen(p.recDeck)===0&&p.hand.length===0){
+    return{...G,winner:1-G.currentPlayer};
+  }
   return G;
 }
 // ── GAME HELPERS ──
@@ -2926,7 +2931,7 @@ function OnlineMulliganScreen({hand,sel,setSel,onConfirm,myPi}){
 }
 
 function OnlineLobby({onBack,savedDecks,onSaveDecks}){
-  const [mode,setMode]=useState('menu');
+  const [mode,setMode]=useState('deck-select'); // 最初にデッキ選択
   const [playerName,setPlayerName]=useState('');
   const [roomId,setRoomId]=useState('');
   const [inputRoom,setInputRoom]=useState('');
@@ -2938,35 +2943,17 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   const [onlineMyPi,setOnlineMyPi]=useState(null);
   const [errMsg,setErrMsg]=useState('');
   const [playerDeck,setPlayerDeck]=useState(null);
-  const [deckScreen,setDeckScreen]=useState(false);
   const sockRef=useRef(null);
 
   useEffect(()=>{
-    if(typeof io==='undefined'){
-      setErrMsg('Socket.ioが読み込まれていません');
-      return;
-    }
+    if(typeof io==='undefined'){setErrMsg('Socket.ioが読み込まれていません');return;}
     let sock=null;
-    // SERVER_URL の非同期解決を待ってから接続
     resolveServerURL().then(url=>{
-      sock=io(url,{
-        transports:['websocket','polling'],
-        reconnection:true,
-        reconnectionAttempts:5,
-        reconnectionDelay:1000,
-      });
+      sock=io(url,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:5,reconnectionDelay:1000});
       sockRef.current=sock;
-      sock.on('connect',()=>{
-        setErrMsg('');
-        console.log('[Grimoire] Connected to',url);
-      });
-      sock.on('connect_error',(e)=>{
-        setErrMsg(`サーバーに接続できません (${url})`);
-        console.error('[Grimoire] connect_error',e.message);
-      });
-      sock.on('disconnect',(reason)=>{
-        if(reason!=='io client disconnect')setErrMsg('サーバーとの接続が切れました');
-      });
+      sock.on('connect',()=>{setErrMsg('');console.log('[Grimoire] Connected to',url);});
+      sock.on('connect_error',(e)=>{setErrMsg(`サーバーに接続できません (${url})`);console.error('[Grimoire] connect_error',e.message);});
+      sock.on('disconnect',(reason)=>{if(reason!=='io client disconnect')setErrMsg('サーバーとの接続が切れました');});
       sock.on('error',msg=>setErrMsg(msg));
       sock.on('roomCreated',({roomId:id})=>{setRoomId(id);setMode('wait');});
       sock.on('roomJoined',({roomId:id,myPi:pi})=>{setRoomId(id);setOnlineMyPi(pi);setMode('wait');});
@@ -2987,28 +2974,63 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function doReady(){emit('ready',{deck:playerDeck});}
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
 
-  if(deckScreen)return h(DeckBuilder,{onBack:()=>setDeckScreen(false),savedDecks,onSaveDecks});
   if(mode==='game'&&onlineG)return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction});
   if(mode==='coin-flip')return h(CoinFlipScreen,{first:coinFirst,myPi:onlineMyPi,onDone:()=>{}});
   if(mode==='mulligan')return h(OnlineMulliganScreen,{hand:mulHand,sel:mulSel,setSel:setMulSel,onConfirm:doMulConfirm,myPi:onlineMyPi});
 
+  // デッキ選択ボタン共通コンポーネント
+  function deckBtn(d,i,selected,onClick){
+    return h('button',{key:i,className:`mbtn${selected?' primary':''}`,style:{width:'360px',textAlign:'left',padding:'12px 18px'},onClick},
+      h('span',{style:{marginRight:'10px'}},'🃏'),
+      h('div',{style:{display:'flex',flexDirection:'column',gap:'2px',flex:1}},
+        h('span',{style:{fontWeight:'bold',fontSize:'13px'}},d.name||`デッキ${i+1}`),
+        h('span',{style:{fontSize:'10px',color:'#c8a878'}},`保存日: ${d.savedAt||''}`)
+      ),
+      selected&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}},'✓ 選択中')
+    );
+  }
+
+  const errDiv=errMsg&&h('div',{style:{color:'#f84',fontSize:'12px',margin:'4px'}},'⚠ '+errMsg);
   const nameBox=h('input',{value:playerName,onChange:e=>setPlayerName(e.target.value),placeholder:'プレイヤー名',
     style:{fontSize:'13px',padding:'8px 12px',borderRadius:'5px',border:'1px solid var(--borderG)',background:'var(--bg3)',color:'var(--text)',fontFamily:'inherit',width:'200px'}});
-  const errDiv=errMsg&&h('div',{style:{color:'#f84',fontSize:'12px',margin:'4px'}},'⚠ '+errMsg);
 
+  // ① デッキ選択画面
+  if(mode==='deck-select')return h('div',{className:'title-screen'},
+    h('div',{className:'logo',style:{marginBottom:'16px'}},
+      h('h1',null,'🃏 自分のデッキを選択'),
+      h('div',{className:'logo-en'},'YOUR DECK SELECT')
+    ),
+    errDiv,
+    h('div',{style:{display:'flex',flexDirection:'column',gap:'10px',alignItems:'center',width:'100%',maxWidth:'420px',maxHeight:'55vh',overflowY:'auto',padding:'4px 8px'}},
+      h('button',{className:`mbtn${playerDeck===null?' primary':''}`,style:{width:'360px',textAlign:'left',padding:'12px 18px'},onClick:()=>setPlayerDeck(null)},
+        h('span',{style:{marginRight:'10px'}},'🎲'),
+        h('span',{style:{fontWeight:'bold'}},'ランダムデッキ'),
+        playerDeck===null&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}},' ✓ 選択中')
+      ),
+      savedDecks.length===0
+        ? h('div',{style:{fontSize:'12px',color:'#a08868',padding:'12px',textAlign:'center'}},'保存済みデッキがありません\nデッキ構築画面でデッキを保存してください')
+        : savedDecks.map((d,i)=>deckBtn(d,i,playerDeck===d,()=>setPlayerDeck(d)))
+    ),
+    h('div',{className:'title-menu',style:{marginTop:'16px'}},
+      h('button',{className:'mbtn primary',onClick:()=>setMode('menu')},'次へ → ルーム作成・参加'),
+      h('button',{className:'mbtn sm',onClick:onBack},'← タイトルへ戻る')
+    )
+  );
+
+  // ② ルーム作成・参加メニュー
   if(mode==='menu')return h('div',{className:'title-screen'},
     h('div',{className:'logo'},h('h1',null,'オンライン対戦'),h('div',{className:'logo-en'},'ONLINE MATCH'),
       h('div',{style:{fontSize:'9px',color:'var(--faint)',marginTop:'4px',fontFamily:'monospace'}},`接続先: ${SERVER_URL}`)
     ),
     errDiv,
-    h('div',{style:{display:'flex',flexDirection:'column',gap:'8px',alignItems:'center',marginBottom:'10px'}},
+    h('div',{style:{display:'flex',alignItems:'center',gap:'10px',justifyContent:'center',marginBottom:'10px'}},
       nameBox,
-      h('button',{className:'mbtn',style:{width:'220px',fontSize:'11px',padding:'7px'},onClick:()=>setDeckScreen(true)},playerDeck?'🃏 デッキ設定済み（変更）':'🃏 デッキを選ぶ（任意）')
+      h('span',{style:{fontSize:'11px',color:playerDeck?'#60d0a8':'var(--muted)'}},playerDeck?`🃏 ${playerDeck.name}`:'🎲 ランダム')
     ),
     h('div',{className:'title-menu'},
       h('button',{className:'mbtn primary',onClick:()=>setMode('create')},'🏠 ルームを作成'),
       h('button',{className:'mbtn',onClick:()=>setMode('join')},'🚪 ルームに参加'),
-      h('button',{className:'mbtn sm',onClick:onBack},'← タイトルへ戻る')
+      h('button',{className:'mbtn sm',onClick:()=>setMode('deck-select')},'← デッキ選択へ戻る')
     )
   );
 

@@ -143,6 +143,25 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ── 再戦 ──
+  socket.on('rematch', ({ deck }) => {
+    const roomId = socketRoom[socket.id];
+    const room = rooms[roomId];
+    if (!room) return;
+    const pl = room.players.find(p => p.socketId === socket.id);
+    if (!pl) return;
+    // デッキを更新してreadyフラグを立てる
+    pl.deck = deck || null;
+    pl.ready = true;
+    broadcast(roomId, 'roomInfo', { players: room.players.map(p => ({ name: p.name, ready: p.ready })) });
+    // 両者揃ったら再戦開始
+    if (room.players.length === 2 && room.players.every(p => p.ready)) {
+      // readyフラグをリセットしてマリガンへ
+      room.players.forEach(p => { p.ready = false; });
+      startMulligan(room);
+    }
+  });
+
   // ── ゲームアクション ──
   socket.on('action', ({ type, payload }) => {
     const roomId = socketRoom[socket.id];

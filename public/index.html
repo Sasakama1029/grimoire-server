@@ -3037,7 +3037,7 @@ function OnlineMulliganScreen({hand,sel,setSel,onConfirm,myPi}){
 }
 
 function OnlineLobby({onBack,savedDecks,onSaveDecks}){
-  const [mode,setMode]=useState('deck-select'); // 最初にデッキ選択
+  const [mode,setMode]=useState('menu');
   const [playerName,setPlayerName]=useState('');
   const [roomId,setRoomId]=useState('');
   const [inputRoom,setInputRoom]=useState('');
@@ -3049,6 +3049,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   const [onlineMyPi,setOnlineMyPi]=useState(null);
   const [errMsg,setErrMsg]=useState('');
   const [playerDeck,setPlayerDeck]=useState(null);
+  const [showResult,setShowResult]=useState(null);
   const sockRef=useRef(null);
 
   useEffect(()=>{
@@ -3057,18 +3058,18 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
     resolveServerURL().then(url=>{
       sock=io(url,{transports:['websocket','polling'],reconnection:true,reconnectionAttempts:5,reconnectionDelay:1000});
       sockRef.current=sock;
-      sock.on('connect',()=>{setErrMsg('');console.log('[Grimoire] Connected to',url);});
-      sock.on('connect_error',(e)=>{setErrMsg(`サーバーに接続できません (${url})`);console.error('[Grimoire] connect_error',e.message);});
-      sock.on('disconnect',(reason)=>{if(reason!=='io client disconnect')setErrMsg('サーバーとの接続が切れました');});
+      sock.on('connect',()=>{setErrMsg('');});
+      sock.on('connect_error',(e)=>{setErrMsg(`サーバーに接続できません`);});
+      sock.on('disconnect',(reason)=>{if(reason!=='io client disconnect')setErrMsg('接続が切れました');});
       sock.on('error',msg=>setErrMsg(msg));
       sock.on('roomCreated',({roomId:id})=>{setRoomId(id);setMode('wait');});
       sock.on('roomJoined',({roomId:id,myPi:pi})=>{setRoomId(id);setOnlineMyPi(pi);setMode('wait');});
       sock.on('roomInfo',info=>setRoomInfo(info));
       sock.on('coinFlip',({first,myPi:pi})=>{setOnlineMyPi(pi);setCoinFirst(first);setMode('coin-flip');});
       sock.on('mulliganStart',({hand,myPi:pi})=>{setMulHand(hand);setOnlineMyPi(pi);setMulSel(new Set());setMode('mulligan');});
-      sock.on('state',({G,myPi:pi})=>{setOnlineG(G);setOnlineMyPi(pi);setMode('game');});
-      sock.on('gameOver',({winnerName,reason})=>{alert(`${winnerName} の勝利！${reason?'\n'+reason:''}`);});
-      sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');});
+      sock.on('state',({G,myPi:pi})=>{setOnlineG(G);setOnlineMyPi(pi);setShowResult(null);setMode('game');});
+      sock.on('gameOver',({winnerName,reason})=>{setShowResult({winnerName,reason});});
+      sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');setShowResult(null);});
     });
     return()=>{if(sock)sock.disconnect();};
   },[]);
@@ -3077,11 +3078,12 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function sendAction(type,payload={}){emit('action',{type,payload});}
   function doCreate(){if(!playerName.trim()){setErrMsg('名前を入力してください');return;}setErrMsg('');emit('createRoom',{name:playerName,deck:playerDeck});}
   function doJoin(){if(!playerName.trim()||!inputRoom.trim()){setErrMsg('名前とルームIDを入力してください');return;}setErrMsg('');emit('joinRoom',{roomId:inputRoom.trim().toUpperCase(),name:playerName,deck:playerDeck});}
-  function doReady(){emit('ready',{deck:playerDeck});}
+  function doReady(){emit('ready',{deck:playerDeck});setMode('wait-ready');}
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
+  function doRematch(){emit('rematch',{deck:playerDeck});setShowResult(null);setMode('wait');}
+  function goTitle(){sockRef.current&&sockRef.current.disconnect();onBack();}
 
-  if(mode==='game'&&onlineG){
-    // roomInfoから自分と相手の名前を取得
+  if(mode==='game'&&onlineG&&!showResult){
     const myNameOnline=playerName||'あなた';
     const oppNameOnline=roomInfo?.players?.find((_,i)=>i!==onlineMyPi)?.name||'相手';
     return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction,myName:myNameOnline,oppName:oppNameOnline});
@@ -3089,7 +3091,10 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   if(mode==='coin-flip')return h(CoinFlipScreen,{first:coinFirst,myPi:onlineMyPi,onDone:()=>{}});
   if(mode==='mulligan')return h(OnlineMulliganScreen,{hand:mulHand,sel:mulSel,setSel:setMulSel,onConfirm:doMulConfirm,myPi:onlineMyPi});
 
-  // デッキ選択ボタン共通コンポーネント
+  const errDiv=errMsg&&h('div',{style:{color:'#f84',fontSize:'12px',margin:'4px 0'}},'⚠ '+errMsg);
+  const nameBox=h('input',{value:playerName,onChange:e=>setPlayerName(e.target.value),placeholder:'プレイヤー名',
+    style:{fontSize:'13px',padding:'8px 12px',borderRadius:'5px',border:'1px solid var(--borderG)',background:'var(--bg3)',color:'var(--text)',fontFamily:'inherit',width:'200px'}});
+
   function deckBtn(d,i,selected,onClick){
     return h('button',{key:i,className:`mbtn${selected?' primary':''}`,style:{width:'360px',textAlign:'left',padding:'12px 18px'},onClick},
       h('span',{style:{marginRight:'10px'}},'🃏'),
@@ -3101,55 +3106,103 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
     );
   }
 
-  const errDiv=errMsg&&h('div',{style:{color:'#f84',fontSize:'12px',margin:'4px'}},'⚠ '+errMsg);
-  const nameBox=h('input',{value:playerName,onChange:e=>setPlayerName(e.target.value),placeholder:'プレイヤー名',
-    style:{fontSize:'13px',padding:'8px 12px',borderRadius:'5px',border:'1px solid var(--borderG)',background:'var(--bg3)',color:'var(--text)',fontFamily:'inherit',width:'200px'}});
-
-  // ① デッキ選択画面
-  if(mode==='deck-select')return h('div',{className:'title-screen'},
-    h('div',{className:'logo',style:{marginBottom:'16px'}},
-      h('h1',null,'🃏 自分のデッキを選択'),
-      h('div',{className:'logo-en'},'YOUR DECK SELECT')
-    ),
-    errDiv,
-    h('div',{style:{display:'flex',flexDirection:'column',gap:'10px',alignItems:'center',width:'100%',maxWidth:'420px',maxHeight:'55vh',overflowY:'auto',padding:'4px 8px'}},
-      h('button',{className:`mbtn${playerDeck===null?' primary':''}`,style:{width:'360px',textAlign:'left',padding:'12px 18px'},onClick:()=>setPlayerDeck(null)},
-        h('span',{style:{marginRight:'10px'}},'🎲'),
-        h('span',{style:{fontWeight:'bold'}},'ランダムデッキ'),
-        playerDeck===null&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}},' ✓ 選択中')
+  function DeckSelectView({title,nextLabel,onNext,onBack2}){
+    return h('div',{className:'title-screen'},
+      h('div',{className:'logo',style:{marginBottom:'16px'}},h('h1',null,title)),
+      errDiv,
+      h('div',{style:{display:'flex',flexDirection:'column',gap:'10px',alignItems:'center',width:'100%',maxWidth:'420px',maxHeight:'55vh',overflowY:'auto',padding:'4px 8px'}},
+        h('button',{className:`mbtn${playerDeck===null?' primary':''}`,style:{width:'360px',textAlign:'left',padding:'12px 18px'},onClick:()=>setPlayerDeck(null)},
+          h('span',{style:{marginRight:'10px'}},'🎲'),
+          h('span',{style:{fontWeight:'bold'}},'ランダムデッキ'),
+          playerDeck===null&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'#f8d888'}},' ✓ 選択中')
+        ),
+        savedDecks.length===0
+          ? h('div',{style:{fontSize:'12px',color:'#a08868',padding:'12px',textAlign:'center'}},'保存済みデッキがありません')
+          : savedDecks.map((d,i)=>deckBtn(d,i,playerDeck===d,()=>setPlayerDeck(d)))
       ),
-      savedDecks.length===0
-        ? h('div',{style:{fontSize:'12px',color:'#a08868',padding:'12px',textAlign:'center'}},'保存済みデッキがありません\nデッキ構築画面でデッキを保存してください')
-        : savedDecks.map((d,i)=>deckBtn(d,i,playerDeck===d,()=>setPlayerDeck(d)))
+      h('div',{className:'title-menu',style:{marginTop:'16px'}},
+        h('button',{className:'mbtn primary',onClick:onNext},nextLabel),
+        onBack2&&h('button',{className:'mbtn sm',onClick:onBack2},'← 戻る')
+      )
+    );
+  }
+
+  // ゲーム終了後
+  if(showResult)return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},
+      h('h1',null,showResult.winnerName+' の勝利！'),
+      showResult.reason&&h('div',{className:'logo-en'},showResult.reason)
     ),
-    h('div',{className:'title-menu',style:{marginTop:'16px'}},
-      h('button',{className:'mbtn primary',onClick:()=>setMode('menu')},'次へ → ルーム作成・参加'),
-      h('button',{className:'mbtn sm',onClick:onBack},'← タイトルへ戻る')
+    h('div',{className:'title-menu',style:{marginTop:'24px'}},
+      h('button',{className:'mbtn primary',onClick:()=>{setPlayerDeck(null);setMode('deck-select-rematch');}},'🔄 再戦する（デッキ変更可）'),
+      h('button',{className:'mbtn sm',onClick:goTitle},'← タイトルへ戻る')
     )
   );
 
-  // ② ルーム作成・参加メニュー
-  if(mode==='menu')return h('div',{className:'title-screen'},
-    h('div',{className:'logo'},h('h1',null,'オンライン対戦'),h('div',{className:'logo-en'},'ONLINE MATCH'),
-      h('div',{style:{fontSize:'9px',color:'var(--faint)',marginTop:'4px',fontFamily:'monospace'}},`接続先: ${SERVER_URL}`)
+  // 再戦デッキ選択
+  if(mode==='deck-select-rematch')return h(DeckSelectView,{
+    title:'🔄 再戦 — デッキを選択',nextLabel:'✅ このデッキで再戦準備完了',
+    onNext:doRematch,onBack2:goTitle
+  });
+
+  // ルーム参加後のデッキ選択（初回）
+  if(mode==='deck-select')return h(DeckSelectView,{
+    title:'🃏 デッキを選択して準備完了',nextLabel:'✅ 準備完了',
+    onNext:doReady,onBack2:()=>setMode('wait')
+  });
+
+  // 準備完了後の待機
+  if(mode==='wait-ready')return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},
+      h('h1',null,'⏳ 相手の準備を待っています...'),
+      roomId&&h('div',{style:{fontSize:'24px',color:'var(--goldL)',letterSpacing:'8px',margin:'12px 0',fontFamily:'monospace',background:'var(--bg3)',padding:'10px 20px',borderRadius:'8px',border:'1px solid var(--goldD)'}},roomId)
     ),
     errDiv,
-    h('div',{style:{display:'flex',alignItems:'center',gap:'10px',justifyContent:'center',marginBottom:'10px'}},
-      nameBox,
-      h('span',{style:{fontSize:'11px',color:playerDeck?'#60d0a8':'var(--muted)'}},playerDeck?`🃏 ${playerDeck.name}`:'🎲 ランダム')
+    roomInfo&&h('div',{style:{display:'flex',gap:'20px',justifyContent:'center',margin:'16px 0'}},
+      roomInfo.players.map((p,i)=>h('div',{key:i,style:{padding:'10px 18px',borderRadius:'7px',minWidth:'120px',textAlign:'center',
+        background:p.ready?'rgba(48,160,80,.2)':'var(--bg3)',border:`1px solid ${p.ready?'#38a068':'var(--border)'}`}},
+        h('div',{style:{fontWeight:'bold',color:'var(--text)',marginBottom:'4px'}},p.name||`P${i+1}`),
+        h('div',{style:{fontSize:'12px',color:p.ready?'#6eda98':'var(--muted)'}},p.ready?'✅ 準備完了':'⏳ 待機中')
+      ))
     ),
     h('div',{className:'title-menu'},
-      h('button',{className:'mbtn primary',onClick:()=>setMode('create')},'🏠 ルームを作成'),
-      h('button',{className:'mbtn',onClick:()=>setMode('join')},'🚪 ルームに参加'),
-      h('button',{className:'mbtn sm',onClick:()=>setMode('deck-select')},'← デッキ選択へ戻る')
+      h('button',{className:'mbtn sm',onClick:()=>setMode('deck-select')},'← デッキを変更する'),
+      h('button',{className:'mbtn sm danger',onClick:goTitle},'退出')
     )
   );
 
-  if(mode==='create')return h('div',{className:'title-screen'},
-    h('div',{className:'logo'},h('h1',null,'ルーム作成')),errDiv,
-    h('div',{className:'title-menu'},nameBox,
-      h('button',{className:'mbtn primary',onClick:doCreate},'ルームを作成する'),
-      h('button',{className:'mbtn sm',onClick:()=>setMode('menu')},'← 戻る'))
+  // ルーム待機（デッキ選択前）
+  if(mode==='wait')return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},
+      h('h1',null,'🏠 ルーム待機中'),
+      roomId&&h('div',{style:{fontSize:'32px',color:'var(--goldL)',letterSpacing:'8px',margin:'12px 0',fontFamily:'monospace',background:'var(--bg3)',padding:'12px 24px',borderRadius:'8px',border:'1px solid var(--goldD)'}},roomId),
+      h('div',{style:{fontSize:'10px',color:'var(--muted)'}},'このIDを相手に伝えてください')
+    ),
+    errDiv,
+    roomInfo&&h('div',{style:{display:'flex',gap:'20px',justifyContent:'center',margin:'16px 0'}},
+      roomInfo.players.map((p,i)=>h('div',{key:i,style:{padding:'10px 18px',borderRadius:'7px',minWidth:'120px',textAlign:'center',
+        background:p.ready?'rgba(48,160,80,.2)':'var(--bg3)',border:`1px solid ${p.ready?'#38a068':'var(--border)'}`}},
+        h('div',{style:{fontWeight:'bold',color:'var(--text)',marginBottom:'4px'}},p.name||`P${i+1}`),
+        h('div',{style:{fontSize:'12px',color:p.ready?'#6eda98':'var(--muted)'}},p.ready?'✅ 準備完了':'⏳ 待機中')
+      ))
+    ),
+    h('div',{className:'title-menu'},
+      h('button',{className:'mbtn primary',onClick:()=>setMode('deck-select')},'🃏 デッキを選択して準備完了'),
+      h('button',{className:'mbtn sm danger',onClick:goTitle},'退出')
+    )
+  );
+
+  // メニュー（ルーム作成・参加）
+  if(mode==='menu')return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},
+      h('h1',null,'🌐 オンライン対戦'),h('div',{className:'logo-en'},'ONLINE MATCH')
+    ),
+    errDiv,nameBox,
+    h('div',{className:'title-menu',style:{marginTop:'12px'}},
+      h('button',{className:'mbtn primary',onClick:doCreate},'🏠 ルームを作成'),
+      h('button',{className:'mbtn',onClick:()=>setMode('join')},'🚪 ルームに参加'),
+      h('button',{className:'mbtn sm',onClick:onBack},'← タイトルへ戻る')
+    )
   );
 
   if(mode==='join')return h('div',{className:'title-screen'},
@@ -3158,25 +3211,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       h('input',{value:inputRoom,onChange:e=>setInputRoom(e.target.value.toUpperCase()),placeholder:'ルームID（6文字）',maxLength:6,
         style:{fontSize:'18px',padding:'8px 12px',borderRadius:'5px',border:'1px solid var(--goldD)',background:'var(--bg3)',color:'var(--goldL)',fontFamily:'monospace',width:'200px',textAlign:'center',letterSpacing:'4px'}}),
       h('button',{className:'mbtn primary',onClick:doJoin},'参加する'),
-      h('button',{className:'mbtn sm',onClick:()=>setMode('menu')},'← 戻る'))
-  );
-
-  if(mode==='wait')return h('div',{className:'title-screen'},
-    h('div',{className:'logo'},
-      h('h1',null,'待機中...'),
-      roomId&&h('div',{style:{fontSize:'32px',color:'var(--goldL)',letterSpacing:'8px',margin:'12px 0',fontFamily:'monospace',background:'var(--bg3)',padding:'12px 24px',borderRadius:'8px',border:'1px solid var(--goldD)'}},roomId),
-      h('div',{style:{fontSize:'10px',color:'var(--muted)'}},'このIDを相手に伝えてください')
-    ),
-    roomInfo&&h('div',{style:{display:'flex',gap:'20px',justifyContent:'center',margin:'16px 0'}},
-      roomInfo.players.map((p,i)=>h('div',{key:i,style:{padding:'12px 20px',borderRadius:'7px',minWidth:'120px',textAlign:'center',background:p.ready?'rgba(48,160,80,.2)':'var(--bg3)',border:`1px solid ${p.ready?'#38a068':'var(--border)'}`}},
-        h('div',{style:{fontWeight:'bold',color:'var(--text)',marginBottom:'4px'}},p.name||`P${i+1}`),
-        h('div',{style:{fontSize:'12px',color:p.ready?'#6eda98':'var(--muted)'}},p.ready?'✅ 準備完了':'⏳ 待機中')
-      ))
-    ),
-    errDiv,
-    h('div',{className:'title-menu'},
-      h('button',{className:'mbtn primary',onClick:doReady},'✅ 準備完了'),
-      h('button',{className:'mbtn sm',onClick:()=>{sockRef.current&&sockRef.current.disconnect();onBack();}},'← 退出')
+      h('button',{className:'mbtn sm',onClick:()=>setMode('menu')},'← 戻る')
     )
   );
 

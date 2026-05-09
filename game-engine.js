@@ -50,7 +50,7 @@ const REC_DEFS = [
   {id:'jagabata',name:'じゃがバター',sat:4,req:['potato','butter'],eff:null},
   {id:'teriyakiBuri',name:'ぶりの照り焼き',sat:4,req:['yellowtail','flour'],eff:'自分と相手は食材山札からカードを1枚引く。'},
   {id:'yakitori',name:'焼き鳥',sat:4,req:['chicken','negi'],eff:null},
-  {id:'steak',name:'ステーキ',sat:5,req:['beef','butter'],eff:'次の自分のターン中、料理を提供できない。'},
+  {id:'steak',name:'ステーキ',sat:6,req:['beef','butter'],eff:'次の自分のターン中、料理を提供できない。'},
   {id:'sabaMiso',name:'さばの味噌煮',sat:3,req:['saba','miso','ginger'],eff:'相手の食材ゾーンのカードを1枚選び、ごみ箱に送る。'},
   {id:'buriDaikon',name:'ぶり大根',sat:3,req:['ginger','yellowtail','daikon'],eff:'相手の食材ゾーンのカードを1枚選び、山札に戻す。'},
   {id:'yasaiSalad',name:'温野菜サラダ',sat:4,req:['carrot','potato','broccoli'],eff:'手札を1枚ごみ箱に送ってもよい。そうしたなら、ごみ箱から食材カードを1枚選び手札に加える。'},
@@ -66,7 +66,7 @@ const REC_DEFS = [
   {id:'germanPotato',name:'ジャーマンポテト',sat:6,req:['potato','pork','onion'],eff:'手札の「脂質」カードを1枚ごみ箱に送ってもよい。そうしたなら、食材山札から食材カードを1枚選び手札に加える。'},
   {id:'gyudon',name:'牛丼',sat:6,req:['rice','beef','onion'],eff:null},
   {id:'butaNinger',name:'豚の生姜焼き',sat:6,req:['ginger','pork','onion'],eff:null},
-  {id:'carpaccio',name:'カルパッチョ',sat:4,req:['yellowtail','lemon','onion','garlic'],eff:'自分は食材山札から食材カードを2枚引き、手札に加える。'},
+  {id:'carpaccio',name:'カルパッチョ',sat:4,req:['yellowtail','lemon','onion','garlic'],eff:'自分は食材山札から食材カードを2枚選び、手札に加える。'},
   {id:'curryBread',name:'カレーパン',sat:5,req:['flour','curryroux','egg','butter'],eff:'自分は食材山札から食材カードを1枚選ぶ。その後、そのカードを食材ゾーンに出す。'},
   {id:'misoShiru',name:'味噌汁',sat:5,req:['miso','tofu','abura','wakame'],eff:'自分の満腹度-3。'},
   {id:'yakisoba',name:'焼きそば',sat:6,req:['flour','pork','cabbage','moyashi'],eff:'手札を全てごみ箱に送る。その後、食材山札から3枚引き、レシピ山札から2枚引く。'},
@@ -77,8 +77,8 @@ const REC_DEFS = [
   {id:'gratin',name:'グラタン',sat:6,req:['flour','cheese','butter','milk'],eff:'次の相手のターン終了時、相手の満腹度+3。'},
   {id:'frenchToast',name:'フレンチトースト',sat:6,req:['flour','egg','milk','butter'],eff:'自分は食材ゾーンのカードを1枚選び、そのカードに【満腹バフ：3】を付与する。'},
   {id:'maboTofu',name:'麻婆豆腐',sat:7,req:['miso','tofu','pork','negi'],eff:'手札の「たんぱく質」カードを1枚ごみ箱に送ってもよい。そうしたなら、レシピ山札から2枚引く。'},
-  {id:'hamburg',name:'ハンバーグ',sat:7,req:['beef','pork','egg','onion'],eff:'食材山札から3枚引く。次の自分のターン終了時まで料理を提供できない。'},
   {id:'curryUdon',name:'カレーうどん',sat:7,req:['flour','abura','curryroux','negi'],eff:'食材山札から2枚引き、そのカードを食材ゾーンに出す。'},
+  {id:'hamburg',name:'ハンバーグ',sat:8,req:['beef','pork','egg','onion'],eff:'食材山札から3枚引く。次の自分のターン終了時まで料理を提供できない。'},
   {id:'okonomiyaki',name:'お好み焼き',sat:8,req:['flour','pork','egg','cabbage'],eff:null},
   {id:'yasaiItame',name:'野菜炒め',sat:8,req:['pork','carrot','moyashi','cabbage'],eff:null},
   {id:'chaahan',name:'チャーハン',sat:9,req:['rice','pork','negi','egg'],eff:'自分は手札を1枚ごみ箱に送ってもよい。そうしないなら、自分の満腹度+1。'},
@@ -348,7 +348,13 @@ function execBlock(G, pi, blk, cardId) {
     case 'drawToZone': return drawToZone(G, pi, blk.n || 1);
     case 'bufNextRec': return bufR(G, pi, blk.n || 1);
     case 'setDebuff': return setDeb(G, pi, blk.key, blk.val);
-    case 'setOppDebuff': return setOppDeb(G, pi, blk.n || 3);
+    case 'setOppDebuff': {
+      if (blk.key) {
+        const o = 1 - pi;
+        return addLog(ovP(G, o, { debuffs: { ...G.players[o].debuffs, [blk.key]: blk.val } }), `P${pi + 1}: 相手にデバフ[${blk.key}]`, 'warn');
+      }
+      return setOppDeb(G, pi, blk.n || 3);
+    }
     case 'redOppSat': return redOpp(G, pi, blk.n || 1);
     case 'redSelfSat': return redSelf(G, pi, blk.n || 1);
     case 'addSelfSat': return addSelf(G, pi, blk.n || 1);
@@ -617,7 +623,7 @@ const ING_BLOCKS = {
   curryroux: [],
   cabbage: [{ type: 'recoverTrashToDeck' }],
   daikon: [{ type: 'condOppZone', op: 'ge', n: 3, then: [{ type: 'drawRec', n: 1 }] }],
-  chili: [{ type: 'setDebuff', key: 'chiliWatch', val: 1 }, { type: 'selfTrash' }],
+  chili: [{ type: 'selfTrash' }, { type: 'setOppDebuff', key: 'chiliWatch', val: 1 }],
   tomato: [{ type: 'condIngZone', op: 'le', n: 3, then: [{ type: 'drawIng', n: 2 }] }],
   carrot: [{ type: 'selectIngZone', then: 'toHand' }],
   broccoli: [{ type: 'selectIngZone', then: 'searchSame' }, { type: 'selfTrash' }],
@@ -681,7 +687,7 @@ const REC_BLOCKS = {
   namuL: [{ type: 'rndBounce' }, { type: 'drawIng', n: 1 }, { type: 'drawIngOpp', n: 1 }],
   agedashi: [{ type: 'discardHand', n: 1, optional: true, filterKey: 'protein' }, { type: 'ifPrev' }, { type: 'drawIng', n: 2 }],
   biscuit: [{ type: 'condOppZone', op: 'le', n: 3, then: [{ type: 'drawIng', n: 3 }] }],
-  carpaccio: [{ type: 'drawIng', n: 2 }],
+  carpaccio: [{ type: 'searchIngDeck', title: '食材山札から1枚目を選ぶ' }, { type: 'searchIngDeck', title: '食材山札から2枚目を選ぶ' }],
   curryBread: [{ type: 'drawToZone', n: 1 }],
   chaahan: [{ type: 'discardHand', n: 1, optional: true }, { type: 'elsePrev', blocks: [{ type: 'redSelfSat', n: 1 }] }],
   omurice: [{ type: 'condOppServedLast' }, { type: 'ifPrev', blocks: [{ type: 'addOppSat', n: 2 }] }, { type: 'drawRec', n: 3 }],
@@ -794,11 +800,10 @@ function doServeRecipe(G, pi, recUid, ingUids) {
   });
   G2 = ovP(G2, opp, { satiety: Math.min(20, G2.players[opp].satiety + gain) });
   G2 = addLog(G2, `P${pi + 1}: 【${rec.name}】完成！相手+${gain}！`, 'hl');
-  // 唐辛子デバフチェック：相手が唐辛子監視中なら自分の満腹度-1
+  // 唐辛子デバフチェック：opp（=唐辛子起動者）がchiliWatchを持っている→提供者piの満腹-1
   if (G2.players[opp].debuffs && G2.players[opp].debuffs.chiliWatch) {
-    G2 = ovP(G2, opp, { debuffs: { ...G2.players[opp].debuffs, chiliWatch: 0 } });
     G2 = ovP(G2, pi, { satiety: Math.max(0, G2.players[pi].satiety - 1) });
-    G2 = addLog(G2, `P${pi + 1}: 唐辛子の効果！自分満腹-1`, 'warn');
+    G2 = addLog(G2, `唐辛子の効果！P${pi + 1}の満腹度-1`, 'warn');
   }
   G2 = checkWin(G2); if (G2.winner != null) return { G: G2 };
   const blocks = REC_BLOCKS[rec.id];
@@ -862,9 +867,14 @@ function endTurn(G) {
   }
   const np = [...s.players];
   np[pi] = { ...np[pi], activatedThisTurn: false, servedLastTurn: false, ingZone: np[pi].ingZone.map(c => ({ ...c, _used: false, _placedThisTurn: false })), revealed: false };
+  // 相手の手札公開フラグもターン終了時にリセット
+  np[opp] = { ...np[opp], revealed: false };
   const od = { ...np[opp].debuffs };
   if (od.noServe) od.noServe = Math.max(0, od.noServe - 1);
   np[opp] = { ...np[opp], debuffs: od };
+  // chiliWatch：相手（opp）のターン終了時にpiのchiliWatchをクリア
+  const pd = { ...np[pi].debuffs };
+  if (pd.chiliWatch) { pd.chiliWatch = 0; np[pi] = { ...np[pi], debuffs: pd }; }
   return addLog({ ...s, players: np, currentPlayer: opp, phase: 'draw', turn: s.turn + 1, firstTurn: false }, `Turn ${s.turn + 1} - P${opp + 1}のターン`);
 }
 

@@ -128,17 +128,17 @@ const PRESET_DECKS = [
   {
     name: 'お米祭り',
     ingDeck: { rice:4, butter:4, nori:4, chicken:4, egg:4, tofu:2, onion:4, tomato:4 },
-    recDeck: { omuraisu:3, oyakodon:4, tkg:4, onigiri:4 },
+    recDeck: { omurice:3, oyakodon:4, tkgr:4, onigiri:4 },
   },
   {
     name: 'パスタパラダイス',
     ingDeck: { flour:4, milk:3, cheese:3, egg:3, beef:2, pork:3, tomato:2, garlic:3, onion:2, carrot:2, chili:2, lettuce:1 },
-    recDeck: { meatPasta:3, peperoncino:4, carbonara:3, caesarSalad:1, pudding:4 },
+    recDeck: { meatSauce:3, peperoncino:4, carbonara:3, caesarSalad:1, pudding:4 },
   },
   {
     name: 'じゃがパーティ',
     ingDeck: { potato:4, butter:4, pork:4, carrot:4, broccoli:4, onion:4, cabbage:2, tomato:4 },
-    recDeck: { minestrone:3, germanPotato:4, jagaButter:4, warmSalad:4 },
+    recDeck: { minestrone:3, germanPotato:4, jagabata:4, yasaiSalad:4 },
   },
 ];
 
@@ -516,16 +516,19 @@ function resolveChoice(G, pi, pd, chosen) {
   }
   if (pd.type === 'trash_to_hand') {
     const card = p.trash.find(c => c._uid === chosen[0]); if (!card) return G;
-    return addLog(ovP(G, pi, { trash: p.trash.filter(c => c._uid !== card._uid), ...ph(p, [card]) }), `P${pi + 1}: ${card.name}を手札へ`);
+    const p2 = { ...p, trash: p.trash.filter(c => c._uid !== card._uid) };
+    return addLog(ovP(G, pi, ph(p2, [card])), `P${pi + 1}: ${card.name}を手札へ`);
   }
   if (pd.type === 'trash_to_hand_multi') {
     const cards = chosen.map(u => p.trash.find(c => c._uid === u)).filter(Boolean);
     if (!cards.length) return G;
-    return addLog(ovP(G, pi, { trash: p.trash.filter(c => !chosen.includes(c._uid)), ...ph(p, cards) }), `P${pi + 1}: ${cards.map(c => c.name).join('・')}を手札へ`);
+    const p2 = { ...p, trash: p.trash.filter(c => !chosen.includes(c._uid)) };
+    return addLog(ovP(G, pi, ph(p2, cards)), `P${pi + 1}: ${cards.map(c => c.name).join('・')}を手札へ`);
   }
   if (pd.type === 'trash_to_hand_rec') {
     const card = p.trash.find(c => c._uid === chosen[0] && c._isRec); if (!card) return G;
-    return addLog(ovP(G, pi, { trash: p.trash.filter(c => c._uid !== card._uid), ...ph(p, [card]) }), `P${pi + 1}: ${card.name}を手札へ`);
+    const p2 = { ...p, trash: p.trash.filter(c => c._uid !== card._uid) };
+    return addLog(ovP(G, pi, ph(p2, [card])), `P${pi + 1}: ${card.name}を手札へ`);
   }
   if (pd.type === 'trash_to_ingdeck') {
     const card = p.trash.find(c => c._uid === chosen[0]); if (!card) return G;
@@ -743,7 +746,7 @@ function doPlaceCard(G, pi, cardUid) {
   if (p.ingZone.length >= 7) return { error: '食材ゾーンが満杯' };
   const s = addLog(ovP(G, pi, {
     hand: p.hand.filter(c => c._uid !== cardUid),
-    ingZone: [...p.ingZone, { ...card, _placedThisTurn: true }]
+    ingZone: [...p.ingZone, { ...card, _placedThisTurn: true, _used: false }]
   }), `P${pi + 1}: ${card.name}を配置`);
   return { G: s };
 }

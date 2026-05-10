@@ -153,6 +153,7 @@ io.on('connection', (socket) => {
     // デッキを更新してreadyフラグを立てる
     pl.deck = deck || null;
     pl.ready = true;
+    // 両者に準備状況を通知
     broadcast(roomId, 'roomInfo', { players: room.players.map(p => ({ name: p.name, ready: p.ready })) });
     // 両者揃ったら再戦開始
     if (room.players.length === 2 && room.players.every(p => p.ready)) {

@@ -743,17 +743,17 @@ const PRESET_DECKS=[
   {
     name:'お米祭り',
     ingDeck:{rice:4,butter:4,nori:4,chicken:4,egg:4,tofu:2,onion:4,tomato:4},
-    recDeck:{omuraisu:3,oyakodon:4,tkg:4,onigiri:4},
+    recDeck:{omurice:3,oyakodon:4,tkgr:4,onigiri:4},
   },
   {
     name:'パスタパラダイス',
     ingDeck:{flour:4,milk:3,cheese:3,egg:3,beef:2,pork:3,tomato:2,garlic:3,onion:2,carrot:2,chili:2,lettuce:1},
-    recDeck:{meatPasta:3,peperoncino:4,carbonara:3,caesarSalad:1,pudding:4},
+    recDeck:{meatSauce:3,peperoncino:4,carbonara:3,caesarSalad:1,pudding:4},
   },
   {
     name:'じゃがパーティ',
     ingDeck:{potato:4,butter:4,pork:4,carrot:4,broccoli:4,onion:4,cabbage:2,tomato:4},
-    recDeck:{minestrone:3,germanPotato:4,jagaButter:4,warmSalad:4},
+    recDeck:{minestrone:3,germanPotato:4,jagabata:4,yasaiSalad:4},
   },
 ];
 
@@ -986,7 +986,7 @@ function execBlock(G,pi,blk,cardId){
       return mkPending(G,{type:'trash_to_hand',pi,
         title:blk.title||'ごみ箱から手札へ回収',
         desc:'回収するカードを選んでください',
-        filter,source:'trash'});
+        filter,filterKey:blk.filterKey||null,candidates:cands,source:'trash'});
     }
     case 'recoverTrashToDeck':{
       const cands=p.trash.filter(c=>!c._isRec);
@@ -994,7 +994,7 @@ function execBlock(G,pi,blk,cardId){
       return mkPending(G,{type:'trash_to_ingdeck',pi,
         title:'ごみ箱から食材を食材山札へ戻す',
         desc:'戻す食材カードを選んでください',
-        filter:c=>!c._isRec,source:'trash'});
+        filter:c=>!c._isRec,filterKey:'ingredient',candidates:cands,source:'trash'});
     }
     case 'selectIngZone':{
       if(!p.ingZone.length)return addLog(G,'食材ゾーンが空');
@@ -1069,7 +1069,7 @@ function execBlock(G,pi,blk,cardId){
       return mkPending(G,{type:'trash_to_hand_multi',pi,
         title:blk.title||`ごみ箱から${n3}枚選んで手札へ`,
         desc:`${n3}枚選んでください`,
-        filter:filter3,source:'trash',multi:n3});
+        filter:filter3,filterKey:blk.filterKey||null,candidates:cands3,source:'trash',multi:n3});
     }
     case 'markIngZone':{
       if(!p.ingZone.length)return addLog(G,`P${pi+1}: 食材ゾーンが空`);
@@ -1111,14 +1111,16 @@ function resolveBlockChoice(G,pi,pd,chosen){
     const p2=G.players[pi];
     const cards=chosen.map(u=>p2.trash.find(c=>c._uid===u)).filter(Boolean);
     if(!cards.length)return G;
-    const trash=p2.trash.filter(c=>!chosen.includes(c._uid));
-    const r=ph(p2,cards);
-    return addLog(ovP(G,pi,{trash,...r}),`P${pi+1}: ${cards.map(c=>c.name).join('・')}を手札へ`);
+    const p3={...p2,trash:p2.trash.filter(c=>!chosen.includes(c._uid))};
+    const r=ph(p3,cards);
+    return addLog(ovP(G,pi,r),`P${pi+1}: ${cards.map(c=>c.name).join('・')}を手札へ`);
   }
   if(pd.type==='trash_to_hand'){
     const card=p.trash.find(c=>c._uid===chosen[0]);if(!card)return G;
-    const r=ph(p,[card]);
-    return addLog(ovP(G,pi,{trash:p.trash.filter(c=>c._uid!==card._uid),...r}),`P${pi+1}: ${card.name}を手札へ`);
+    const trashRemoved=p.trash.filter(c=>c._uid!==card._uid);
+    const p2={...p,trash:trashRemoved};
+    const r=ph(p2,[card]);
+    return addLog(ovP(G,pi,r),`P${pi+1}: ${card.name}を手札へ`);
   }
   if(pd.type==='trash_to_ingdeck'){
     const card=p.trash.find(c=>c._uid===chosen[0]);if(!card)return G;
@@ -1280,7 +1282,7 @@ const ING_BLOCKS={
 
   // 豆腐: ごみ箱からたんぱく質→手札
   tofu:[
-    {type:'recoverTrash',filter:c=>c.cat==='protein'&&!c._isRec,
+    {type:'recoverTrash',filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein',
      title:'ごみ箱からたんぱく質を手札へ回収'},
   ],
 
@@ -1363,13 +1365,13 @@ const ING_BLOCKS={
 
   // 牛乳: ごみ箱からチーズorバター→手札
   milk:[
-    {type:'recoverTrash',filter:c=>['cheese','butter'].includes(c.id)&&!c._isRec,
+    {type:'recoverTrash',filter:c=>['cheese','butter'].includes(c.id)&&!c._isRec,filterKey:'id:cheese,butter',
      title:'ごみ箱からチーズまたはバターを手札へ回収'},
   ],
 
   // さば: ごみ箱からミネラル→手札
   saba:[
-    {type:'recoverTrash',filter:c=>c.cat==='mineral'&&!c._isRec,
+    {type:'recoverTrash',filter:c=>c.cat==='mineral'&&!c._isRec,filterKey:'mineral',
      title:'ごみ箱からミネラルカードを手札へ回収'},
   ],
 
@@ -1377,7 +1379,7 @@ const ING_BLOCKS={
   shiitake:[
     {type:'discardHand',n:2,optional:true},
     {type:'ifPrev'},
-    {type:'searchIngDeck',filter:c=>c.cat==='mineral',title:'食材山札からミネラルカードを選ぶ'},
+    {type:'searchIngDeck',filter:c=>c.cat==='mineral',filterKey:'mineral',title:'食材山札からミネラルカードを選ぶ'},
     {type:'selfTrash'},
   ],
 
@@ -1386,7 +1388,7 @@ const ING_BLOCKS={
 
   // 海苔: ごみ箱からお米→手札
   nori:[
-    {type:'recoverTrash',filter:c=>c.id==='rice',
+    {type:'recoverTrash',filter:c=>c.id==='rice',filterKey:'id:rice',
      title:'ごみ箱からお米を手札へ回収'},
   ],
 
@@ -1916,6 +1918,10 @@ function SelectionModal({G,onResolve,canOperate}){
     if(k==='fat'||k==='fat_ing')return c.cat==='fat'&&!c._isRec;
     if(k==='vitamin'||k==='vitamin_ing')return c.cat==='vitamin'&&!c._isRec;
     if(k==='mineral'||k==='mineral_ing')return c.cat==='mineral'&&!c._isRec;
+    if(k.startsWith('id:')){
+      const ids=k.slice(3).split(',');
+      return ids.includes(c.id)&&!c._isRec;
+    }
     return true;
   }
   // source が未設定の場合（サーバー側game-engineが生成したpendingなど）、typeから推定
@@ -2570,7 +2576,7 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     }
     if(G.phase==='place'&&!c._isRec){
       if(p.ingZone.length>=7){showMsg('食材ゾーンは最大7枚！');return;}
-      setG(prev=>addLog(ovP(prev,pid,{hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),ingZone:[...prev.players[pid].ingZone,{...c,_placedThisTurn:true,_satBuff:0}]}),`P${pid+1}: ${c.name}を配置`));return;
+      setG(prev=>addLog(ovP(prev,pid,{hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),ingZone:[...prev.players[pid].ingZone,{...c,_placedThisTurn:true,_satBuff:0,_used:false}]}),`P${pid+1}: ${c.name}を配置`));return;
     }
     if(G.phase==='serve'){
       if(c._isRec){setSelH(c._uid);setSelZ([]);} return;
@@ -3171,7 +3177,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
     )
   );
 
-  // ルーム待機（デッキ選択前）
+  // ルーム待機（デッキ選択前 or 再戦待機）
   if(mode==='wait')return h('div',{className:'title-screen'},
     h('div',{className:'logo'},
       h('h1',null,'🏠 ルーム待機中'),
@@ -3183,7 +3189,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       roomInfo.players.map((p,i)=>h('div',{key:i,style:{padding:'10px 18px',borderRadius:'7px',minWidth:'120px',textAlign:'center',
         background:p.ready?'rgba(48,160,80,.2)':'var(--bg3)',border:`1px solid ${p.ready?'#38a068':'var(--border)'}`}},
         h('div',{style:{fontWeight:'bold',color:'var(--text)',marginBottom:'4px'}},p.name||`P${i+1}`),
-        h('div',{style:{fontSize:'12px',color:p.ready?'#6eda98':'var(--muted)'}},p.ready?'✅ 準備完了':'⏳ 待機中')
+        h('div',{style:{fontSize:'12px',color:p.ready?'#6eda98':'var(--muted)'}},p.ready?'✅ 再戦準備完了':'⏳ 待機中')
       ))
     ),
     h('div',{className:'title-menu'},

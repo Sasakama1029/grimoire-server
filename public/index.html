@@ -2563,6 +2563,10 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     if(G.firstTurn&&G.turn===1&&G.phase==='activate'){
       setG(prev=>({...prev,phase:'discard'}));setSelH(null);setSelZ([]);return;
     }
+    // noServeデバフがある場合はserveフェーズをスキップ
+    if(G.phase==='activate'&&G.players[pid]?.debuffs?.noServe){
+      setG(prev=>({...prev,phase:'discard'}));setSelH(null);setSelZ([]);return;
+    }
     if(idx<phases.length-1)setG(prev=>({...prev,phase:phases[idx+1]}));
     else{setSelH(null);setSelZ([]);setG(prev=>endTurn(prev));}
     setSelH(null);setSelZ([]);
@@ -3091,7 +3095,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function doJoin(){if(!playerName.trim()||!inputRoom.trim()){setErrMsg('名前とルームIDを入力してください');return;}setErrMsg('');emit('joinRoom',{roomId:inputRoom.trim().toUpperCase(),name:playerName,deck:playerDeck});}
   function doReady(){emit('ready',{deck:playerDeck});setMode('wait-ready');}
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
-  function doRematch(){emit('rematch',{deck:playerDeck});setShowResult(null);setMode('wait');}
+  function doRematch(){emit('rematch',{deck:playerDeck});setShowResult(null);setRematchSec(null);setMode('wait');}
   function goTitle(){setRematchSec(null);sockRef.current&&sockRef.current.disconnect();onBack();}
 
   if(mode==='game'&&onlineG&&!showResult){
@@ -3148,7 +3152,11 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       `⏳ 再戦受付中... ${rematchSec}秒`
     ),
     h('div',{className:'title-menu',style:{marginTop:'16px'}},
-      h('button',{className:'mbtn primary',onClick:()=>{setPlayerDeck(null);setMode('deck-select-rematch');}},'🔄 再戦する（デッキ変更可）'),
+      rematchSec===null&&h('button',{className:'mbtn primary',onClick:()=>{
+        // 即座にrematchイベントを送信してカウントダウン開始
+        emit('rematch',{deck:playerDeck});
+      }},'🔄 再戦する'),
+      rematchSec!==null&&h('button',{className:'mbtn',disabled:true},'⏳ 相手の応答を待っています...'),
       h('button',{className:'mbtn sm',onClick:goTitle},'← タイトルへ戻る')
     )
   );

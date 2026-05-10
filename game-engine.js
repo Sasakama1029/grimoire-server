@@ -854,6 +854,10 @@ function doNextPhase(G, pi) {
   if (G.firstTurn && G.turn === 1 && G.phase === 'activate') {
     return { G: { ...G, phase: 'discard' } };
   }
+  // noServeデバフがある場合はserveフェーズをスキップ
+  if (G.phase === 'activate' && G.players[pi]?.debuffs?.noServe) {
+    return { G: { ...G, phase: 'discard' } };
+  }
   if (idx < phases.length - 1) {
     return { G: { ...G, phase: phases[idx + 1] } };
   }

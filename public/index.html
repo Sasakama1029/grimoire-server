@@ -663,7 +663,7 @@ const REC_DEFS=[
   {id:'teriyakiBuri',name:'ぶりの照り焼き',sat:4,req:['yellowtail','flour'],eff:'自分と相手は食材山札からカードを1枚引く。',icon:'🐟'},
   {id:'jagabata',name:'じゃがバター',sat:4,req:['potato','butter'],eff:null,icon:'🥔'},
   {id:'yakitori',name:'焼き鳥',sat:4,req:['chicken','negi'],eff:null,icon:'🍢'},
-  {id:'steak',name:'ステーキ',sat:6,req:['beef','butter'],eff:'次の自分のターン中、料理を提供できない。',icon:'🥩'},
+  {id:'steak',name:'ステーキ',sat:5,req:['beef','butter'],eff:'次の自分のターン中、料理を提供できない。',icon:'🥩'},
   {id:'sabaMiso',name:'さばの味噌煮',sat:3,req:['saba','miso','ginger'],eff:'相手の食材ゾーンのカードを1枚選び、ごみ箱に送る。',icon:'🐟'},
   {id:'buriDaikon',name:'ぶり大根',sat:3,req:['ginger','yellowtail','daikon'],eff:'相手の食材ゾーンのカードを1枚選び、山札に戻す。',icon:'🐠'},
   {id:'yasaiSalad',name:'温野菜サラダ',sat:4,req:['carrot','potato','broccoli'],eff:'手札を1枚ごみ箱に送ってもよい。そうしたなら、ごみ箱から食材カードを1枚選び手札に加える。',icon:'🥗'},
@@ -1330,7 +1330,7 @@ const ING_BLOCKS={
   // 唐辛子: 相手が料理を提供した時、自分の満腹度-1（相手ターン終了時まで有効）→ごみ箱
   chili:[
     {type:'selfTrash'},
-    {type:'setOppDebuff',key:'chiliWatch',val:1},
+    {type:'setDebuff',key:'chiliWatch',val:1},
   ],
 
   // トマト: 自食材ゾーン3枚以下→食材2ドロー
@@ -1630,8 +1630,8 @@ function serveRecipe(G,pi,recUid,ingUids){
   G2=ovP(G2,opp,{satiety:Math.min(20,G2.players[opp].satiety+gain+toastBonus)});
   const toastMsg=toastBonus>0?`（満腹バフ+${toastBonus}）`:'';
   G2=addLog(G2,`P${pi+1}: 【${rec.name}】完成！相手+${gain+toastBonus}！${toastMsg}`,'hl');
-  // 唐辛子デバフチェック：相手（opp）がchiliWatchを持っている場合、提供者（pi）の満腹度-1
-  if(G2.players[opp].debuffs&&G2.players[opp].debuffs.chiliWatch){
+  // 唐辛子デバフチェック：opp（唐辛子起動者）がchiliWatchを持っている→提供者piの満腹-1
+  if(G2.players[opp]&&G2.players[opp].debuffs&&G2.players[opp].debuffs.chiliWatch){
     G2=ovP(G2,pi,{satiety:Math.max(0,G2.players[pi].satiety-1)});
     G2=addLog(G2,`唐辛子の効果！P${pi+1}の満腹度-1`,'warn');
   }
@@ -1655,9 +1655,11 @@ function endTurn(G){
   np[opp]={...np[opp],revealed:false};
   const od={...np[opp].debuffs};
   if(od.noServe)od.noServe=Math.max(0,od.noServe-1);
-  // chiliWatch：相手（opp）のターン終了時にpiのchiliWatchをクリア
+  // chiliWatch：ターン終了時に両プレイヤーのchiliWatchをクリア（相手のターン終了で消える仕様）
   const pd={...np[pi].debuffs};
   if(pd.chiliWatch){pd.chiliWatch=0;np[pi]={...np[pi],debuffs:pd};}
+  const pod={...np[opp].debuffs};
+  if(pod.chiliWatch){pod.chiliWatch=0;np[opp]={...np[opp],debuffs:pod};}
   np[opp]={...np[opp],debuffs:od};
   return addLog({...s,players:np,currentPlayer:opp,phase:'draw',turn:s.turn+1,firstTurn:false},`Turn ${s.turn+1} - P${opp+1}のターン`);
 }

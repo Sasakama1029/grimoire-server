@@ -72,7 +72,7 @@ io.on('connection', (socket) => {
     const roomId = uuidv4().slice(0, 6).toUpperCase();
     rooms[roomId] = {
       id: roomId,
-      players: [{ socketId: socket.id, name: name || 'Player1', pi: 0, deck: deck || null, ready: false }],
+      players: [{ socketId: socket.id, name: name || 'Player1', pi: 0, deck: deck || null, ready: false, rematchReady: false }],
       G: null, phase: 'waiting', mulliganSels: [null, null], rematchTimer: null,
       G: null, phase: 'waiting', mulliganSels: [null, null],
     };
@@ -93,7 +93,7 @@ io.on('connection', (socket) => {
     if (room.players.length >= 2) { socket.emit('error', 'ルームが満員です'); return; }
     if (room.phase !== 'waiting') { socket.emit('error', 'ゲームが既に始まっています'); return; }
 
-    room.players.push({ socketId: socket.id, name: name || 'Player2', pi: 1, deck: deck || null, ready: false });
+    room.players.push({ socketId: socket.id, name: name || 'Player2', pi: 1, deck: deck || null, ready: false, rematchReady: false });
     socketRoom[socket.id] = roomId;
     socket.join(roomId);
     socket.emit('roomJoined', { roomId, myPi: 1 });
@@ -152,11 +152,11 @@ io.on('connection', (socket) => {
     const pl = room.players.find(p => p.socketId === socket.id);
     if (!pl) return;
     pl.deck = deck || null;
-    pl.ready = true;
+    pl.rematchReady = true;
     broadcast(roomId, 'roomInfo', { players: room.players.map(p => ({ name: p.name, ready: p.ready })) });
 
     // 最初の1人目がボタンを押したらカウントダウン開始
-    const readyCount = room.players.filter(p => p.ready).length;
+    const readyCount = room.players.filter(p => p.rematchReady).length;
     if (readyCount === 1 && !room.rematchTimer) {
       let sec = 10;
       broadcast(roomId, 'rematchCountdown', { sec });
@@ -166,20 +166,20 @@ io.on('connection', (socket) => {
         if (sec <= 0) {
           clearInterval(room.rematchTimer);
           room.rematchTimer = null;
-          // 時間切れ：揃っていなければタイトルへ戻るよう通知
-          if (!room.players.every(p => p.ready)) {
+          if (!room.players.every(p => p.rematchReady)) {
             broadcast(roomId, 'rematchExpired', {});
-            room.players.forEach(p => { p.ready = false; });
+            room.players.forEach(p => { p.rematchReady = false; });
           }
         }
       }, 1000);
     }
 
-    // 両者揃ったら再戦開始
-    if (room.players.length === 2 && room.players.every(p => p.ready)) {
+    // 両者揃ったらデッキ選択画面へ誘導
+    if (room.players.length === 2 && room.players.every(p => p.rematchReady)) {
       if (room.rematchTimer) { clearInterval(room.rematchTimer); room.rematchTimer = null; }
-      room.players.forEach(p => { p.ready = false; });
-      startMulligan(room);
+      room.players.forEach(p => { p.rematchReady = false; p.ready = false; });
+      // 両者にrematchMatchedを送信→各自デッキ選択後にreadyイベントを送る
+      broadcast(roomId, 'rematchMatched', {});
     }
   });
 

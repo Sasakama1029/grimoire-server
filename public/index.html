@@ -1652,7 +1652,7 @@ function endTurn(G){
   const np=[...s.players];
   // 現ターンプレイヤー（pi）のリセット
   const piDebuffs={...np[pi].debuffs};
-  if(piDebuffs.noServe)piDebuffs.noServe=Math.max(0,piDebuffs.noServe-1);
+  // noServeはactivate→serve遷移時にチェック・消費するためここでは減らさない
   if(piDebuffs.chiliWatch)piDebuffs.chiliWatch=0;
   np[pi]={...np[pi],activatedThisTurn:false,servedLastTurn:false,
     ingZone:np[pi].ingZone.map(c=>({...c,_used:false,_placedThisTurn:false})),
@@ -1754,9 +1754,14 @@ function aiTurn(G,pi){
   // ── 料理提供の優先度改善 ──
   s={...s,phase:'serve'};
   if(!(s.firstTurn&&s.turn===1)){
-    let served=true;
-    while(served){
-      served=false;if(s.players[pi].debuffs.noServe)break;
+    // noServeがある場合はserveをスキップして消費
+    if(s.players[pi].debuffs&&s.players[pi].debuffs.noServe){
+      const db={...s.players[pi].debuffs,noServe:0};
+      s=ovP(s,pi,{debuffs:db});
+    } else {
+      let served=true;
+      while(served){
+        served=false;
       const sp=s.players[pi];const zoneIds=sp.ingZone.map(z=>z.id);
       const oppSat=s.players[1-pi].satiety;
       const opts=sp.hand.filter(c=>c._isRec&&c.req.every(r=>zoneIds.includes(r))).map(rec=>{
@@ -1772,6 +1777,7 @@ function aiTurn(G,pi){
       s=addLog(s,`AI: 【${b.rec.name}】を提供！`,'ai-log');
       s=serveRecipe(s,pi,b.rec._uid,b.iu);served=true;if(s.winner!=null)return s;
     }
+    } // noServeのelseブロック終了
   }
 
   // ── 廃棄の積極化 ──
@@ -2563,9 +2569,13 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     if(G.firstTurn&&G.turn===1&&G.phase==='activate'){
       setG(prev=>({...prev,phase:'discard'}));setSelH(null);setSelZ([]);return;
     }
-    // noServeデバフがある場合はserveフェーズをスキップ
+    // noServeデバフがある場合はserveフェーズをスキップし、noServeを消費
     if(G.phase==='activate'&&G.players[pid]?.debuffs?.noServe){
-      setG(prev=>({...prev,phase:'discard'}));setSelH(null);setSelZ([]);return;
+      setG(prev=>{
+        const db={...prev.players[pid].debuffs,noServe:0};
+        return {...ovP(prev,pid,{debuffs:db}),phase:'discard'};
+      });
+      setSelH(null);setSelZ([]);return;
     }
     if(idx<phases.length-1)setG(prev=>({...prev,phase:phases[idx+1]}));
     else{setSelH(null);setSelZ([]);setG(prev=>endTurn(prev));}
@@ -3084,6 +3094,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       sock.on('gameOver',({winnerName,reason})=>{setShowResult({winnerName,reason});setRematchSec(null);});
       sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');setShowResult(null);setRematchSec(null);});
       sock.on('rematchCountdown',({sec})=>{setRematchSec(sec);});
+      sock.on('rematchMatched',()=>{setShowResult(null);setRematchSec(null);setPlayerDeck(null);setMode('deck-select-rematch');});
       sock.on('rematchExpired',()=>{setRematchSec(null);setShowResult(null);goTitle();});
     });
     return()=>{if(sock)sock.disconnect();};
@@ -3095,7 +3106,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function doJoin(){if(!playerName.trim()||!inputRoom.trim()){setErrMsg('名前とルームIDを入力してください');return;}setErrMsg('');emit('joinRoom',{roomId:inputRoom.trim().toUpperCase(),name:playerName,deck:playerDeck});}
   function doReady(){emit('ready',{deck:playerDeck});setMode('wait-ready');}
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
-  function doRematch(){emit('rematch',{deck:playerDeck});setShowResult(null);setRematchSec(null);setMode('wait');}
+  function doRematch(){emit('ready',{deck:playerDeck});setMode('wait-ready');}
   function goTitle(){setRematchSec(null);sockRef.current&&sockRef.current.disconnect();onBack();}
 
   if(mode==='game'&&onlineG&&!showResult){

@@ -854,9 +854,10 @@ function doNextPhase(G, pi) {
   if (G.firstTurn && G.turn === 1 && G.phase === 'activate') {
     return { G: { ...G, phase: 'discard' } };
   }
-  // noServeデバフがある場合はserveフェーズをスキップ
+  // noServeデバフがある場合はserveフェーズをスキップし、noServeを消費
   if (G.phase === 'activate' && G.players[pi]?.debuffs?.noServe) {
-    return { G: { ...G, phase: 'discard' } };
+    const db = { ...G.players[pi].debuffs, noServe: 0 };
+    return { G: { ...ovP(G, pi, { debuffs: db }), phase: 'discard' } };
   }
   if (idx < phases.length - 1) {
     return { G: { ...G, phase: phases[idx + 1] } };
@@ -883,7 +884,7 @@ function endTurn(G) {
   const np = [...s.players];
   // 現ターンプレイヤー（pi）のリセット
   const piDebuffs = { ...np[pi].debuffs };
-  if (piDebuffs.noServe) piDebuffs.noServe = Math.max(0, piDebuffs.noServe - 1);
+  // noServeはdoNextPhaseでチェック・消費するためここでは減らさない
   if (piDebuffs.chiliWatch) piDebuffs.chiliWatch = 0;
   np[pi] = { ...np[pi], activatedThisTurn: false, servedLastTurn: false,
     ingZone: np[pi].ingZone.map(c => ({ ...c, _used: false, _placedThisTurn: false })),

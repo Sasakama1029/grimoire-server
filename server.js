@@ -155,14 +155,16 @@ io.on('connection', (socket) => {
     pl.rematchReady = true;
     broadcast(roomId, 'roomInfo', { players: room.players.map(p => ({ name: p.name, ready: p.ready })) });
 
-    // 最初の1人目がボタンを押したらカウントダウン開始
-    const readyCount = room.players.filter(p => p.rematchReady).length;
     if (readyCount === 1 && !room.rematchTimer) {
       let sec = 10;
-      broadcast(roomId, 'rematchCountdown', { sec });
+      // 押した本人にはカウントダウン、相手には「相手が希望」フラグ付きで送信
+      room.players.forEach(p => {
+        const s = io.sockets.sockets.get(p.socketId);
+        if (!s) return;
+        s.emit('rematchCountdown', { sec, fromOpponent: !p.rematchReady });
+      });
       room.rematchTimer = setInterval(() => {
         sec--;
-        broadcast(roomId, 'rematchCountdown', { sec });
         if (sec <= 0) {
           clearInterval(room.rematchTimer);
           room.rematchTimer = null;
@@ -170,7 +172,13 @@ io.on('connection', (socket) => {
             broadcast(roomId, 'rematchExpired', {});
             room.players.forEach(p => { p.rematchReady = false; });
           }
+          return;
         }
+        // カウントダウン中は押した本人にのみsecを送信
+        room.players.filter(p => p.rematchReady).forEach(p => {
+          const s = io.sockets.sockets.get(p.socketId);
+          if (s) s.emit('rematchCountdown', { sec, fromOpponent: false });
+        });
       }, 1000);
     }
 

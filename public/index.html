@@ -3072,7 +3072,9 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   const [errMsg,setErrMsg]=useState('');
   const [playerDeck,setPlayerDeck]=useState(null);
   const [showResult,setShowResult]=useState(null);
-  const [rematchSec,setRematchSec]=useState(null); // カウントダウン秒数
+  const [rematchSec,setRematchSec]=useState(null);       // 自分が押した後のカウントダウン
+  const [opponentWantsRematch,setOpponentWantsRematch]=useState(false); // 相手が再戦ボタンを押した
+  const [iWantRematch,setIWantRematch]=useState(false);   // 自分が再戦ボタンを押した
   const sockRef=useRef(null);
 
   useEffect(()=>{
@@ -3091,11 +3093,15 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       sock.on('coinFlip',({first,myPi:pi})=>{setOnlineMyPi(pi);setCoinFirst(first);setMode('coin-flip');});
       sock.on('mulliganStart',({hand,myPi:pi})=>{setMulHand(hand);setOnlineMyPi(pi);setMulSel(new Set());setMode('mulligan');});
       sock.on('state',({G,myPi:pi})=>{setOnlineG(G);setOnlineMyPi(pi);setShowResult(null);setMode('game');});
-      sock.on('gameOver',({winnerName,reason})=>{setShowResult({winnerName,reason});setRematchSec(null);});
-      sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');setShowResult(null);setRematchSec(null);});
-      sock.on('rematchCountdown',({sec})=>{setRematchSec(sec);});
-      sock.on('rematchMatched',()=>{setShowResult(null);setRematchSec(null);setPlayerDeck(null);setMode('deck-select-rematch');});
-      sock.on('rematchExpired',()=>{setRematchSec(null);setShowResult(null);goTitle();});
+      sock.on('gameOver',({winnerName,reason})=>{setShowResult({winnerName,reason});setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);});
+      sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');setShowResult(null);setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);});
+      sock.on('rematchCountdown',({sec,fromOpponent})=>{
+        // fromOpponentがtrueなら相手が押した（自分はまだ押していない可能性）
+        if(fromOpponent){setOpponentWantsRematch(true);}
+        else{setRematchSec(sec);}
+      });
+      sock.on('rematchMatched',()=>{setShowResult(null);setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);setPlayerDeck(null);setMode('deck-select-rematch');});
+      sock.on('rematchExpired',()=>{setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);setShowResult(null);goTitle();});
     });
     return()=>{if(sock)sock.disconnect();};
   },[]);
@@ -3159,15 +3165,20 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       h('h1',null,showResult.winnerName+' の勝利！'),
       showResult.reason&&h('div',{className:'logo-en'},showResult.reason)
     ),
-    rematchSec!==null&&h('div',{style:{fontSize:'13px',color:'var(--goldL)',margin:'8px 0',textAlign:'center'}},
-      `⏳ 再戦受付中... ${rematchSec}秒`
+    // 相手が先に押している場合の通知
+    opponentWantsRematch&&!iWantRematch&&h('div',{style:{fontSize:'13px',color:'#6eda98',margin:'8px 0',textAlign:'center'}},
+      '🔔 相手が再戦を希望しています！'
+    ),
+    // 自分が押した後の待機表示
+    iWantRematch&&h('div',{style:{fontSize:'13px',color:'var(--goldL)',margin:'8px 0',textAlign:'center'}},
+      rematchSec!==null?`⏳ 相手の応答を待っています... ${rematchSec}秒`:'⏳ 相手の応答を待っています...'
     ),
     h('div',{className:'title-menu',style:{marginTop:'16px'}},
-      rematchSec===null&&h('button',{className:'mbtn primary',onClick:()=>{
-        // 即座にrematchイベントを送信してカウントダウン開始
+      !iWantRematch&&h('button',{className:'mbtn primary',onClick:()=>{
+        setIWantRematch(true);
         emit('rematch',{deck:playerDeck});
       }},'🔄 再戦する'),
-      rematchSec!==null&&h('button',{className:'mbtn',disabled:true},'⏳ 相手の応答を待っています...'),
+      iWantRematch&&h('button',{className:'mbtn',disabled:true,style:{opacity:0.5}},'✅ 再戦申請中...'),
       h('button',{className:'mbtn sm',onClick:goTitle},'← タイトルへ戻る')
     )
   );

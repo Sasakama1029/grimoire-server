@@ -396,7 +396,12 @@ function execBlock(G, pi, blk, cardId) {
       return runBlocks(G, pi, blk.then, cardId);
     }
     case 'discardHand': {
-      const cands = (blk.filter ? p.hand.filter(blk.filter) : p.hand).filter(c => !c._hidden);
+      const handAll = p.hand.filter(c => !c._hidden);
+      const cands = blk.filter
+        ? handAll.filter(blk.filter)
+        : blk.filterKey
+          ? handAll.filter(c => matchFilter(c, blk.filterKey))
+          : handAll;
       if (!cands.length) return blk.optional ? null : G;
       const multi = blk.n || 1;
       return mkPending(G, { type: 'discardHand', pi, n: multi, multi, optional: !!blk.optional, canSkip: !!blk.optional, filterKey: blk.filterKey, candidates: cands, source: 'hand' });
@@ -872,17 +877,17 @@ function endTurn(G) {
     s = checkWin(s); if (s.winner != null) return s;
   }
   const np = [...s.players];
-  np[pi] = { ...np[pi], activatedThisTurn: false, servedLastTurn: false, ingZone: np[pi].ingZone.map(c => ({ ...c, _used: false, _placedThisTurn: false })), revealed: false };
-  // 相手の手札公開フラグもターン終了時にリセット
-  np[opp] = { ...np[opp], revealed: false };
-  const od = { ...np[opp].debuffs };
-  if (od.noServe) od.noServe = Math.max(0, od.noServe - 1);
-  np[opp] = { ...np[opp], debuffs: od };
-  // chiliWatch：ターン終了時に両プレイヤーのchiliWatchをクリア
-  const pd = { ...np[pi].debuffs };
-  if (pd.chiliWatch) { pd.chiliWatch = 0; np[pi] = { ...np[pi], debuffs: pd }; }
-  const pod = { ...np[opp].debuffs };
-  if (pod.chiliWatch) { pod.chiliWatch = 0; np[opp] = { ...np[opp], debuffs: pod }; }
+  // 現ターンプレイヤー（pi）のリセット
+  const piDebuffs = { ...np[pi].debuffs };
+  if (piDebuffs.noServe) piDebuffs.noServe = Math.max(0, piDebuffs.noServe - 1);
+  if (piDebuffs.chiliWatch) piDebuffs.chiliWatch = 0;
+  np[pi] = { ...np[pi], activatedThisTurn: false, servedLastTurn: false,
+    ingZone: np[pi].ingZone.map(c => ({ ...c, _used: false, _placedThisTurn: false })),
+    revealed: false, debuffs: piDebuffs };
+  // 次ターンプレイヤー（opp）のリセット
+  const oppDebuffs = { ...np[opp].debuffs };
+  if (oppDebuffs.chiliWatch) oppDebuffs.chiliWatch = 0;
+  np[opp] = { ...np[opp], revealed: false, debuffs: oppDebuffs };
   return addLog({ ...s, players: np, currentPlayer: opp, phase: 'draw', turn: s.turn + 1, firstTurn: false }, `Turn ${s.turn + 1} - P${opp + 1}のターン`);
 }
 

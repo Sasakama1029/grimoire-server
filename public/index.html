@@ -1650,17 +1650,17 @@ function endTurn(G){
     s=addLog(s,`P${pi+1}: バフで満腹+${v}`,'warn');s=checkWin(s);if(s.winner!=null)return s;
   }
   const np=[...s.players];
-  np[pi]={...np[pi],activatedThisTurn:false,servedLastTurn:false,ingZone:np[pi].ingZone.map(c=>({...c,_used:false,_placedThisTurn:false})),revealed:false};
-  // 相手の手札公開フラグもターン終了時にリセット
-  np[opp]={...np[opp],revealed:false};
-  const od={...np[opp].debuffs};
-  if(od.noServe)od.noServe=Math.max(0,od.noServe-1);
-  // chiliWatch：ターン終了時に両プレイヤーのchiliWatchをクリア（相手のターン終了で消える仕様）
-  const pd={...np[pi].debuffs};
-  if(pd.chiliWatch){pd.chiliWatch=0;np[pi]={...np[pi],debuffs:pd};}
-  const pod={...np[opp].debuffs};
-  if(pod.chiliWatch){pod.chiliWatch=0;np[opp]={...np[opp],debuffs:pod};}
-  np[opp]={...np[opp],debuffs:od};
+  // 現ターンプレイヤー（pi）のリセット
+  const piDebuffs={...np[pi].debuffs};
+  if(piDebuffs.noServe)piDebuffs.noServe=Math.max(0,piDebuffs.noServe-1);
+  if(piDebuffs.chiliWatch)piDebuffs.chiliWatch=0;
+  np[pi]={...np[pi],activatedThisTurn:false,servedLastTurn:false,
+    ingZone:np[pi].ingZone.map(c=>({...c,_used:false,_placedThisTurn:false})),
+    revealed:false,debuffs:piDebuffs};
+  // 次ターンプレイヤー（opp）のリセット
+  const oppDebuffs={...np[opp].debuffs};
+  if(oppDebuffs.chiliWatch)oppDebuffs.chiliWatch=0;
+  np[opp]={...np[opp],revealed:false,debuffs:oppDebuffs};
   return addLog({...s,players:np,currentPlayer:opp,phase:'draw',turn:s.turn+1,firstTurn:false},`Turn ${s.turn+1} - P${opp+1}のターン`);
 }
 function doMulligan(players,sels){

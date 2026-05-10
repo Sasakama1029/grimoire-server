@@ -3058,6 +3058,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   const [errMsg,setErrMsg]=useState('');
   const [playerDeck,setPlayerDeck]=useState(null);
   const [showResult,setShowResult]=useState(null);
+  const [rematchSec,setRematchSec]=useState(null); // カウントダウン秒数
   const sockRef=useRef(null);
 
   useEffect(()=>{
@@ -3076,8 +3077,10 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       sock.on('coinFlip',({first,myPi:pi})=>{setOnlineMyPi(pi);setCoinFirst(first);setMode('coin-flip');});
       sock.on('mulliganStart',({hand,myPi:pi})=>{setMulHand(hand);setOnlineMyPi(pi);setMulSel(new Set());setMode('mulligan');});
       sock.on('state',({G,myPi:pi})=>{setOnlineG(G);setOnlineMyPi(pi);setShowResult(null);setMode('game');});
-      sock.on('gameOver',({winnerName,reason})=>{setShowResult({winnerName,reason});});
-      sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');setShowResult(null);});
+      sock.on('gameOver',({winnerName,reason})=>{setShowResult({winnerName,reason});setRematchSec(null);});
+      sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');setShowResult(null);setRematchSec(null);});
+      sock.on('rematchCountdown',({sec})=>{setRematchSec(sec);});
+      sock.on('rematchExpired',()=>{setRematchSec(null);setShowResult(null);goTitle();});
     });
     return()=>{if(sock)sock.disconnect();};
   },[]);
@@ -3089,7 +3092,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function doReady(){emit('ready',{deck:playerDeck});setMode('wait-ready');}
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
   function doRematch(){emit('rematch',{deck:playerDeck});setShowResult(null);setMode('wait');}
-  function goTitle(){sockRef.current&&sockRef.current.disconnect();onBack();}
+  function goTitle(){setRematchSec(null);sockRef.current&&sockRef.current.disconnect();onBack();}
 
   if(mode==='game'&&onlineG&&!showResult){
     const myNameOnline=playerName||'あなた';
@@ -3141,7 +3144,10 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       h('h1',null,showResult.winnerName+' の勝利！'),
       showResult.reason&&h('div',{className:'logo-en'},showResult.reason)
     ),
-    h('div',{className:'title-menu',style:{marginTop:'24px'}},
+    rematchSec!==null&&h('div',{style:{fontSize:'13px',color:'var(--goldL)',margin:'8px 0',textAlign:'center'}},
+      `⏳ 再戦受付中... ${rematchSec}秒`
+    ),
+    h('div',{className:'title-menu',style:{marginTop:'16px'}},
       h('button',{className:'mbtn primary',onClick:()=>{setPlayerDeck(null);setMode('deck-select-rematch');}},'🔄 再戦する（デッキ変更可）'),
       h('button',{className:'mbtn sm',onClick:goTitle},'← タイトルへ戻る')
     )

@@ -73,6 +73,7 @@ io.on('connection', (socket) => {
     rooms[roomId] = {
       id: roomId,
       players: [{ socketId: socket.id, name: name || 'Player1', pi: 0, deck: deck || null, ready: false }],
+      G: null, phase: 'waiting', mulliganSels: [null, null], rematchTimer: null,
       G: null, phase: 'waiting', mulliganSels: [null, null],
     };
     socketRoom[socket.id] = roomId;
@@ -150,14 +151,33 @@ io.on('connection', (socket) => {
     if (!room) return;
     const pl = room.players.find(p => p.socketId === socket.id);
     if (!pl) return;
-    // デッキを更新してreadyフラグを立てる
     pl.deck = deck || null;
     pl.ready = true;
-    // 両者に準備状況を通知
     broadcast(roomId, 'roomInfo', { players: room.players.map(p => ({ name: p.name, ready: p.ready })) });
+
+    // 最初の1人目がボタンを押したらカウントダウン開始
+    const readyCount = room.players.filter(p => p.ready).length;
+    if (readyCount === 1 && !room.rematchTimer) {
+      let sec = 10;
+      broadcast(roomId, 'rematchCountdown', { sec });
+      room.rematchTimer = setInterval(() => {
+        sec--;
+        broadcast(roomId, 'rematchCountdown', { sec });
+        if (sec <= 0) {
+          clearInterval(room.rematchTimer);
+          room.rematchTimer = null;
+          // 時間切れ：揃っていなければタイトルへ戻るよう通知
+          if (!room.players.every(p => p.ready)) {
+            broadcast(roomId, 'rematchExpired', {});
+            room.players.forEach(p => { p.ready = false; });
+          }
+        }
+      }, 1000);
+    }
+
     // 両者揃ったら再戦開始
     if (room.players.length === 2 && room.players.every(p => p.ready)) {
-      // readyフラグをリセットしてマリガンへ
+      if (room.rematchTimer) { clearInterval(room.rematchTimer); room.rematchTimer = null; }
       room.players.forEach(p => { p.ready = false; });
       startMulligan(room);
     }
@@ -199,6 +219,7 @@ io.on('connection', (socket) => {
     if (!roomId) return;
     const room = rooms[roomId];
     if (room) {
+      if (room.rematchTimer) { clearInterval(room.rematchTimer); room.rematchTimer = null; }
       broadcast(roomId, 'opponentLeft', { msg: '相手が切断しました' });
       // ゲーム中なら相手の勝利
       if (room.phase === 'game') {

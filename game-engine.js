@@ -396,51 +396,54 @@ function execBlock(G, pi, blk, cardId) {
       return runBlocks(G, pi, blk.then, cardId);
     }
     case 'discardHand': {
-      const cands = (blk.filter ? p.hand.filter(blk.filter) : p.hand);
+      const cands = (blk.filter ? p.hand.filter(blk.filter) : p.hand).filter(c => !c._hidden);
       if (!cands.length) return blk.optional ? null : G;
-      return mkPending(G, { type: 'discardHand', pi, n: blk.n || 1, optional: !!blk.optional, filterKey: blk.filterKey });
+      const multi = blk.n || 1;
+      return mkPending(G, { type: 'discardHand', pi, n: multi, multi, optional: !!blk.optional, canSkip: !!blk.optional, filterKey: blk.filterKey, candidates: cands, source: 'hand' });
     }
     case 'retHand': {
       if (p.hand.length < (blk.n || 1)) return G;
-      return mkPending(G, { type: 'retHand', pi, n: blk.n || 1 });
+      const hCands = p.hand.filter(c => !c._hidden);
+      return mkPending(G, { type: 'retHand', pi, n: blk.n || 1, multi: blk.n || 1, candidates: hCands, source: 'hand' });
     }
     case 'recoverTrash': {
       const f = blk.filterKey;
-      const cands = p.trash.filter(c => !c._isRec && (!f || matchFilter(c, f)));
+      const cands = p.trash.filter(c => !c._hidden && (!f || matchFilter(c, f)));
       if (!cands.length) return addLog(G, `P${pi + 1}: ごみ箱に対象なし`);
-      return mkPending(G, { type: 'trash_to_hand', pi, filterKey: f });
+      return mkPending(G, { type: 'trash_to_hand', pi, filterKey: f, candidates: cands, source: 'trash' });
     }
     case 'recoverTrash2': {
       const f = blk.filterKey;
-      const cands = p.trash.filter(c => !c._isRec && (!f || matchFilter(c, f)));
+      const cands = p.trash.filter(c => !c._hidden && (!f || matchFilter(c, f)));
       if (!cands.length) return addLog(G, `P${pi + 1}: ごみ箱に対象なし`);
-      return mkPending(G, { type: 'trash_to_hand_multi', pi, n: Math.min(blk.n || 2, cands.length), filterKey: f });
+      const n2 = Math.min(blk.n || 2, cands.length);
+      return mkPending(G, { type: 'trash_to_hand_multi', pi, n: n2, multi: n2, filterKey: f, candidates: cands, source: 'trash' });
     }
     case 'recoverTrashToDeck': {
       const cands = p.trash.filter(c => !c._isRec);
       if (!cands.length) return addLog(G, `P${pi + 1}: ごみ箱に食材なし`);
-      return mkPending(G, { type: 'trash_to_ingdeck', pi });
+      return mkPending(G, { type: 'trash_to_ingdeck', pi, candidates: cands, source: 'trash' });
     }
     case 'recoverRecFromTrash': {
       const cands = p.trash.filter(c => c._isRec);
       if (!cands.length) return addLog(G, `P${pi + 1}: ごみ箱にレシピなし`);
-      return mkPending(G, { type: 'trash_to_hand_rec', pi });
+      return mkPending(G, { type: 'trash_to_hand_rec', pi, candidates: cands, source: 'trash' });
     }
     case 'selectIngZone': {
       if (!p.ingZone.length) return addLog(G, '食材ゾーンが空');
-      return mkPending(G, { type: 'selectIngZone_' + blk.then, pi });
+      return mkPending(G, { type: 'selectIngZone_' + blk.then, pi, candidates: [...p.ingZone], source: 'ingZone' });
     }
     case 'selectOppZone': {
       if (!G.players[opp].ingZone.length) return addLog(G, '相手食材ゾーンが空');
       const title = blk.then === 'trash' ? '相手の食材ゾーンから1枚をごみ箱へ'
         : blk.then === 'deck' ? '相手の食材ゾーンから1枚を山札へ'
         : '相手の食材ゾーンからカードを選ぶ';
-      return mkPending(G, { type: 'selectOppZone_' + blk.then, pi, title, desc: '対象のカードを選んでください' });
+      return mkPending(G, { type: 'selectOppZone_' + blk.then, pi, title, desc: '対象のカードを選んでください', candidates: [...G.players[opp].ingZone], source: 'oppIngZone' });
     }
     case 'selectHand': {
-      const cands = blk.filterKey ? p.hand.filter(c => matchFilter(c, blk.filterKey)) : p.hand;
+      const cands = blk.filterKey ? p.hand.filter(c => matchFilter(c, blk.filterKey)) : p.hand.filter(c=>!c._hidden);
       if (!cands.length) return blk.optional ? null : addLog(G, `P${pi + 1}: 手札に対象なし`);
-      return mkPending(G, { type: 'selectHand_' + blk.then, pi, optional: !!blk.optional, filterKey: blk.filterKey });
+      return mkPending(G, { type: 'selectHand_' + blk.then, pi, optional: !!blk.optional, filterKey: blk.filterKey, candidates: cands, source: 'hand' });
     }
     case 'selectIngZoneMulti': {
       if (p.ingZone.length < (blk.n || 2)) return addLog(G, `食材ゾーンに${blk.n || 2}枚以上必要`);

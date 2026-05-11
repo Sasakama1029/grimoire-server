@@ -790,7 +790,6 @@ function doActivate(G, pi, cardUid) {
 function doServeRecipe(G, pi, recUid, ingUids) {
   if (G.phase !== 'serve' || G.currentPlayer !== pi) return { error: '操作できません' };
   const p = G.players[pi];
-  if (p.debuffs && p.debuffs.noServe) return { error: 'デバフ中：料理提供不可' };
   const rec = p.hand.find(c => c._uid === recUid);
   if (!rec || !rec._isRec) return { error: '無効なレシピ' };
   const zoneIds = p.ingZone.map(c => c.id);
@@ -903,7 +902,15 @@ function doMulligan(players, sels) {
     let iD = [...p.ingDeck], rD = [...p.recDeck];
     ret.forEach(c => { if (c._isRec) rD = shuffle([...rD, c]); else iD = shuffle([...iD, c]); });
     const inN = ret.filter(c => !c._isRec).length, reN = ret.filter(c => c._isRec).length;
-    return { ...p, hand: [...kept, ...iD.slice(0, inN), ...rD.slice(0, reN)], ingDeck: iD.slice(inN), recDeck: rD.slice(reN) };
+    return {
+      ...p,
+      hand: [...kept, ...iD.slice(0, inN), ...rD.slice(0, reN)],
+      ingDeck: iD.slice(inN), recDeck: rD.slice(reN),
+      // ゲーム状態を完全リセット
+      ingZone: [], recZone: [], trash: [],
+      satiety: 0, bufNextRec: 0, debuffs: {},
+      revealed: false, activatedThisTurn: false, servedLastTurn: false,
+    };
   });
 }
 

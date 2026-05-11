@@ -1670,8 +1670,15 @@ function doMulligan(players,sels){
     let iD=[...p.ingDeck],rD=[...p.recDeck];
     ret.forEach(c=>{if(c._isRec)rD=shuffle([...rD,c]);else iD=shuffle([...iD,c]);});
     const inN=ret.filter(c=>!c._isRec).length,reN=ret.filter(c=>c._isRec).length;
-    const result={...p,hand:[...kept,...iD.slice(0,inN),...rD.slice(0,reN)],ingDeck:iD.slice(inN),recDeck:rD.slice(reN)};
-    return result;
+    return {
+      ...p,
+      hand:[...kept,...iD.slice(0,inN),...rD.slice(0,reN)],
+      ingDeck:iD.slice(inN),recDeck:rD.slice(reN),
+      // ゲーム状態を完全リセット
+      ingZone:[],recZone:[],trash:[],
+      satiety:0,bufNextRec:0,debuffs:{},
+      revealed:false,activatedThisTurn:false,servedLastTurn:false,
+    };
   });
 }
 function aiTurn(G,pi){
@@ -2659,7 +2666,7 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       const miss=rec.req.filter(r=>!si.includes(r)).map(r=>ING_NAME[r]||r);
       showMsg(miss.length?`食材不足: ${miss.join('・')}`:'組み合わせが違います');return;
     }
-    if(p.debuffs?.noServe){showMsg('デバフ中：料理提供不可');return;}
+
     const prevSat=G.players[1-pid].satiety;
     const afterServe=serveRecipe(G,pid,selH,selZ);
     const newSat=afterServe.players[1-pid].satiety;

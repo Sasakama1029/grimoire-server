@@ -1630,10 +1630,10 @@ function serveRecipe(G,pi,recUid,ingUids){
   G2=ovP(G2,opp,{satiety:Math.min(20,G2.players[opp].satiety+gain+toastBonus)});
   const toastMsg=toastBonus>0?`（満腹バフ+${toastBonus}）`:'';
   G2=addLog(G2,`P${pi+1}: 【${rec.name}】完成！相手+${gain+toastBonus}！${toastMsg}`,'hl');
-  // 唐辛子デバフチェック：opp（唐辛子起動者）がchiliWatchを持っている→提供者piの満腹-1
+  // 唐辛子バフチェック：opp（唐辛子起動者）がchiliWatchを持っている→opp自身の満腹-1
   if(G2.players[opp]&&G2.players[opp].debuffs&&G2.players[opp].debuffs.chiliWatch){
-    G2=ovP(G2,pi,{satiety:Math.max(0,G2.players[pi].satiety-1)});
-    G2=addLog(G2,`唐辛子の効果！P${pi+1}の満腹度-1`,'warn');
+    G2=ovP(G2,opp,{satiety:Math.max(0,G2.players[opp].satiety-1)});
+    G2=addLog(G2,`唐辛子の効果！P${opp+1}の満腹度-1`,'warn');
   }
   G2=checkWin(G2);if(G2.winner!=null)return G2;
   const fn=REC_FN[rec.id];
@@ -1653,11 +1653,12 @@ function endTurn(G){
   // 現ターンプレイヤー（pi）のリセット
   const piDebuffs={...np[pi].debuffs};
   // noServeはactivate→serve遷移時にチェック・消費するためここでは減らさない
-  if(piDebuffs.chiliWatch)piDebuffs.chiliWatch=0;
+  // chiliWatchはpiのターン中に起動→oppのターン終了時にクリア（ここではクリアしない）
   np[pi]={...np[pi],activatedThisTurn:false,servedLastTurn:false,
     ingZone:np[pi].ingZone.map(c=>({...c,_used:false,_placedThisTurn:false})),
     revealed:false,debuffs:piDebuffs};
   // 次ターンプレイヤー（opp）のリセット
+  // opp.chiliWatchクリア：oppのターンが今終わった＝oppが唐辛子起動者だったので効果終了
   const oppDebuffs={...np[opp].debuffs};
   if(oppDebuffs.chiliWatch)oppDebuffs.chiliWatch=0;
   np[opp]={...np[opp],revealed:false,debuffs:oppDebuffs};

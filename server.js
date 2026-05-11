@@ -153,11 +153,21 @@ io.on('connection', (socket) => {
     if (!pl) return;
     pl.deck = deck || null;
     pl.rematchReady = true;
-    broadcast(roomId, 'roomInfo', { players: room.players.map(p => ({ name: p.name, ready: p.ready })) });
 
+    const readyCount = room.players.filter(p => p.rematchReady).length;
+
+    // 両者揃ったら即マッチ成立
+    if (room.players.length === 2 && readyCount === 2) {
+      if (room.rematchTimer) { clearInterval(room.rematchTimer); room.rematchTimer = null; }
+      room.players.forEach(p => { p.rematchReady = false; p.ready = false; });
+      broadcast(roomId, 'rematchMatched', {});
+      return;
+    }
+
+    // 1人目がボタンを押したらカウントダウン開始
     if (readyCount === 1 && !room.rematchTimer) {
       let sec = 10;
-      // 押した本人にはカウントダウン、相手には「相手が希望」フラグ付きで送信
+      // 押した本人にカウントダウン、相手に「相手が希望」通知
       room.players.forEach(p => {
         const s = io.sockets.sockets.get(p.socketId);
         if (!s) return;
@@ -174,20 +184,12 @@ io.on('connection', (socket) => {
           }
           return;
         }
-        // カウントダウン中は押した本人にのみsecを送信
+        // 押した本人にのみカウントダウン更新
         room.players.filter(p => p.rematchReady).forEach(p => {
           const s = io.sockets.sockets.get(p.socketId);
           if (s) s.emit('rematchCountdown', { sec, fromOpponent: false });
         });
       }, 1000);
-    }
-
-    // 両者揃ったらデッキ選択画面へ誘導
-    if (room.players.length === 2 && room.players.every(p => p.rematchReady)) {
-      if (room.rematchTimer) { clearInterval(room.rematchTimer); room.rematchTimer = null; }
-      room.players.forEach(p => { p.rematchReady = false; p.ready = false; });
-      // 両者にrematchMatchedを送信→各自デッキ選択後にreadyイベントを送る
-      broadcast(roomId, 'rematchMatched', {});
     }
   });
 

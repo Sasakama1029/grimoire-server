@@ -2988,33 +2988,24 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     );
   }
 
-  if(G.winner!=null){
-    const iWin=G.winner===myPiLocal;
-    // 勝利/敗北SE（1回だけ）
-    useEffect(()=>{
-      Audio.stopBgm();
-      Audio.se(iWin?'se_win':'se_lose');
-    },[]);
-    const particles=Array.from({length:30},(_,i)=>({
-      id:i,
-      left:Math.random()*100,
+  // 勝利/敗北SE（G.winnerが変化したとき1回だけ）
+  useEffect(()=>{
+    if(G.winner==null)return;
+    Audio.stopBgm();
+    Audio.se(G.winner===myPiLocal?'se_win':'se_lose');
+  },[G.winner]);
+
+  // 勝利エフェクト用パーティクル（毎回同じになるようuseRefで保持）
+  const particlesRef=useRef(null);
+  if(G.winner!=null&&!particlesRef.current){
+    particlesRef.current=Array.from({length:30},(_,i)=>({
+      id:i,left:Math.random()*100,
       size:8+Math.random()*16,
       color:['#f8d888','#ff6644','#44dd88','#88aaff','#ff88cc'][i%5],
-      delay:Math.random()*1.5,
-      dur:2+Math.random()*2,
+      delay:Math.random()*1.5,dur:2+Math.random()*2,
     }));
-    return h('div',{className:'winner-overlay'},
-      h('div',{className:'winner-particles'},
-        particles.map(p=>h('div',{key:p.id,className:'winner-particle',style:{
-          left:`${p.left}%`,width:`${p.size}px`,height:`${p.size}px`,
-          background:p.color,animationDuration:`${p.dur}s`,animationDelay:`${p.delay}s`,
-        }}))
-      ),
-      h('div',{className:'winner-title'},iWin?'🎉 勝利！':'😢 敗北...'),
-      h('div',{className:'winner-sub'},iWin?'相手を満腹にさせました！':'相手に満腹にされました...'),
-      h('div',{className:'winner-btns'},h('button',{className:'btn primary',onClick:()=>window.location.reload()},'タイトルへ戻る'))
-    );
   }
+  if(G.winner==null)particlesRef.current=null;
 
   return h('div',{className:'game-screen',style:{position:'relative'}},
     aiThink&&h('div',{className:'ai-thinking-overlay'},h('p',null,'🤖 AIが思考中...'),h('div',null,h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}))),
@@ -3160,6 +3151,21 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
                 c._isRec&&h('div',{className:'ti-sat'},`+${c.sat}`)
               ))
         )
+      )
+    ),
+
+    // 勝利/敗北オーバーレイ
+    G.winner!=null&&h('div',{className:'winner-overlay'},
+      h('div',{className:'winner-particles'},
+        (particlesRef.current||[]).map(p=>h('div',{key:p.id,className:'winner-particle',style:{
+          left:`${p.left}%`,width:`${p.size}px`,height:`${p.size}px`,
+          background:p.color,animationDuration:`${p.dur}s`,animationDelay:`${p.delay}s`,
+        }}))
+      ),
+      h('div',{className:'winner-title'},G.winner===myPiLocal?'🎉 勝利！':'😢 敗北...'),
+      h('div',{className:'winner-sub'},G.winner===myPiLocal?'相手を満腹にさせました！':'相手に満腹にされました...'),
+      h('div',{className:'winner-btns'},
+        h('button',{className:'btn primary',onClick:()=>window.location.reload()},'タイトルへ戻る')
       )
     )
   );

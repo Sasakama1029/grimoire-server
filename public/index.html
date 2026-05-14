@@ -430,7 +430,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .draw-card-anim.hidden{background:repeating-linear-gradient(45deg,#16100a 0,#16100a 8px,#1a1409 8px,#1a1409 16px);border-color:var(--borderG)}
 
 /* 勝利画面強化 */
-.winner-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:200;animation:winFadeIn .6s ease-out}
+.winner-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:400;animation:winFadeIn .6s ease-out}
 @keyframes winFadeIn{from{opacity:0}to{opacity:1}}
 .winner-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .winner-particle{
@@ -442,7 +442,16 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
   100%{transform:translateY(-20vh) rotate(720deg);opacity:0}
 }
 .winner-title{
-  font-size:72px;font-weight:bold;
+  font-size:96px;font-weight:900;
+  color:#ffffff;
+  letter-spacing:6px;text-align:center;
+  text-shadow:
+    -3px -3px 0 #000,
+     3px -3px 0 #000,
+    -3px  3px 0 #000,
+     3px  3px 0 #000,
+     0    0   20px rgba(255,220,80,.8),
+     0    0   50px rgba(255,180,40,.4);
   animation:winPop .8s cubic-bezier(.17,.67,.35,1.4) .2s both;
 }
 @keyframes winPop{
@@ -451,9 +460,18 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
   100%{transform:scale(1);opacity:1}
 }
 .winner-sub{
-  font-size:22px;color:var(--goldL);letter-spacing:3px;
-  animation:winFadeIn .6s ease-out .6s both;
+  font-size:26px;font-weight:800;
+  color:#ffffff;
+  letter-spacing:3px;text-align:center;
+  text-shadow:
+    -2px -2px 0 #000,
+     2px -2px 0 #000,
+    -2px  2px 0 #000,
+     2px  2px 0 #000,
+     0    0   12px rgba(0,0,0,.8);
+  animation:winFadeIn .6s ease-out .5s both;
 }
+.winner-btns{display:flex;gap:10px;margin-top:12px;animation:winFadeIn .6s ease-out .8s both}
 
 /* ── カード配置アニメ ── */
 .place-anim-overlay{position:fixed;inset:0;z-index:380;pointer-events:none;}
@@ -596,11 +614,6 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .sel-footer{display:flex;gap:8px;justify-content:center;flex-shrink:0;flex-wrap:wrap}
 .sel-skip{font-size:10px;color:var(--muted);text-align:center;cursor:pointer;text-decoration:underline;padding:4px}
 
-/* winner */
-.winner-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:200}
-.winner-title{font-size:32px;color:var(--goldL);font-weight:bold;letter-spacing:3px;text-align:center;text-shadow:0 0 30px rgba(212,168,83,.5)}
-.winner-sub{font-size:14px;color:var(--muted)}
-.winner-btns{display:flex;gap:10px;margin-top:8px}
 .mode-select-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;height:100vh;background:radial-gradient(ellipse at 50% 40%,#301a06 0%,#0e0a04 65%)}
 @keyframes aib{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
 /* ── ELECTRON CHROME ── */
@@ -3165,7 +3178,7 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       h('div',{className:'winner-title'},G.winner===myPiLocal?'🎉 勝利！':'😢 敗北...'),
       h('div',{className:'winner-sub'},G.winner===myPiLocal?'相手を満腹にさせました！':'相手に満腹にされました...'),
       h('div',{className:'winner-btns'},
-        h('button',{className:'btn primary',onClick:()=>window.location.reload()},'タイトルへ戻る')
+        h('button',{className:'btn primary',style:{color:'#ffffff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',fontSize:'16px',padding:'10px 28px',fontWeight:'800'},onClick:()=>window.location.reload()},'タイトルへ戻る')
       )
     )
   );

@@ -1,0 +1,17 @@
+grimoire-electron/renderer/sounds/
+  bgm_title.mp3   ← タイトル画面
+  bgm_main.mp3    ← ゲーム中
+   se_draw.mp3     ← ドロー
+   se_place.mp3    ← カード配置
+   se_serve.mp3    ← 料理完成
+   se_activate.mp3 ← 起動効果
+   se_turn_start.mp3 ← 自分のターン開始
+  se_turn_end.mp3   ← ターン終了
+   se_win.mp3      ← 勝利
+   se_lose.mp3     ← 敗北
+
+
+
+・Springin’ Sound Stock
+・効果音ラボ
+・OtoLogic

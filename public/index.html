@@ -2,6 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>調理魔導書《レシピグリモワール》</title>
 <!-- 外部サーバーURL設定: server-config.js を編集してください -->
 <script src="server-config.js"></script>
@@ -95,25 +96,25 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .db-tab{font-size:11px;padding:4px 14px;border-radius:4px;border:1px solid rgba(140,100,40,.4);background:rgba(255,248,220,.4);color:#2e1e0a;cursor:pointer;font-family:inherit;transition:all .15s;font-weight:600}
 .db-tab.active{background:rgba(74,44,8,.25);border-color:rgba(100,60,10,.6);color:#1a1008;font-weight:700}
 .deck-info{margin-left:auto;display:flex;align-items:center;gap:10px}
-.deck-count{font-size:11px;color:var(--muted);padding:2px 8px;border-radius:4px;border:1px solid #6a4822}
-.deck-count.ok{color:#6cd4b0;border-color:#3a8a6a}
-.deck-count.over{color:#ff6666;border-color:#aa2222}
-.deck-name-input{font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid #8a6232;background:#2e1e0e;color:#f8f0e0;font-family:inherit;width:150px}
-.deck-name-input:focus{outline:none;border-color:#f8d888}
+.deck-count{font-size:11px;color:#2e1e0a;padding:2px 8px;border-radius:4px;border:1px solid rgba(140,100,40,.4);background:rgba(255,248,220,.5);font-weight:700}
+.deck-count.ok{color:#145808;border-color:rgba(30,100,40,.5);background:rgba(200,240,210,.4)}
+.deck-count.over{color:#900808;border-color:rgba(160,20,20,.5);background:rgba(255,210,210,.4)}
+.deck-name-input{font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid rgba(140,100,40,.5);background:rgba(255,255,255,.85);color:#1a1008;font-family:inherit;width:150px;font-weight:600}
+.deck-name-input:focus{outline:none;border-color:rgba(100,60,10,.7);background:#ffffff;color:#1a1008}
 .db-body{display:grid;grid-template-columns:1fr 300px;overflow:hidden}
 .card-library{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #6a4822}
-.lib-filters{display:flex;gap:5px;padding:7px 10px;background:#1e140a;border-bottom:1px solid #6a4822;flex-wrap:wrap;align-items:center}
+.lib-filters{display:flex;gap:5px;padding:7px 10px;background:var(--bg);border-bottom:1px solid rgba(140,100,40,.3);flex-wrap:wrap;align-items:center}
 .filter-btn{font-size:11px;padding:4px 12px;border-radius:12px;border:1px solid #7a5530;background:rgba(60,36,10,.6);color:#d4b888;cursor:pointer;font-family:inherit;transition:all .12s}
-.filter-btn:hover{border-color:#c49040;color:#fff8e8;background:rgba(80,50,12,.7)}
-.filter-btn.active{color:#fff;border-color:transparent}
-.filter-btn.f-all.active{background:#7a5020}
-.filter-btn.f-protein.active{background:#b03838}
-.filter-btn.f-carb.active{background:#3a70b8}
-.filter-btn.f-fat.active{background:#50a018}
-.filter-btn.f-vitamin.active{background:#20a860}
-.filter-btn.f-mineral.active{background:#8a28b0}
-.search-input{font-size:11px;padding:4px 12px;border-radius:4px;border:1px solid #8a6232;background:#2e1e0e;color:#f8f0e0;font-family:inherit;width:140px;margin-left:auto}
-.search-input:focus{outline:none;border-color:#f8d888}
+.filter-btn:hover{border-color:rgba(100,60,10,.6);background:rgba(255,248,220,.9)}
+.filter-btn.active{color:#1a1008;border-color:rgba(100,60,10,.5);font-weight:700}
+.filter-btn.f-all.active{background:rgba(160,110,40,.25)}
+.filter-btn.f-protein.active{background:rgba(180,40,40,.2);color:#800808}
+.filter-btn.f-carb.active{background:rgba(40,80,180,.2);color:#0a3080}
+.filter-btn.f-fat.active{background:rgba(60,140,20,.2);color:#1a6008}
+.filter-btn.f-vitamin.active{background:rgba(20,150,80,.2);color:#0a6030}
+.filter-btn.f-mineral.active{background:rgba(120,30,160,.2);color:#5a1080}
+.search-input{font-size:11px;padding:4px 12px;border-radius:4px;border:1px solid rgba(140,100,40,.5);background:rgba(255,255,255,.85);color:#1a1008;font-family:inherit;width:140px;margin-left:auto;font-weight:600}
+.search-input:focus{outline:none;border-color:rgba(100,60,10,.7);background:#ffffff;color:#1a1008}
 .card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:12px;overflow-y:auto;align-content:start}
 .lib-card{border-radius:8px;background:#38240e;border:1px solid #7a5530;padding:12px;cursor:pointer;transition:all .15s;position:relative;user-select:none;display:flex;flex-direction:column}
 .lib-card:hover{border-color:#c49040;transform:translateY(-2px);background:#422a10;box-shadow:0 4px 14px rgba(0,0,0,.5)}
@@ -135,34 +136,34 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .lib-card .lc-count{position:absolute;top:7px;right:7px;font-size:11px;background:rgba(0,0,0,.8);border-radius:10px;padding:2px 8px;color:#f8d888;font-weight:bold}
 .lib-card .lc-add{display:block;width:100%;margin-top:8px;font-size:11px;background:rgba(140,85,10,.9);border-radius:4px;padding:4px 0;color:#f8d888;border:1px solid #c49040;text-align:center;box-sizing:border-box}
 .lib-card:hover .lc-add{background:rgba(180,120,20,.95);border-color:#f8d888}
-.deck-panel{display:flex;flex-direction:column;overflow:hidden;background:#1e140a}
-.deck-section{padding:6px 10px;border-bottom:1px solid #6a4822}
-.deck-section h3{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between}
-.deck-section h3 span{color:#f8d888}
-.deck-entry{display:flex;align-items:center;gap:6px;padding:3px 10px;border-bottom:1px solid rgba(255,255,255,.06);transition:background .1s}
-.deck-entry:hover{background:rgba(255,255,255,.05)}
-.de-name{font-size:10px;color:#f0e4cc;flex:1;line-height:1.4}
-.de-cnt{font-size:9px;color:#f8d888;width:18px;text-align:center;font-weight:bold}
-.de-sat{font-size:9px;color:#f0c060;width:22px;text-align:right}
-.de-rm{background:transparent;border:none;color:#a08060;cursor:pointer;padding:0 3px;font-size:13px;line-height:1;transition:color .1s}
-.de-rm:hover{color:#f44}
+.deck-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.deck-section{padding:6px 10px;border-bottom:1px solid rgba(140,100,40,.3);background:var(--bg)}
+.deck-section h3{font-size:10px;color:#1a1008;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;font-weight:700}
+.deck-section h3 span{color:#4a2c08;font-weight:800}
+.deck-entry{display:flex;align-items:center;gap:6px;padding:3px 10px;border-bottom:1px solid rgba(140,100,40,.15);transition:background .1s}
+.deck-entry:hover{background:rgba(255,248,220,.6)}
+.de-name{font-size:10px;color:#1a1008;flex:1;line-height:1.4;font-weight:600}
+.de-cnt{font-size:9px;color:#4a2c08;width:18px;text-align:center;font-weight:800}
+.de-sat{font-size:9px;color:#301a04;width:22px;text-align:right;font-weight:700}
+.de-rm{background:transparent;border:none;color:#7a5030;cursor:pointer;padding:0 3px;font-size:13px;line-height:1;transition:color .1s}
+.de-rm:hover{color:#900}
 .cat-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.deck-stats{padding:8px 10px;border-top:1px solid #6a4822;margin-top:auto}
+.deck-stats{padding:8px 10px;border-top:1px solid rgba(140,100,40,.3);margin-top:auto}
 .stat-row{display:flex;align-items:center;gap:5px;margin-bottom:4px}
-.stat-label{font-size:8px;color:var(--muted);width:54px;flex-shrink:0}
-.stat-bar{flex:1;height:5px;background:rgba(0,0,0,.5);border-radius:3px;overflow:hidden}
+.stat-label{font-size:8px;color:#2e1e0a;width:54px;flex-shrink:0;font-weight:700}
+.stat-bar{flex:1;height:5px;background:rgba(0,0,0,.18);border-radius:3px;overflow:hidden}
 .stat-fill{height:100%;border-radius:3px;transition:width .3s}
-.stat-num{font-size:8px;color:var(--muted);width:18px;text-align:right}
+.stat-num{font-size:8px;color:#2e1e0a;width:18px;text-align:right;font-weight:700}
 .db-footer{display:flex;gap:7px;align-items:center;padding:7px 12px;background:rgba(200,180,140,.7);border-top:1px solid rgba(140,100,40,.4);flex-wrap:wrap}
-.validation-msg{font-size:10px;color:#ff8844}
-.validation-ok{font-size:10px;color:#60d0a8}
+.validation-msg{font-size:10px;color:#900808;font-weight:700}
+.validation-ok{font-size:10px;color:#145808;font-weight:700}
 .saved-screen{display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.saved-header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#1e140a;border-bottom:1px solid #6a4822}
+.saved-header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(200,180,140,.7);border-bottom:1px solid rgba(140,100,40,.4)}
 .saved-list{padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1}
-.saved-item{background:#2e1e0e;border:1px solid #7a5530;border-radius:7px;padding:10px 14px;display:flex;align-items:center;gap:10px;transition:border-color .15s}
-.saved-item:hover{border-color:#c49040}
-.si-name{font-size:12px;color:#f8d888;font-weight:bold;flex:1}
-.si-info{font-size:9px;color:var(--muted)}
+.saved-item{background:rgba(255,248,220,.7);border:1px solid rgba(140,100,40,.35);border-radius:7px;padding:10px 14px;display:flex;align-items:center;gap:10px;transition:border-color .15s}
+.saved-item:hover{border-color:rgba(100,60,10,.7);background:rgba(255,248,220,.9)}
+.si-name{font-size:12px;color:#1a1008;font-weight:800;flex:1}
+.si-info{font-size:9px;color:#3a2010;font-weight:600}
 .si-btns{display:flex;gap:5px}
 
 /* ── MULLIGAN ── */
@@ -207,6 +208,97 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
     radial-gradient(ellipse 50% 35% at 80% 20%,rgba(255,230,180,.1) 0%,transparent 50%),
     radial-gradient(ellipse 70% 50% at 50% 110%,rgba(140,90,30,.15) 0%,transparent 55%),
     linear-gradient(180deg,#d8c8a0 0%,#ccbc90 30%,#c4b488 60%,#b8a878 100%);
+}
+
+/* ── スマホ対応（縦画面） ── */
+@media(max-width:700px){
+  html,body{overflow:auto}
+  #root{height:auto;min-height:100dvh}
+
+  .game-screen{
+    display:flex;flex-direction:column;
+    height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
+    padding:4px;gap:4px;
+  }
+  /* ヘッダー：縦2行に */
+  .g-header{
+    grid-column:unset;grid-row:unset;
+    grid-template-columns:1fr 1fr;
+    flex-shrink:0;padding:4px 8px;gap:4px;
+  }
+  .g-header-center{display:none} /* タイトルは省略 */
+  .sat-bar-left,.sat-bar-right{font-size:8px;padding:2px 5px}
+  .sat-track{min-width:40px}
+  .sat-num{font-size:10px;width:28px}
+
+  /* フィールド：縦並び */
+  .fields-area-self,.fields-area-opp{
+    grid-column:unset;grid-row:unset;
+    height:auto;min-height:0;
+  }
+  .pfield{height:auto}
+
+  /* 中央パネル */
+  .center-panel{
+    grid-column:unset;grid-row:unset;
+    flex-direction:row;gap:4px;
+    min-height:0;
+  }
+  .detail-panel{flex:1;min-height:80px;max-height:140px}
+  .center-btns{flex:0 0 auto;width:120px;padding:5px;gap:4px}
+  .center-btn{font-size:12px;padding:8px 6px}
+
+  /* ログ */
+  .g-bottom{grid-column:unset;grid-row:unset;height:auto}
+  .g-log{max-height:60px}
+
+  /* 食材カード縮小 */
+  .ing-card{width:58px;height:72px}
+  .ic-img-wrap{height:32px;margin:-3px -3px 2px;width:calc(100% + 6px)}
+  .ic-name{font-size:10px}
+  .ic-cat{font-size:6px}
+  .ing-slot-empty{width:58px;height:72px}
+
+  /* 手札カード縮小 */
+  .hcard{width:76px;height:92px}
+  .hcard-img-wrap{height:42px;margin:-5px -5px 3px;width:calc(100% + 10px)}
+  .hc-name{font-size:10px}
+  .hc-type{font-size:7px}
+  .hc-sat{font-size:12px}
+  .hand-slot-empty{width:76px;height:92px}
+
+  /* deck-mini縮小 */
+  .deck-mini{width:54px;height:68px}
+  .dm-icon{font-size:14px}
+  .dm-count{font-size:15px}
+  .dm-label{font-size:6.5px}
+
+  /* 完成料理 */
+  .rcard-done{min-width:44px;padding:3px}
+  .rcard-done .rn{font-size:8px}
+  .rcard-done .rs{font-size:11px}
+
+  /* ターンバナー */
+  .turn-banner-inner{font-size:20px;padding:12px 32px}
+
+  /* 勝利タイトル */
+  .winner-title{font-size:64px}
+  .winner-sub{font-size:20px}
+
+  /* タイトル画面 */
+  .title-screen{padding:20px 12px;gap:16px}
+  .logo h1{font-size:22px;letter-spacing:3px}
+  .logo-en{font-size:14px}
+  .logo-tagline{font-size:13px}
+  .mbtn{width:90%;max-width:300px;font-size:13px;padding:12px}
+
+  /* デッキビルダー */
+  .db-body{flex-direction:column}
+  .db-lib{width:100%;border-right:none;border-bottom:1px solid rgba(140,100,40,.3);height:55vh}
+  .deck-panel{height:45vh;overflow-y:auto}
+  .dp-preview{display:none} /* スマホではカード詳細プレビューを非表示 */
+  .db-footer{flex-wrap:wrap;gap:5px}
+  .db-footer .btn{font-size:10px;padding:4px 8px}
 }
 /* ヘッダー */
 .g-header{
@@ -576,16 +668,16 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .dp-sat-label{font-size:9px;color:var(--muted);position:absolute;bottom:38px;right:12px}
 
 /* detail sections */
-.dp-section{background:var(--bg3);border-radius:5px;padding:9px 11px;border:1px solid var(--border)}
-.dp-section-title{font-size:9px;color:var(--goldD);letter-spacing:1px;margin-bottom:6px;border-bottom:1px solid var(--border);padding-bottom:4px}
+.dp-section{background:var(--bg);border-radius:5px;padding:9px 11px;border:1px solid rgba(140,100,40,.3)}
+.dp-section-title{font-size:9px;color:#1a1008;letter-spacing:1px;margin-bottom:6px;border-bottom:1px solid rgba(140,100,40,.25);padding-bottom:4px;font-weight:800}
 .dp-eff-text{font-size:12px;color:var(--text);line-height:1.9}
 .dp-eff-text.no-eff{color:var(--faint);font-style:italic;font-size:11px}
 .dp-keyword-box{margin-top:8px;padding:6px 8px;background:rgba(232,128,32,.12);border:1px solid rgba(232,128,32,.4);border-radius:5px}
-.dp-keyword-title{font-size:10px;font-weight:bold;color:#e88020;margin-bottom:3px}
+.dp-keyword-title{font-size:10px;font-weight:800;color:#4a2c08;margin-bottom:3px}
 .dp-keyword-desc{font-size:11px;color:var(--text);line-height:1.6}
 .dp-req-list{display:flex;flex-wrap:wrap;gap:5px}
 .dp-req-chip{font-size:10px;padding:3px 8px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid var(--border);color:var(--muted)}
-.dp-req-chip.have{border-color:var(--green);color:#6eda98;background:rgba(48,160,104,.15)}
+.dp-req-chip.have{border-color:rgba(30,100,40,.5);color:#145808;background:rgba(180,240,190,.3)}
 
 /* AI overlay */
 .ai-thinking-overlay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,6,24,.92);border:1px solid #5a3a9a;border-radius:10px;padding:16px 26px;text-align:center;z-index:100}
@@ -756,13 +848,13 @@ const REC_DEFS=[
   {id:'carbonara',name:'カルボナーラ',sat:6,req:['flour','egg','pork','milk','cheese'],eff:'手札を全て山札に戻す。その後、食材山札から4枚引き、レシピ山札から3枚引く。',icon:'🍝'},
   {id:'butajiru',name:'豚汁',sat:6,req:['pork','miso','carrot','konjac','daikon'],eff:'食材山札から2枚引く。その後、自分の満腹度-4。',icon:'🍵'},
   {id:'nikujaga',name:'肉じゃが',sat:9,req:['potato','beef','carrot','onion','konjac'],eff:'ごみ箱からレシピカードを1枚選び手札に加える。その後、手札を1枚ごみ箱に送る。',icon:'🍲'},
-  {id:'okosamLunch',name:'お子様ランチ',sat:9,req:['rice','beef','egg','carrot','broccoli'],eff:'レシピ山札から3枚引く。その後、手札を2枚山札に戻す。',icon:'🍱'},
   {id:'croquette',name:'コロッケ',sat:10,req:['potato','flour','egg','beef','onion'],eff:null,icon:'🍤'},
   {id:'minestrone',name:'ミネストローネ',sat:7,req:['potato','pork','carrot','cabbage','tomato','onion'],eff:'ごみ箱から食材カードを2枚選び手札に加える。その後、自分の満腹度-4。',icon:'🍵'},
   {id:'creamStew',name:'クリームシチュー',sat:9,req:['potato','chicken','milk','butter','carrot','onion'],eff:'レシピ山札からレシピカードを2枚選び手札に加える。',icon:'🍲'},
   {id:'meatSauce',name:'ミートソースパスタ',sat:9,req:['flour','beef','tomato','carrot','onion','garlic'],eff:'手札を全て山札に戻す。その後、食材山札からX枚引く（X=相手の食材ゾーンの枚数）。',icon:'🍝'},
   {id:'omurice',name:'オムライス',sat:10,req:['rice','egg','butter','tomato','onion','chicken'],eff:'前の相手のターン中、相手が料理を提供していたなら、相手の満腹度+2。その後、自分はレシピ山札からカードを3枚引く。',icon:'🍳'},
   {id:'curryRice',name:'カレーライス',sat:10,req:['rice','potato','beef','curryroux','carrot','onion'],eff:'食材山札から2枚引き、そのカードを食材ゾーンに出す。',icon:'🍛'},
+  {id:'okosamLunch',name:'お子様ランチ',sat:11,req:['rice','beef','egg','carrot','broccoli','tomato'],eff:'レシピ山札から3枚引く。その後、手札を2枚山札に戻す。',icon:'🍱'},
   {id:'sukiyaki',name:'すき焼き',sat:12,req:['konjac','beef','tofu','negi','carrot','shiitake'],eff:'相手の手札が7枚以上なら、相手の満腹度+2。そうでないなら、自分の満腹度+2。',icon:'🫕'},
 ];
 
@@ -828,7 +920,23 @@ function initPlayers(c0,c1){
   return[mp(c0),mp(c1)];
 }
 // ============================================================
-// BGM / SE システム
+// デッキコードシステム（Base64エンコード、無期限）
+// ============================================================
+function encodeDeckCode(name, ingDeck, recDeck){
+  const data={n:name,i:ingDeck,r:recDeck};
+  try{
+    return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  }catch(e){return null;}
+}
+function decodeDeckCode(code){
+  try{
+    const data=JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+    if(!data.i||!data.r)return null;
+    return {name:data.n||'インポートデッキ',ingDeck:data.i,recDeck:data.r};
+  }catch(e){return null;}
+}
+
+
 // ============================================================
 const Audio={
   _bgm:null,_vol:0.5,_seVol:0.7,_muted:false,
@@ -1829,47 +1937,55 @@ function doMulligan(players,sels){
     };
   });
 }
-function aiTurn(G,pi){
-  let s=G;const p=s.players[pi];const opp=s.players[1-pi];
+// ============================================================
+// AI TURN（難易度: 'easy' | 'normal' | 'hard'）
+// ============================================================
+function aiTurn(G, pi, difficulty='normal'){
+  let s=G;
+  const p=()=>s.players[pi];
+  const opp=()=>s.players[1-pi];
 
-  // ── ドロー判断の改善 ──
-  // 手札レシピが必要とする食材の不足数を計算
-  const handRecs=p.hand.filter(c=>c._isRec);
-  const zIds=new Set(p.ingZone.map(z=>z.id));
-  const handIngIds=new Set(p.hand.filter(c=>!c._isRec).map(c=>c.id));
-  // 各レシピの不足食材数を合計
+  // ── ドロー ──
+  const handRecs=p().hand.filter(c=>c._isRec);
+  const zIds=new Set(p().ingZone.map(z=>z.id));
+  const handIngIds=new Set(p().hand.filter(c=>!c._isRec).map(c=>c.id));
   const ingShortage=handRecs.reduce((acc,rec)=>{
     rec.req.forEach(r=>{if(!zIds.has(r)&&!handIngIds.has(r))acc++;});
     return acc;
   },0);
-  const recH=p.hand.filter(c=>c._isRec).length;
-  const ingH=p.hand.filter(c=>!c._isRec).length;
-  // 食材が不足しているか手札レシピが多いなら食材山、そうでなければレシピ山
-  if(p.ingDeck.length&&(ingShortage>0||recH>ingH||!p.recDeck.length))s=drawI(s,pi,1);
-  else if(p.recDeck.length)s=drawR(s,pi,1);
+  const recH=p().hand.filter(c=>c._isRec).length;
 
-  // ── 食材配置の最適化 ──
+  if(difficulty==='easy'){
+    // かんたん：手札にレシピがあれば食材、なければレシピ（単純判断）
+    const hasRec=p().hand.some(c=>c._isRec);
+    if(hasRec&&p().ingDeck.length) s=drawI(s,pi,1);
+    else if(p().recDeck.length) s=drawR(s,pi,1);
+    else if(p().ingDeck.length) s=drawI(s,pi,1);
+  } else {
+    // ふつう/むずかしい：不足食材計算で判断
+    if(p().ingDeck.length&&(ingShortage>0||recH>p().hand.filter(c=>!c._isRec).length||!p().recDeck.length))
+      s=drawI(s,pi,1);
+    else if(p().recDeck.length) s=drawR(s,pi,1);
+    else if(p().ingDeck.length) s=drawI(s,pi,1);
+  }
+
+  // ── 食材配置 ──
   s={...s,phase:'place'};
-  // 各レシピの完成に必要な食材セットを計算
-  function recipeScore(rec,currentZone,hand){
-    const zoneIds=new Set(currentZone.map(z=>z.id));
+  function recipeScore(rec,zone){
+    const zoneIds=new Set(zone.map(z=>z.id));
     const have=rec.req.filter(r=>zoneIds.has(r)).length;
     return{rec,have,need:rec.req.length,short:rec.req.length-have};
   }
-  // 配置フェーズ：最も完成に近いレシピを優先して食材を置く
-  const handIngs=s.players[pi].hand.filter(c=>!c._isRec);
-  // 配置候補：レシピ完成に貢献する食材を優先
   function getBestPlacements(){
-    const ap=s.players[pi];
+    const ap=p();
     const recs=ap.hand.filter(c=>c._isRec);
     const zone=ap.ingZone;
-    if(!recs.length){
-      // レシピなし：とりあえず全部置く
+    if(difficulty==='easy'){
+      // かんたん：手札の食材を全部置く（戦略なし）
       return ap.hand.filter(c=>!c._isRec);
     }
-    // 各レシピのスコア（あと何枚で完成か）
-    const recScores=recs.map(r=>recipeScore(r,zone,ap.hand)).sort((a,b)=>a.short-b.short);
-    // 最も完成に近いレシピから順に必要食材を選ぶ
+    if(!recs.length) return ap.hand.filter(c=>!c._isRec);
+    const recScores=recs.map(r=>recipeScore(r,zone)).sort((a,b)=>a.short-b.short);
     const placed=new Set();
     const result=[];
     for(const rs of recScores){
@@ -1880,7 +1996,6 @@ function aiTurn(G,pi){
         if(card){placed.add(card._uid);result.push(card);}
       }
     }
-    // 残り枠があれば不要な食材も置く（食材ゾーン上限7まで）
     for(const c of ap.hand.filter(c=>!c._isRec&&!placed.has(c._uid))){
       if(ap.ingZone.length+result.length>=7)break;
       result.push(c);placed.add(c._uid);
@@ -1888,74 +2003,129 @@ function aiTurn(G,pi){
     return result;
   }
   for(const c of getBestPlacements()){
-    const ap=s.players[pi];if(ap.ingZone.length>=7)break;
-    s=addLog(ovP(s,pi,{hand:s.players[pi].hand.filter(x=>x._uid!==c._uid),ingZone:[...s.players[pi].ingZone,{...c,_satBuff:0}]}),`AI: ${c.name}を配置`,'ai-log');
+    const ap=p();if(ap.ingZone.length>=7)break;
+    s=addLog(ovP(s,pi,{
+      hand:s.players[pi].hand.filter(x=>x._uid!==c._uid),
+      ingZone:[...s.players[pi].ingZone,{...c,_satBuff:0,_used:false,_placedThisTurn:true}]
+    }),`AI: ${c.name}を配置`,'ai-log');
   }
 
-  // ── 起動（先頭カードのみ発動・現状維持） ──
+  // ── 起動 ──
   s={...s,phase:'activate'};
-  const ap2=s.players[pi];
+  const ap2=p();
   if(!ap2.activatedThisTurn){
-    for(const c of ap2.ingZone){
-      if(!c._used&&ING_FN[c.id]){
-        const iz=s.players[pi].ingZone.map(x=>x._uid===c._uid?{...x,_used:true}:x);
-        s=ovP(s,pi,{ingZone:iz,activatedThisTurn:true});
-        try{s=ING_FN[c.id](s,pi);}catch(e){}
-        s=addLog(s,`AI: ${c.name}の効果発動`,'ai-log');break;
-      }
+    // むずかしい：起動効果の有効性を判断して選ぶ
+    const candidates=ap2.ingZone.filter(c=>!c._used&&ING_FN[c.id]);
+    let target=null;
+    if(difficulty==='hard'&&candidates.length>0){
+      // 有効な起動を優先（唐辛子は相手が提供できる状況なら優先）
+      target=candidates.find(c=>c.id==='chili'&&opp().ingZone.length>=2)
+        ||candidates[0];
+    } else if(difficulty==='easy'){
+      // かんたん：80%の確率で発動（少し忘れることがある）
+      target=Math.random()<0.8?candidates[0]:null;
+    } else {
+      target=candidates[0];
+    }
+    if(target){
+      const iz=s.players[pi].ingZone.map(x=>x._uid===target._uid?{...x,_used:true}:x);
+      s=ovP(s,pi,{ingZone:iz,activatedThisTurn:true});
+      try{s=ING_FN[target.id](s,pi);}catch(e){}
+      s=addLog(s,`AI: ${target.name}の効果発動`,'ai-log');
     }
   }
 
-  // ── 料理提供の優先度改善 ──
+  // ── 料理提供 ──
   s={...s,phase:'serve'};
   if(!(s.firstTurn&&s.turn===1)){
-    // noServeがある場合はserveをスキップして消費
-    if(s.players[pi].debuffs&&s.players[pi].debuffs.noServe){
-      const db={...s.players[pi].debuffs,noServe:0};
+    if(p().debuffs&&p().debuffs.noServe){
+      const db={...p().debuffs,noServe:0};
       s=ovP(s,pi,{debuffs:db});
     } else {
       let served=true;
       while(served){
         served=false;
-      const sp=s.players[pi];const zoneIds=sp.ingZone.map(z=>z.id);
-      const oppSat=s.players[1-pi].satiety;
-      const opts=sp.hand.filter(c=>c._isRec&&c.req.every(r=>zoneIds.includes(r))).map(rec=>{
-        const iu=rec.req.map(r=>sp.ingZone.find(z=>z.id===r)?._uid).filter(Boolean);
-        if(iu.length!==rec.req.length)return null;
-        const gain=rec.sat+(sp.bufNextRec||0);
-        // 相手満腹度が16以上なら大ダメージ優先、それ以外は効率重視
-        const priority=oppSat>=16?gain*10:(gain/rec.req.length);
-        return{rec,iu,gain,priority};
-      }).filter(Boolean).sort((a,b)=>b.priority-a.priority);
-      if(!opts.length)break;
-      const b=opts[0];
-      s=addLog(s,`AI: 【${b.rec.name}】を提供！`,'ai-log');
-      s=serveRecipe(s,pi,b.rec._uid,b.iu);served=true;if(s.winner!=null)return s;
+        const sp=p();
+        const zoneIds=sp.ingZone.map(z=>z.id);
+        const oppSat=opp().satiety;
+        const opts=sp.hand.filter(c=>c._isRec&&c.req.every(r=>zoneIds.includes(r))).map(rec=>{
+          const iu=rec.req.map(r=>sp.ingZone.find(z=>z.id===r)?._uid).filter(Boolean);
+          if(iu.length!==rec.req.length)return null;
+          const gain=rec.sat+(sp.bufNextRec||0);
+          let priority;
+          if(difficulty==='easy'){
+            // かんたん：順番通りに出す（優先度計算なし）
+            priority=1;
+          } else if(difficulty==='hard'){
+            // むずかしい：トドメ・大ダメージを最優先、効率も考慮
+            const isKill=oppSat+gain>=20;
+            priority=isKill?99999:oppSat>=14?gain*15:(gain*gain/rec.req.length);
+          } else {
+            // ふつう
+            priority=oppSat>=16?gain*10:(gain/rec.req.length);
+          }
+          return{rec,iu,gain,priority};
+        }).filter(Boolean).sort((a,b)=>b.priority-a.priority);
+        if(!opts.length)break;
+        // かんたん：20%の確率で提供しない
+        if(difficulty==='easy'&&Math.random()<0.2)break;
+        const b=opts[0];
+        s=addLog(s,`AI: 【${b.rec.name}】を提供！`,'ai-log');
+        s=serveRecipe(s,pi,b.rec._uid,b.iu);
+        served=true;if(s.winner!=null)return s;
+      }
     }
-    } // noServeのelseブロック終了
   }
 
-  // ── 廃棄の積極化 ──
+  // ── 廃棄 ──
   s={...s,phase:'discard'};
-  const dp=s.players[pi];
+  const dp=p();
   const wantedIds=new Set(dp.hand.filter(c=>c._isRec).flatMap(r=>r.req));
   const zoneIdsSet=new Set(dp.ingZone.map(z=>z.id));
-  if(dp.hand.length>=6){
-    // 手札6枚以上：レシピに不要かつ食材ゾーンにもない食材を廃棄
-    const dis=dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id)&&!zoneIdsSet.has(c.id))
-      ||dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id))
-      ||(dp.hand.length>=9?dp.hand[dp.hand.length-1]:null);
-    if(dis)s=addLog(ovP(s,pi,{
-      hand:s.players[pi].hand.filter(c=>c._uid!==dis._uid),
-      trash:[...s.players[pi].trash,dis]
-    }),`AI: ${dis.name}を廃棄`,'ai-log');
-  } else if(dp.ingZone.length>4){
-    // 食材ゾーン過多：レシピに不要な食材を廃棄
-    const dis=dp.ingZone.find(c=>!wantedIds.has(c.id));
-    if(dis)s=addLog(ovP(s,pi,{
-      ingZone:s.players[pi].ingZone.filter(c=>c._uid!==dis._uid),
-      trash:[...s.players[pi].trash,dis]
-    }),`AI: 食材ゾーンの${dis.name}を廃棄`,'ai-log');
+  if(difficulty==='easy'){
+    // かんたん：手札8枚以上になったらランダムに1枚廃棄
+    if(dp.hand.length>=8){
+      const dis=dp.hand[Math.floor(Math.random()*dp.hand.length)];
+      if(dis)s=addLog(ovP(s,pi,{
+        hand:s.players[pi].hand.filter(c=>c._uid!==dis._uid),
+        trash:[...s.players[pi].trash,dis]
+      }),`AI: ${dis.name}を廃棄`,'ai-log');
+    }
+  } else if(difficulty==='hard'){
+    // むずかしい：積極的に廃棄（手札5枚以上でも不要牌を捨てる）
+    const threshold=5;
+    if(dp.hand.length>=threshold){
+      const dis=dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id)&&!zoneIdsSet.has(c.id))
+        ||dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id))
+        ||(dp.hand.length>=8?dp.hand[dp.hand.length-1]:null);
+      if(dis)s=addLog(ovP(s,pi,{
+        hand:s.players[pi].hand.filter(c=>c._uid!==dis._uid),
+        trash:[...s.players[pi].trash,dis]
+      }),`AI: ${dis.name}を廃棄`,'ai-log');
+    } else if(dp.ingZone.length>3){
+      const dis=dp.ingZone.find(c=>!wantedIds.has(c.id));
+      if(dis)s=addLog(ovP(s,pi,{
+        ingZone:s.players[pi].ingZone.filter(c=>c._uid!==dis._uid),
+        trash:[...s.players[pi].trash,dis]
+      }),`AI: 食材ゾーンの${dis.name}を廃棄`,'ai-log');
+    }
+  } else {
+    // ふつう
+    if(dp.hand.length>=6){
+      const dis=dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id)&&!zoneIdsSet.has(c.id))
+        ||dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id))
+        ||(dp.hand.length>=9?dp.hand[dp.hand.length-1]:null);
+      if(dis)s=addLog(ovP(s,pi,{
+        hand:s.players[pi].hand.filter(c=>c._uid!==dis._uid),
+        trash:[...s.players[pi].trash,dis]
+      }),`AI: ${dis.name}を廃棄`,'ai-log');
+    } else if(dp.ingZone.length>4){
+      const dis=dp.ingZone.find(c=>!wantedIds.has(c.id));
+      if(dis)s=addLog(ovP(s,pi,{
+        ingZone:s.players[pi].ingZone.filter(c=>c._uid!==dis._uid),
+        trash:[...s.players[pi].trash,dis]
+      }),`AI: 食材ゾーンの${dis.name}を廃棄`,'ai-log');
+    }
   }
   return s;
 }
@@ -2260,6 +2430,11 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
   const [name,setName]=useState('マイデッキ');
   const [viewSaved,setViewSaved]=useState(false);
   const [showBackConfirm,setShowBackConfirm]=useState(false);
+  const [showCodeModal,setShowCodeModal]=useState(false);   // コード発行モーダル
+  const [showImportModal,setShowImportModal]=useState(false); // コード読み込みモーダル
+  const [importInput,setImportInput]=useState('');
+  const [importError,setImportError]=useState('');
+  const [copyDone,setCopyDone]=useState(false);
   // 最後に保存した状態のスナップショット（保存後に変更がなければダイアログ不要）
   const [savedSnap,setSavedSnap]=useState(null); // {ing,rec,name} or null
 
@@ -2334,6 +2509,27 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
   }
   function loadD(d){setIng(d.ingDeck);setRec(d.recDeck);setName(d.name);setViewSaved(false);}
   // タイトルへ戻るボタン処理
+  function copyCode(){
+    const code=encodeDeckCode(name,ing,rec);
+    if(!code)return;
+    navigator.clipboard.writeText(code).then(()=>{
+      setCopyDone(true);setTimeout(()=>setCopyDone(false),2000);
+    }).catch(()=>{
+      // clipboard API が使えない場合はselect
+      const el=document.createElement('textarea');
+      el.value=code;document.body.appendChild(el);
+      el.select();document.execCommand('copy');
+      document.body.removeChild(el);
+      setCopyDone(true);setTimeout(()=>setCopyDone(false),2000);
+    });
+  }
+  function doImport(){
+    setImportError('');
+    const result=decodeDeckCode(importInput);
+    if(!result){setImportError('コードが正しくありません。');return;}
+    setIng(result.ingDeck);setRec(result.recDeck);setName(result.name);
+    setSavedSnap(null);setImportInput('');setShowImportModal(false);
+  }
   function handleBack(){
     if(isDirty){setShowBackConfirm(true);}
     else{onBack();}
@@ -2471,7 +2667,71 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
       h('div',{className:'sp'}),
       !isOk&&h('span',{className:'validation-msg'},errs[0]),
       isOk&&h('span',{className:'validation-ok'},'✓ デッキ完成'),
+      h('button',{className:'btn sm',onClick:()=>setShowImportModal(true)},'📥 コード読込'),
+      h('button',{className:'btn sm',onClick:()=>isOk&&setShowCodeModal(true),disabled:!isOk},'📤 コード発行'),
       h('button',{className:'btn sm',onClick:()=>save(false),disabled:!isOk},'保存')
+    ),
+
+    // デッキコード発行モーダル
+    showCodeModal&&h('div',{className:'trash-modal-overlay',onClick:()=>setShowCodeModal(false)},
+      h('div',{className:'trash-modal',style:{maxWidth:'480px'},onClick:e=>e.stopPropagation()},
+        h('div',{className:'trash-modal-header'},
+          h('h3',null,'📤 デッキコード'),
+          h('button',{className:'trash-modal-close',onClick:()=>setShowCodeModal(false)},'✕')
+        ),
+        h('div',{style:{padding:'14px 16px'}},
+          h('div',{style:{fontSize:'11px',color:'var(--muted)',marginBottom:'8px'}},
+            'このコードをコピーしてフレンドに共有できます。コードは無期限で有効です。'
+          ),
+          h('div',{style:{
+            fontFamily:'monospace',fontSize:'11px',
+            background:'rgba(255,248,220,.8)',border:'1px solid rgba(140,100,40,.3)',
+            borderRadius:'5px',padding:'10px 12px',
+            wordBreak:'break-all',lineHeight:1.6,color:'#1a1008',
+            userSelect:'all',cursor:'text',maxHeight:'120px',overflowY:'auto',
+          }},encodeDeckCode(name,ing,rec)||''),
+          h('div',{style:{display:'flex',gap:'8px',marginTop:'12px',justifyContent:'flex-end'}},
+            h('button',{className:'btn sm',onClick:copyCode},
+              copyDone?'✅ コピーしました！':'📋 クリップボードにコピー'
+            ),
+            h('button',{className:'btn sm',onClick:()=>setShowCodeModal(false)},'閉じる')
+          )
+        )
+      )
+    ),
+
+    // デッキコード読み込みモーダル
+    showImportModal&&h('div',{className:'trash-modal-overlay',onClick:()=>setShowImportModal(false)},
+      h('div',{className:'trash-modal',style:{maxWidth:'480px'},onClick:e=>e.stopPropagation()},
+        h('div',{className:'trash-modal-header'},
+          h('h3',null,'📥 デッキコードを読み込む'),
+          h('button',{className:'trash-modal-close',onClick:()=>setShowImportModal(false)},'✕')
+        ),
+        h('div',{style:{padding:'14px 16px'}},
+          h('div',{style:{fontSize:'11px',color:'var(--muted)',marginBottom:'8px'}},
+            'デッキコードを貼り付けてください。現在のデッキは上書きされます。'
+          ),
+          h('textarea',{
+            value:importInput,
+            onChange:e=>setImportInput(e.target.value),
+            placeholder:'デッキコードをここに貼り付け...',
+            style:{
+              width:'100%',height:'90px',resize:'vertical',
+              fontFamily:'monospace',fontSize:'11px',
+              background:'rgba(255,248,220,.8)',border:'1px solid rgba(140,100,40,.3)',
+              borderRadius:'5px',padding:'8px 10px',color:'#1a1008',outline:'none',
+              fontWeight:'500',
+            }
+          }),
+          importError&&h('div',{style:{fontSize:'11px',color:'#900808',marginTop:'4px',fontWeight:'600'}},
+            '⚠ '+importError
+          ),
+          h('div',{style:{display:'flex',gap:'8px',marginTop:'12px',justifyContent:'flex-end'}},
+            h('button',{className:'btn sm primary',onClick:doImport,disabled:!importInput.trim()},'読み込む'),
+            h('button',{className:'btn sm',onClick:()=>{setShowImportModal(false);setImportError('');setImportInput('');}},'キャンセル')
+          )
+        )
+      )
     ),
 
     // 未保存確認ダイアログ
@@ -2582,7 +2842,7 @@ function MulliganScreen({players,onConfirm,isAI,aiPi=1}){
 // ============================================================
 const PHASE_LABELS={draw:'ドロー',place:'食材配置',activate:'起動',serve:'料理提供',discard:'廃棄'};
 
-function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=null,myName='あなた',oppName=null}){
+function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=null,myName='あなた',oppName=null,difficulty='normal'}){
   const [G,setG]=useState(initG);
   const [selH,setSelH]=useState(null);
   const [selZ,setSelZ]=useState([]);
@@ -2709,7 +2969,8 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
   useEffect(()=>{
     if(isOnline||!isAiTurn||G.winner!=null||aiRef.current||G.pending)return;
     aiRef.current=true;setAiThink(true);setHovered(null);
-    setTimeout(()=>{setG(prev=>{const nx=aiTurn(prev,aiPi);return endTurn(nx);});setAiThink(false);aiRef.current=false;},1200);
+    const delay=difficulty==='easy'?1500:difficulty==='hard'?400:900;
+    setTimeout(()=>{setG(prev=>{const nx=aiTurn(prev,aiPi,difficulty);return endTurn(nx);});setAiThink(false);aiRef.current=false;},delay);
   },[isAiTurn,G.turn,G.pending]);
 
   function drawCard(type){
@@ -3167,8 +3428,8 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       )
     ),
 
-    // 勝利/敗北オーバーレイ
-    G.winner!=null&&h('div',{className:'winner-overlay'},
+    // 勝利/敗北オーバーレイ（ローカル対戦のみ）
+    !isOnline&&G.winner!=null&&h('div',{className:'winner-overlay'},
       h('div',{className:'winner-particles'},
         (particlesRef.current||[]).map(p=>h('div',{key:p.id,className:'winner-particle',style:{
           left:`${p.left}%`,width:`${p.size}px`,height:`${p.size}px`,
@@ -3271,8 +3532,8 @@ function OnlineMulliganScreen({hand,sel,setSel,onConfirm,myPi}){
   );
 }
 
-function OnlineLobby({onBack,savedDecks,onSaveDecks}){
-  const [mode,setMode]=useState('menu');
+function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
+  const [mode,setMode]=useState(initialMode);
   const [playerName,setPlayerName]=useState('');
   const [roomId,setRoomId]=useState('');
   const [inputRoom,setInputRoom]=useState('');
@@ -3285,9 +3546,11 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   const [errMsg,setErrMsg]=useState('');
   const [playerDeck,setPlayerDeck]=useState(null);
   const [showResult,setShowResult]=useState(null);
-  const [rematchSec,setRematchSec]=useState(null);       // 自分が押した後のカウントダウン
-  const [opponentWantsRematch,setOpponentWantsRematch]=useState(false); // 相手が再戦ボタンを押した
-  const [iWantRematch,setIWantRematch]=useState(false);   // 自分が再戦ボタンを押した
+  const [rematchSec,setRematchSec]=useState(null);
+  const [opponentWantsRematch,setOpponentWantsRematch]=useState(false);
+  const [iWantRematch,setIWantRematch]=useState(false);
+  const [queueSize,setQueueSize]=useState(0);       // 待機人数
+  const [matchOpponent,setMatchOpponent]=useState(''); // マッチした相手の名前
   const sockRef=useRef(null);
 
   useEffect(()=>{
@@ -3306,7 +3569,23 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
       sock.on('coinFlip',({first,myPi:pi})=>{setOnlineMyPi(pi);setCoinFirst(first);setMode('coin-flip');});
       sock.on('mulliganStart',({hand,myPi:pi})=>{setMulHand(hand);setOnlineMyPi(pi);setMulSel(new Set());setMode('mulligan');});
       sock.on('state',({G,myPi:pi})=>{setOnlineG(G);setOnlineMyPi(pi);setShowResult(null);setMode('game');});
-      sock.on('gameOver',({winnerName,reason})=>{setShowResult({winnerName,reason});setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);});
+      // ランダムマッチ
+      sock.on('queueJoined',({queueSize:qs})=>{setQueueSize(qs);});
+      sock.on('queueUpdate',({queueSize:qs})=>{setQueueSize(qs);});
+      sock.on('matchFound',({opponent,roomId:id,myPi:pi})=>{
+        setMatchOpponent(opponent);
+        setOnlineMyPi(pi);
+        setRoomId(id);
+        setMode('match-found');
+        // 2秒後に自動でready送信
+        setTimeout(()=>{ sock.emit('ready',{deck:playerDeck}); setMode('wait-ready'); },2000);
+      });
+      sock.on('gameOver',({winnerName,reason})=>{
+        setShowResult({winnerName,reason});
+        setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);
+        Audio.stopBgm();
+        Audio.se(winnerName===playerName?'se_win':'se_lose');
+      });
       sock.on('opponentLeft',({msg})=>{setErrMsg(msg);setMode('menu');setShowResult(null);setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);});
       sock.on('rematchCountdown',({sec,fromOpponent})=>{
         // fromOpponentがtrueなら相手が押した（自分はまだ押していない可能性）
@@ -3327,6 +3606,73 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   function doMulConfirm(){emit('mulliganDone',{sel:[...mulSel]});setMode('wait');}
   function doRematch(){emit('ready',{deck:playerDeck});setMode('wait-ready');}
   function goTitle(){setRematchSec(null);sockRef.current&&sockRef.current.disconnect();onBack();}
+  function doJoinQueue(){
+    if(!playerName.trim()){setErrMsg('名前を入力してください');return;}
+    if(!playerDeck){setErrMsg('デッキを選択してください');return;}
+    setErrMsg('');setQueueSize(0);
+    emit('joinCasualQueue',{name:playerName,deck:playerDeck});
+    setMode('queue-waiting');
+  }
+  function doLeaveQueue(){emit('leaveQueue',{});setMode('random-match');}
+
+  // ── ランダムマッチ：デッキ選択 ──
+  if(mode==='random-match')return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},
+      h('h1',null,'🎲 ランダムマッチ'),
+      h('div',{className:'logo-en'},'CASUAL MATCH')
+    ),
+    errDiv,
+    h('div',{style:{display:'flex',flexDirection:'column',gap:'6px',alignItems:'center',width:'100%',maxWidth:'400px'}},
+      h('div',{style:{fontSize:'12px',color:'var(--text)',fontWeight:'700',marginBottom:'4px'}},'プレイヤー名'),
+      h('input',{value:playerName,onChange:e=>setPlayerName(e.target.value),placeholder:'プレイヤー名を入力',
+        style:{fontSize:'13px',padding:'8px 12px',borderRadius:'5px',border:'1px solid var(--borderG)',
+          background:'rgba(255,255,255,.85)',color:'#1a1008',fontFamily:'inherit',width:'100%',fontWeight:'600',marginBottom:'8px'}}),
+      h('div',{style:{fontSize:'12px',color:'var(--text)',fontWeight:'700',marginBottom:'4px'}},'デッキを選択'),
+      savedDecks.length===0
+        ? h('div',{style:{fontSize:'12px',color:'var(--muted)',padding:'12px'}},'保存済みデッキがありません')
+        : savedDecks.map((d,i)=>h('button',{key:i,
+            className:`mbtn${playerDeck===d?' primary':''}`,
+            style:{width:'100%',textAlign:'left',padding:'10px 14px'},
+            onClick:()=>setPlayerDeck(d)},
+            h('span',{style:{marginRight:'8px'}},'🃏'),
+            h('span',{style:{fontWeight:'700',fontSize:'13px'}},d.name||`デッキ${i+1}`),
+            playerDeck===d&&h('span',{style:{marginLeft:'auto',fontSize:'11px',color:'var(--goldD)'}},'✓ 選択中')
+          ))
+    ),
+    h('div',{className:'title-menu',style:{marginTop:'8px'}},
+      h('button',{className:'mbtn primary',onClick:doJoinQueue,disabled:!playerDeck||!playerName.trim()},'🔍 対戦相手を探す'),
+      h('button',{className:'mbtn sm',onClick:()=>setMode('menu')},'← 戻る')
+    )
+  );
+
+  // ── ランダムマッチ：マッチング待機中 ──
+  if(mode==='queue-waiting')return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},
+      h('h1',{style:{fontSize:'28px'}},'🔍 対戦相手を探しています...'),
+    ),
+    h('div',{style:{
+      fontSize:'16px',color:'var(--muted)',fontWeight:'600',
+      animation:'fadeInOut 1.5s ease-in-out infinite alternate',
+    }},`待機中 ${queueSize}人`),
+    h('style',null,`@keyframes fadeInOut{from{opacity:.4}to{opacity:1}}`),
+    h('div',{style:{marginTop:'8px',fontSize:'13px',color:'var(--dim)'}},
+      `プレイヤー名: ${playerName}　デッキ: ${playerDeck?.name||''}` ),
+    h('div',{className:'title-menu',style:{marginTop:'20px'}},
+      h('button',{className:'mbtn sm danger',onClick:doLeaveQueue},'✕ キャンセル')
+    )
+  );
+
+  // ── ランダムマッチ：マッチング成立 ──
+  if(mode==='match-found')return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},
+      h('h1',{style:{fontSize:'32px',color:'#1a6010'}},'✅ マッチング成立！'),
+      h('div',{className:'logo-en',style:{color:'#2a8020'}},'MATCH FOUND'),
+    ),
+    h('div',{style:{fontSize:'18px',fontWeight:'700',color:'var(--text)',marginTop:'8px'}},
+      `対戦相手: ${matchOpponent}`
+    ),
+    h('div',{style:{fontSize:'13px',color:'var(--muted)',marginTop:'6px'}},'ゲームを開始します...'),
+  );
 
   if(mode==='game'&&onlineG&&!showResult){
     const myNameOnline=playerName||'あなた';
@@ -3373,28 +3719,56 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks}){
   }
 
   // ゲーム終了後
-  if(showResult)return h('div',{className:'title-screen'},
-    h('div',{className:'logo'},
-      h('h1',null,showResult.winnerName+' の勝利！'),
-      showResult.reason&&h('div',{className:'logo-en'},showResult.reason)
-    ),
-    // 相手が先に押している場合の通知
-    opponentWantsRematch&&!iWantRematch&&h('div',{style:{fontSize:'13px',color:'#6eda98',margin:'8px 0',textAlign:'center'}},
-      '🔔 相手が再戦を希望しています！'
-    ),
-    // 自分が押した後の待機表示
-    iWantRematch&&h('div',{style:{fontSize:'13px',color:'var(--goldL)',margin:'8px 0',textAlign:'center'}},
-      rematchSec!==null?`⏳ 相手の応答を待っています... ${rematchSec}秒`:'⏳ 相手の応答を待っています...'
-    ),
-    h('div',{className:'title-menu',style:{marginTop:'16px'}},
-      !iWantRematch&&h('button',{className:'mbtn primary',onClick:()=>{
-        setIWantRematch(true);
-        emit('rematch',{deck:playerDeck});
-      }},'🔄 再戦する'),
-      iWantRematch&&h('button',{className:'mbtn',disabled:true,style:{opacity:0.5}},'✅ 再戦申請中...'),
-      h('button',{className:'mbtn sm',onClick:goTitle},'← タイトルへ戻る')
-    )
-  );
+  if(showResult){
+    // 勝利判定（プレイヤー名が自分のnameと一致するか）
+    const iWinOnline=showResult.winnerName===playerName;
+    // パーティクル（useMemoで固定）
+    const onlineParticles=Array.from({length:30},(_,i)=>({
+      id:i,left:Math.random()*100,
+      size:8+Math.random()*16,
+      color:['#f8d888','#ff6644','#44dd88','#88aaff','#ff88cc'][i%5],
+      delay:Math.random()*1.5,dur:2+Math.random()*2,
+    }));
+    return h('div',{className:'winner-overlay'},
+      // パーティクル
+      h('div',{className:'winner-particles'},
+        onlineParticles.map(p=>h('div',{key:p.id,className:'winner-particle',style:{
+          left:`${p.left}%`,width:`${p.size}px`,height:`${p.size}px`,
+          background:p.color,animationDuration:`${p.dur}s`,animationDelay:`${p.delay}s`,
+        }}))
+      ),
+      h('div',{className:'winner-title'},iWinOnline?'🎉 勝利！':'😢 敗北...'),
+      h('div',{className:'winner-sub'},
+        iWinOnline?'相手を満腹にさせました！':'相手に満腹にされました...'
+      ),
+      showResult.reason&&h('div',{style:{fontSize:'14px',color:'rgba(255,255,255,.7)',marginTop:'-8px',textShadow:'0 1px 3px #000'}},showResult.reason),
+      // 相手が再戦希望通知
+      opponentWantsRematch&&!iWantRematch&&h('div',{style:{fontSize:'15px',color:'#80ffb0',fontWeight:'700',textShadow:'0 1px 3px #000'}},
+        '🔔 相手が再戦を希望しています！'
+      ),
+      // 自分が押した後の待機
+      iWantRematch&&h('div',{style:{fontSize:'15px',color:'#ffe080',fontWeight:'700',textShadow:'0 1px 3px #000'}},
+        rematchSec!==null?`⏳ 相手の応答を待っています... ${rematchSec}秒`:'⏳ 相手の応答を待っています...'
+      ),
+      // ボタン群
+      h('div',{className:'winner-btns',style:{flexDirection:'column',gap:'12px',alignItems:'center'}},
+        !iWantRematch&&h('button',{
+          className:'btn primary',
+          style:{color:'#ffffff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',fontSize:'16px',padding:'12px 32px',fontWeight:'800'},
+          onClick:()=>{setIWantRematch(true);emit('rematch',{deck:playerDeck});}
+        },'🔄 再戦する'),
+        iWantRematch&&h('button',{
+          className:'btn',
+          style:{color:'#ffffff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',fontSize:'14px',padding:'10px 28px',fontWeight:'700',opacity:.7,cursor:'default'}
+        },'✅ 再戦申請中...'),
+        h('button',{
+          className:'btn',
+          style:{color:'#ffffff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',fontSize:'16px',padding:'12px 32px',fontWeight:'800'},
+          onClick:goTitle
+        },'← タイトルへ戻る')
+      )
+    );
+  }
 
   // 再戦デッキ選択
   if(mode==='deck-select-rematch')return h(DeckSelectView,{
@@ -3492,6 +3866,10 @@ function ElectronVersionBadge(){
 // ============================================================
 function App(){
   const [screen,setScreen]=useState('title');
+  // ランダム/ランクマッチ
+  const [matchType,setMatchType]=useState(null);         // 'casual'|'ranked'
+  const [myRating,setMyRating]=useState(()=>parseInt(localStorage.getItem('grimoire_rating')||'1500'));
+  const [queueDeckSel,setQueueDeckSel]=useState(null);   // キュー用デッキ選択済みか
   // タイトル画面でBGM再生（ゲーム画面に入るとGameScreen側で切り替え）
   useEffect(()=>{
     if(screen==='title')Audio.playBgm('bgm_title');
@@ -3499,6 +3877,7 @@ function App(){
   const [savedDecks,setSavedDecks]=useState(LS.load);
   const [isAI,setIsAI]=useState(false);
   const [aiPi,setAiPi]=useState(1);
+  const [aiDifficulty,setAiDifficulty]=useState('normal'); // 'easy'|'normal'|'hard'
   const [firstPi,setFirstPi]=useState(0);
   const [myLocalPi,setMyLocalPi]=useState(0);
   const [playerDeck,setPlayerDeck]=useState(null);
@@ -3543,7 +3922,9 @@ function App(){
     h('div',{className:'title-menu'},
       h('button',{className:'mbtn primary',onClick:()=>setScreen('deckbuild')},'🃏 デッキを構築して対戦'),
       h('button',{className:'mbtn',onClick:()=>openMySelect()},'🤖 クイックスタート（VS AI）'),
-      h('button',{className:'mbtn',style:{borderColor:'#1a5a1a',color:'#0e3a0e'},onClick:()=>setScreen('online')},'🌐 オンライン対戦')
+      h('button',{className:'mbtn',style:{borderColor:'#1a5a1a',color:'#0e3a0e'},onClick:()=>setScreen('online')},'🌐 オンライン対戦（フレンド）'),
+      h('button',{className:'mbtn',style:{borderColor:'#1a5a2a',color:'#0e3a1a'},onClick:()=>setScreen('random-match')},'🎲 ランダムマッチ'),
+      h('button',{className:'mbtn',style:{borderColor:'#7a3a00',color:'#4a1a00',opacity:.6},onClick:()=>alert('🏆 ランクマッチは実装予定です！\nSteam版でお楽しみに！')},'🏆 ランクマッチ（実装予定）')
     ),
     
     window.electronAPI&&h(ElectronVersionBadge,null)
@@ -3644,6 +4025,25 @@ function App(){
             ))
       ),
       h('div',{className:'title-menu',style:{marginTop:'16px'}},
+        // 難易度選択
+        h('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',marginBottom:'8px'}},
+          h('div',{style:{fontSize:'12px',color:'var(--text)',fontWeight:'700',letterSpacing:'2px'}},'🎯 難易度'),
+          h('div',{style:{display:'flex',gap:'8px'}},
+            [['easy','かんたん','#2a7a2a'],['normal','ふつう','#1a3d6e'],['hard','むずかしい','#8a1010']].map(([val,label,col])=>
+              h('button',{key:val,
+                style:{
+                  padding:'7px 16px',borderRadius:'6px',fontFamily:'inherit',
+                  fontWeight:'700',fontSize:'12px',cursor:'pointer',
+                  border:`2px solid ${aiDifficulty===val?col:'rgba(140,100,40,.3)'}`,
+                  background:aiDifficulty===val?`${col}22`:'rgba(255,248,220,.5)',
+                  color:aiDifficulty===val?col:'var(--text)',
+                  transition:'all .15s',
+                },
+                onClick:()=>setAiDifficulty(val)
+              },label)
+            )
+          )
+        ),
         h('button',{className:'mbtn primary',onClick:()=>startMul(myDeck,aiDeck,true)},
           '🤖 対戦開始！'),
         h('button',{className:'mbtn sm',onClick:()=>setScreen('my-deck-select')},'← 自分のデッキ選択へ戻る')
@@ -3655,8 +4055,9 @@ function App(){
   // コインフリップ画面：自分のpiは ローカル=1-aiPi、オンラインはonlineMyPi
   if(screen==='coin-flip')return h(CoinFlipScreen,{first:firstPi,myPi:myLocalPi,onDone:onCoinFlipDone});
   if(screen==='mulligan')return h(MulliganScreen,{players:mulPl,onConfirm:onMulConfirm,isAI,aiPi});
-  if(screen==='game'&&gameG)return h(GameScreen,{initG:gameG,isAI,aiPi});
-  if(screen==='online')return h(OnlineLobby,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave});
+  if(screen==='game'&&gameG)return h(GameScreen,{initG:gameG,isAI,aiPi,difficulty:aiDifficulty});
+  if(screen==='online')return h(OnlineLobby,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave,initialMode:'menu'});
+  if(screen==='random-match')return h(OnlineLobby,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave,initialMode:'random-match'});
   return null;
 }
 

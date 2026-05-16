@@ -1,0 +1,103 @@
+====================================================
+調理魔導書《レシピグリモワール》
+カード画像ファイル名一覧
+====================================================
+配置場所: images/ フォルダ（index.htmlと同じ階層）
+形式: JPG推奨（PNG可）
+
+----------------------------------------------------
+食材カード（35枚）
+----------------------------------------------------
+ing_rice.jpg        // お米
+ing_flour.jpg       // 小麦粉
+ing_potato.jpg      // じゃがいも
+ing_konjac.jpg      // こんにゃく
+ing_ginger.jpg      // 生姜
+ing_beef.jpg        // 牛肉
+ing_salmon.jpg      // 鮭
+ing_egg.jpg         // 卵
+ing_tofu.jpg        // 豆腐
+ing_chicken.jpg     // 鶏肉
+ing_pork.jpg        // 豚肉
+ing_yellowtail.jpg  // ぶり
+ing_miso.jpg        // 味噌
+ing_abura.jpg       // 油揚げ
+ing_butter.jpg      // バター
+ing_curryroux.jpg   // カレールー
+ing_cabbage.jpg     // キャベツ
+ing_daikon.jpg      // 大根
+ing_chili.jpg       // 唐辛子
+ing_tomato.jpg      // トマト
+ing_carrot.jpg      // にんじん
+ing_broccoli.jpg    // ブロッコリー
+ing_lettuce.jpg     // レタス
+ing_lemon.jpg       // レモン
+ing_negi.jpg        // 青ねぎ
+ing_onion.jpg       // 玉ねぎ
+ing_garlic.jpg      // にんにく
+ing_moyashi.jpg     // もやし
+ing_milk.jpg        // 牛乳
+ing_saba.jpg        // さば
+ing_shiitake.jpg    // しいたけ
+ing_cheese.jpg      // チーズ
+ing_nori.jpg        // 海苔
+ing_spinach.jpg     // ほうれん草
+ing_wakame.jpg      // わかめ
+
+----------------------------------------------------
+レシピカード（50枚）
+----------------------------------------------------
+rec_onigiri.jpg         // おにぎり
+rec_tkgr.jpg            // 卵かけご飯
+rec_pudding.jpg         // プリン
+rec_sushiSalmon.jpg     // サーモン寿司
+rec_teriyakiBuri.jpg    // ぶりの照り焼き
+rec_jagabata.jpg        // じゃがバター
+rec_yakitori.jpg        // 焼き鳥
+rec_steak.jpg           // ステーキ
+rec_sabaMiso.jpg        // さばの味噌煮
+rec_buriDaikon.jpg      // ぶり大根
+rec_yasaiSalad.jpg      // 温野菜サラダ
+rec_omelet.jpg          // オムレツ
+rec_hiyakko.jpg         // 冷やっこ
+rec_horenSote.jpg       // ほうれん草のソテー
+rec_namuL.jpg           // 野菜のナムル
+rec_agedashi.jpg        // 揚げ出し豆腐
+rec_cheeseOmelet.jpg    // チーズオムレツ
+rec_biscuit.jpg         // ビスケット
+rec_mashed.jpg          // マッシュポテト
+rec_peperoncino.jpg     // ペペロンチーノ
+rec_germanPotato.jpg    // ジャーマンポテト
+rec_gyudon.jpg          // 牛丼
+rec_butaNinger.jpg      // 豚の生姜焼き
+rec_carpaccio.jpg       // カルパッチョ
+rec_curryBread.jpg      // カレーパン
+rec_misoShiru.jpg       // 味噌汁
+rec_yakisoba.jpg        // 焼きそば
+rec_chickenSalad.jpg    // チキンサラダ
+rec_caesarSalad.jpg     // シーザーサラダ
+rec_oyakodon.jpg        // 親子丼
+rec_salmonMeuniere.jpg  // 鮭のムニエル
+rec_gratin.jpg          // グラタン
+rec_frenchToast.jpg     // フレンチトースト
+rec_maboTofu.jpg        // 麻婆豆腐
+rec_curryUdon.jpg       // カレーうどん
+rec_hamburg.jpg         // ハンバーグ
+rec_okonomiyaki.jpg     // お好み焼き
+rec_yasaiItame.jpg      // 野菜炒め
+rec_chaahan.jpg         // チャーハン
+rec_carbonara.jpg       // カルボナーラ
+rec_butajiru.jpg        // 豚汁
+rec_nikujaga.jpg        // 肉じゃが
+rec_okosamLunch.jpg     // お子様ランチ
+rec_croquette.jpg       // コロッケ
+rec_minestrone.jpg      // ミネストローネ
+rec_creamStew.jpg       // クリームシチュー
+rec_meatSauce.jpg       // ミートソースパスタ
+rec_omurice.jpg         // オムライス
+rec_curryRice.jpg       // カレーライス
+rec_sukiyaki.jpg        // すき焼き
+
+====================================================
+合計: 食材35枚 + レシピ50枚 = 85ファイル
+====================================================

@@ -85,7 +85,7 @@ const REC_DEFS = [
   {id:'carbonara',name:'カルボナーラ',sat:6,req:['flour','egg','pork','milk','cheese'],eff:'手札を全て山札に戻す。その後、食材山札から4枚引き、レシピ山札から3枚引く。'},
   {id:'butajiru',name:'豚汁',sat:6,req:['pork','miso','carrot','konjac','daikon'],eff:'食材山札から2枚引く。その後、自分の満腹度-4。'},
   {id:'nikujaga',name:'肉じゃが',sat:9,req:['potato','beef','carrot','onion','konjac'],eff:'ごみ箱からレシピカードを1枚選び手札に加える。その後、手札を1枚ごみ箱に送る。'},
-  {id:'okosamLunch',name:'お子様ランチ',sat:9,req:['rice','beef','egg','carrot','broccoli'],eff:'レシピ山札から3枚引く。その後、手札を2枚山札に戻す。'},
+  {id:'okosamLunch',name:'お子様ランチ',sat:11,req:['rice','beef','egg','carrot','broccoli','tomato'],eff:'レシピ山札から3枚引く。その後、手札を2枚山札に戻す。'},
   {id:'croquette',name:'コロッケ',sat:10,req:['potato','flour','egg','beef','onion'],eff:null},
   {id:'minestrone',name:'ミネストローネ',sat:7,req:['potato','pork','carrot','cabbage','tomato','onion'],eff:'ごみ箱から食材カードを2枚選び手札に加える。その後、自分の満腹度-4。'},
   {id:'creamStew',name:'クリームシチュー',sat:9,req:['potato','chicken','milk','butter','carrot','onion'],eff:'レシピ山札からレシピカードを2枚選び手札に加える。'},

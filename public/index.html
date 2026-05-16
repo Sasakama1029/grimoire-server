@@ -3645,7 +3645,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
     ),
     h('div',{className:'title-menu',style:{marginTop:'8px'}},
       h('button',{className:'mbtn primary',onClick:doJoinQueue,disabled:!playerDeck||!playerName.trim()},'🔍 対戦相手を探す'),
-      h('button',{className:'mbtn sm',onClick:()=>setMode('menu')},'← 戻る')
+      h('button',{className:'mbtn sm',onClick:onBack},'← タイトルへ戻る')
     )
   );
 
@@ -3923,7 +3923,7 @@ function App(){
     h('div',{className:'title-menu'},
       h('button',{className:'mbtn primary',onClick:()=>setScreen('deckbuild')},'🃏 デッキを構築して対戦'),
       h('button',{className:'mbtn',onClick:()=>openMySelect()},'🤖 クイックスタート（VS AI）'),
-      h('button',{className:'mbtn',style:{borderColor:'#1a5a1a',color:'#0e3a0e'},onClick:()=>setScreen('online')},'🌐 オンライン対戦（フレンド）'),
+      h('button',{className:'mbtn',style:{borderColor:'#1a5a1a',color:'#0e3a0e'},onClick:()=>setScreen('online')},'🏠 ルームマッチ'),
       h('button',{className:'mbtn',style:{borderColor:'#1a5a2a',color:'#0e3a1a'},onClick:()=>setScreen('random-match')},'🎲 ランダムマッチ'),
       h('button',{className:'mbtn',style:{borderColor:'#7a3a00',color:'#4a1a00',opacity:.6},onClick:()=>alert('🏆 ランクマッチは実装予定です！\nSteam版でお楽しみに！')},'🏆 ランクマッチ（実装予定）')
     ),

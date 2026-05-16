@@ -390,31 +390,8 @@ function startMulligan(room) {
   console.log('coin flip: first =', first, room.id);
 }
 
-const PORT = process.env.PORT || 3000;
-srv.listen(PORT, () => console.log(`🍳 Grimoire Server listening on port ${PORT}`));
-
-
-const io = new Server(srv, {
-  cors: {
-    origin: ALLOWED_ORIGINS.includes('*') ? '*' : ALLOWED_ORIGINS,
-    methods: ['GET', 'POST'],
-  },
-  transports: ['websocket', 'polling'],
-});
-
-app.use(express.static(__dirname + '/public'));
-
-// ヘルスチェック
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    rooms: Object.keys(rooms).length,
-    uptime: Math.floor(process.uptime()),
-  });
-});
-
 // ルーム状態確認（デバッグ用）
-app.get('/rooms', (req, res) => {
+app.get('/debug-rooms', (req, res) => {
   const summary = Object.values(rooms).map(r => ({
     id: r.id,
     players: r.players.length,
@@ -422,30 +399,6 @@ app.get('/rooms', (req, res) => {
   }));
   res.json(summary);
 });
-
-// ── ルーム管理 ──
-// rooms[roomId] = { id, players:[{socketId,name,pi,deck,ready}], G, phase:'waiting'|'mulligan'|'game', mulliganSels }
-const rooms = {};
-// socketId → roomId
-const socketRoom = {};
-
-function broadcast(roomId, event, data) {
-  io.to(roomId).emit(event, data);
-}
-
-function sendState(room) {
-  room.players.forEach((pl) => {
-    const sock = io.sockets.sockets.get(pl.socketId);
-    if (!sock) return;
-    const pub = room.G ? engine.publicState(room.G, pl.pi) : null;
-    sock.emit('state', {
-      G: pub,
-      myPi: pl.pi,
-      roomPhase: room.phase,
-      players: room.players.map(p => ({ name: p.name, ready: p.ready })),
-    });
-  });
-}
 
 io.on('connection', (socket) => {
   console.log('connect', socket.id);
@@ -457,7 +410,6 @@ io.on('connection', (socket) => {
       id: roomId,
       players: [{ socketId: socket.id, name: name || 'Player1', pi: 0, deck: deck || null, ready: false, rematchReady: false }],
       G: null, phase: 'waiting', mulliganSels: [null, null], rematchTimer: null,
-      G: null, phase: 'waiting', mulliganSels: [null, null],
     };
     socketRoom[socket.id] = roomId;
     socket.join(roomId);

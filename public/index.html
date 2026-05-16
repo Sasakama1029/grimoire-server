@@ -3616,6 +3616,10 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
   function doLeaveQueue(){emit('leaveQueue',{});setMode('random-match');}
 
   // ── ランダムマッチ：デッキ選択 ──
+  const myNameOnline2=playerName||'あなた';
+  const oppNameOnline2=roomInfo?.players?.find((_,i)=>i!==onlineMyPi)?.name||'相手';
+  const errDiv=errMsg&&h('div',{style:{color:'var(--red)',fontSize:'12px',margin:'4px 0'}},'⚠ '+errMsg);
+
   if(mode==='random-match')return h('div',{className:'title-screen'},
     h('div',{className:'logo'},
       h('h1',null,'🎲 ランダムマッチ'),
@@ -3675,14 +3679,11 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
   );
 
   if(mode==='game'&&onlineG&&!showResult){
-    const myNameOnline=playerName||'あなた';
-    const oppNameOnline=roomInfo?.players?.find((_,i)=>i!==onlineMyPi)?.name||'相手';
-    return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction,myName:myNameOnline,oppName:oppNameOnline});
+    return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction,myName:myNameOnline2,oppName:oppNameOnline2});
   }
   if(mode==='coin-flip')return h(CoinFlipScreen,{first:coinFirst,myPi:onlineMyPi,onDone:()=>{}});
   if(mode==='mulligan')return h(OnlineMulliganScreen,{hand:mulHand,sel:mulSel,setSel:setMulSel,onConfirm:doMulConfirm,myPi:onlineMyPi});
 
-  const errDiv=errMsg&&h('div',{style:{color:'var(--red)',fontSize:'12px',margin:'4px 0'}},'⚠ '+errMsg);
   const nameBox=h('input',{value:playerName,onChange:e=>setPlayerName(e.target.value),placeholder:'プレイヤー名',
     style:{fontSize:'13px',padding:'8px 12px',borderRadius:'5px',border:'1px solid var(--borderG)',background:'var(--bg3)',color:'var(--text)',fontFamily:'inherit',width:'200px'}});
 
@@ -3826,7 +3827,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
   // メニュー（ルーム作成・参加）
   if(mode==='menu')return h('div',{className:'title-screen'},
     h('div',{className:'logo'},
-      h('h1',null,'🌐 オンライン対戦'),h('div',{className:'logo-en'},'ONLINE MATCH')
+      h('h1',null,'🏠 ルームマッチ'),h('div',{className:'logo-en'},'ROOM MATCH')
     ),
     errDiv,nameBox,
     h('div',{className:'title-menu',style:{marginTop:'12px'}},

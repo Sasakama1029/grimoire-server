@@ -484,6 +484,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .serve-card-big .sc-label{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:6px}
 .serve-card-big .sc-name{font-size:22px;font-weight:bold;color:#fff8e8;line-height:1.3;margin-bottom:8px}
 .serve-card-big .sc-sat{font-size:40px;font-weight:bold;color:var(--goldL);line-height:1}
+.serve-card-big .sc-img-wrap{width:160px;height:120px;border-radius:8px;overflow:hidden;margin-bottom:8px;border:2px solid rgba(255,255,255,.3);flex-shrink:0;position:relative;background:rgba(0,0,0,.2)}
 .serve-card-big .sc-icon{font-size:48px;margin-bottom:6px}
 .serve-ribbon{font-size:18px;font-weight:bold;color:#fff;background:linear-gradient(90deg,#c84020,#e86030);padding:6px 24px;border-radius:20px;letter-spacing:2px;box-shadow:0 4px 16px rgba(200,64,32,.5)}
 
@@ -2902,7 +2903,7 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     if(currOpp.recZone.length>prevOpp.recZone.length){
       const newRec=currOpp.recZone[currOpp.recZone.length-1];
       if(newRec){
-        setServeAnim({name:newRec.name,sat:newRec.sat,icon:newRec.icon||'🍽️'});
+        setServeAnim({name:newRec.name,sat:newRec.sat,icon:newRec.icon||'🍽️',id:newRec.id});
         setTimeout(()=>setServeAnim(null),1500);
         Audio.se('se_serve');
       }
@@ -2938,8 +2939,8 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
   }
 
   // 料理完成アニメーション
-  function fireServe(name,sat,icon){
-    setServeAnim({name,sat,icon});
+  function fireServe(name,sat,icon,id){
+    setServeAnim({name,sat,icon,id});
     setTimeout(()=>setServeAnim(null),1500);
   }
 
@@ -3107,7 +3108,7 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     const newSat=afterServe.players[1-pid].satiety;
     const gain=newSat-prevSat;
     // 料理完成アニメ・SE
-    fireServe(rec.name, rec.sat, rec.icon||'🍽️');
+    fireServe(rec.name, rec.sat, rec.icon||'🍽️', rec.id);
     Audio.se('se_serve');
     // 演出の待機時間（1.5秒）後にゲーム状態を更新・効果発動
     setSelH(null);setSelZ([]);
@@ -3385,7 +3386,12 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       h('div',{className:'serve-burst'},
         h('div',{className:'serve-ribbon'},'🍽️ 料理完成！'),
         h('div',{className:'serve-card-big'},
-          h('div',{className:'sc-icon'},serveAnim.icon||'🍽️'),
+          // レシピ画像エリア
+          h('div',{className:'sc-img-wrap'},
+            h(CardImg,{id:serveAnim.id,style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'8px'}}),
+            // 画像がない場合のアイコンフォールバック
+            !cardImgUrl(serveAnim.id)&&h('div',{className:'sc-icon'},serveAnim.icon||'🍽️')
+          ),
           h('div',{className:'sc-label'},'レシピ'),
           h('div',{className:'sc-name'},serveAnim.name),
           h('div',{className:'sc-sat'},`+${serveAnim.sat}`)

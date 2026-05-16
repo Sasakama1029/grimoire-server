@@ -3933,7 +3933,7 @@ function App(){
   if(screen==='title')return h('div',{className:'title-screen'},
     h('div',{className:'logo'},h('h1',null,'調理魔導書'),h('div',{className:'logo-en'},'《 RECIPE GRIMOIRE 》'),h('div',{className:'logo-tagline'},'食材とレシピを集め、先に"満腹"を叩き込め')),
     h('div',{className:'title-menu'},
-      h('button',{className:'mbtn primary',onClick:()=>setScreen('deckbuild')},'🃏 デッキを構築して対戦'),
+      h('button',{className:'mbtn primary',onClick:()=>setScreen('deckbuild')},'🃏 デッキ構築'),
       h('button',{className:'mbtn',onClick:()=>openMySelect()},'🤖 クイックスタート（VS AI）'),
       h('button',{className:'mbtn',style:{borderColor:'#1a5a1a',color:'#0e3a0e'},onClick:()=>setScreen('online')},'🏠 ルームマッチ'),
       h('button',{className:'mbtn',style:{borderColor:'#1a5a2a',color:'#0e3a1a'},onClick:()=>setScreen('random-match')},'🎲 ランダムマッチ'),

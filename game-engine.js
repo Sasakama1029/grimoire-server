@@ -690,7 +690,7 @@ const REC_BLOCKS = {
   sukiyaki: [
     { type: 'condOppHand', n: 7 },
     { type: 'ifPrev', blocks: [{ type: 'addOppSat', n: 2 }] },
-    { type: 'elsePrev', blocks: [{ type: 'redSelfSat', n: 2 }] },
+    { type: 'elsePrev', blocks: [{ type: 'addSelfSat', n: 2 }] },
   ],
   pudding: [{ type: 'selectOppZone', then: 'searchSame' }],
   teriyakiBuri: [{ type: 'drawIng', n: 1 }, { type: 'drawIngOpp', n: 1 }],

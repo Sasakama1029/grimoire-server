@@ -1815,7 +1815,7 @@ const REC_BLOCKS={
   sukiyaki:[
     {type:'condOppHand',n:7},
     {type:'ifPrev',blocks:[{type:'addOppSat',n:2}]},
-    {type:'elsePrev',blocks:[{type:'redSelfSat',n:2}]},
+    {type:'elsePrev',blocks:[{type:'addSelfSat',n:2}]},
   ],
 
   // プリン: 相手食材ゾーンから1枚選ぶ→自分の食材山札から同名カードをサーチ
@@ -3887,6 +3887,14 @@ function App(){
   useEffect(()=>{
     if(screen==='title')Audio.playBgm('bgm_title');
   },[screen]);
+
+  // タイトル表示中に全カード画像をプリロード（ゲーム中の遅延防止）
+  useEffect(()=>{
+    Object.values(CARD_IMG_MAP).forEach(name=>{
+      const img=new Image();
+      img.src=`images/${name}.png`;
+    });
+  },[]);
   const [savedDecks,setSavedDecks]=useState(LS.load);
   const [isAI,setIsAI]=useState(false);
   const [aiPi,setAiPi]=useState(1);
@@ -3937,7 +3945,22 @@ function App(){
       h('button',{className:'mbtn',onClick:()=>openMySelect()},'🤖 クイックスタート（VS AI）'),
       h('button',{className:'mbtn',style:{borderColor:'#1a5a1a',color:'#0e3a0e'},onClick:()=>setScreen('online')},'🏠 ルームマッチ'),
       h('button',{className:'mbtn',style:{borderColor:'#1a5a2a',color:'#0e3a1a'},onClick:()=>setScreen('random-match')},'🎲 ランダムマッチ'),
-      h('button',{className:'mbtn',style:{borderColor:'#7a3a00',color:'#4a1a00',opacity:.6},onClick:()=>alert('🏆 ランクマッチは実装予定です！\nSteam版でお楽しみに！')},'🏆 ランクマッチ（実装予定）')
+      h('button',{className:'mbtn',style:{borderColor:'#7a3a00',color:'#4a1a00',opacity:.6},onClick:()=>alert('🏆 ランクマッチは実装予定です！\nSteam版でお楽しみに！')},'🏆 ランクマッチ（実装予定）'),
+      h('a',{
+        href:'https://discord.gg/arn2TbU7Qd',
+        target:'_blank',
+        rel:'noopener noreferrer',
+        style:{
+          display:'block',width:'260px',padding:'10px',borderRadius:'7px',
+          border:'1px solid #5865f2',background:'rgba(88,101,242,.12)',
+          color:'#3d4fd0',fontSize:'13px',cursor:'pointer',
+          fontFamily:'inherit',letterSpacing:'1px',textAlign:'center',
+          textDecoration:'none',fontWeight:'700',marginTop:'4px',
+          transition:'all .2s',
+        },
+        onMouseEnter:e=>{e.currentTarget.style.background='rgba(88,101,242,.25)'},
+        onMouseLeave:e=>{e.currentTarget.style.background='rgba(88,101,242,.12)'},
+      },'💬 公式Discordコミュニティ')
     ),
     
     window.electronAPI&&h(ElectronVersionBadge,null)

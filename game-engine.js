@@ -475,6 +475,7 @@ function execBlock(G, pi, blk, cardId) {
 
 function matchFilter(c, key) {
   if (!key) return true;
+  if (key === 'cheese_or_butter') return ['cheese', 'butter'].includes(c.id) && !c._isRec;
   if (key === 'ingredient') return !c._isRec;
   if (key === 'recipe') return c._isRec;
   if (['protein', 'carb', 'fat', 'vitamin', 'mineral'].includes(key)) return c.cat === key && !c._isRec;
@@ -703,19 +704,6 @@ const REC_BLOCKS = {
   chaahan: [{ type: 'discardHand', n: 1, optional: true }, { type: 'elsePrev', blocks: [{ type: 'redSelfSat', n: 1 }] }],
   omurice: [{ type: 'condOppServedLast' }, { type: 'ifPrev', blocks: [{ type: 'addOppSat', n: 2 }] }, { type: 'drawRec', n: 3 }],
 };
-
-// filterKey に cheese_or_butter を対応
-const origMatchFilter = matchFilter;
-function matchFilter(c, key) {
-  if (key === 'cheese_or_butter') return ['cheese', 'butter'].includes(c.id) && !c._isRec;
-  if (key === 'ingredient') return !c._isRec;
-  if (key === 'recipe') return c._isRec;
-  if (['protein', 'carb', 'fat', 'vitamin', 'mineral'].includes(key)) return c.cat === key && !c._isRec;
-  if (key === 'fat_ing') return c.cat === 'fat' && !c._isRec;
-  if (key === 'mineral_ing') return c.cat === 'mineral' && !c._isRec;
-  if (key && key.startsWith('id:')) return c.id === key.slice(3);
-  return true;
-}
 
 // ── 公開用ゲーム状態（手札は秘匿） ──
 function publicState(G, myPi) {

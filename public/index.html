@@ -939,6 +939,348 @@ function decodeDeckCode(code){
 
 
 // ============================================================
+// TUTORIAL
+// ============================================================
+const TUTORIAL_STEPS=[
+  {id:'welcome',title:'🍳 調理魔導書へようこそ！',
+   body:'このゲームは、食材カードを集めてレシピカードで料理を完成させ、\n相手の満腹度を20にすると勝利です！\nチュートリアルで基本操作を学びましょう。\n\n「次へ →」を押してスタート！',
+   highlight:null,action:null},
+  {id:'draw',title:'📚 Step1：ドローフェーズ',
+   body:'まず山札からカードを1枚引きます。\n\n👉「食材山札」をクリックしてカードを引いてください。',
+   highlight:'ing-deck',action:'draw',phase:'draw'},
+  {id:'place',title:'🌾 Step2：食材配置フェーズ',
+   body:'手札の食材カードを食材ゾーンに配置します。\n\n手札には「お米」「海苔」「卵」があります。\n👉「お米」と「海苔」の両方をクリックして食材ゾーンに配置してください。\n\n✏️ 置いたカードをクリックすると手札に戻せます。',
+   highlight:'hand',action:'place',phase:'place'},
+  {id:'activate',title:'⚡ Step3：起動フェーズ',
+   body:'食材カードの起動効果を使えます。\n\nお米は「食材山札から1枚引く」効果があります。\n👉食材ゾーンの「お米」をクリックして効果を発動！',
+   highlight:'ing-zone',action:'activate',phase:'activate'},
+  {id:'serve',title:'🍙 Step4：料理提供フェーズ',
+   body:'レシピカードで料理を完成させましょう！\n\nおにぎりの必要食材：お米＋海苔\n\n👉手札の「おにぎり」をクリック\n→ 食材ゾーンの「お米」「海苔」を順にクリック\nで料理が完成します！',
+   highlight:'hand',action:'serve',phase:'serve'},
+  {id:'discard',title:'🗑️ Step5：廃棄フェーズ',
+   body:'手札が10枚を超えた場合、1枚廃棄が必要です。\n今は手札が少ないのでそのまま終了できます。\n\n👉「ターン終了」ボタンを押して次へ進みましょう。',
+   highlight:'btn-end',action:'endturn',phase:'discard'},
+  {id:'done',title:'🎉 チュートリアル完了！',
+   body:'お疲れ様でした！基本操作をマスターしました。\n\n実際の対戦では：\n・食材35種・レシピ50種のカードを使ってデッキを自由に構築！\n・クイックスタートでAIと対戦可能！\n・ルームマッチやランダムマッチで他のユーザーと対戦可能！\n\nさっそく対戦を始めてみましょう！',
+   highlight:null,action:'finish'},
+];
+
+const TUTORIAL_ING_DECK=['rice','rice','rice','rice','nori','nori','nori','nori',
+  'egg','egg','egg','egg','onion','onion','onion','onion',
+  'carrot','carrot','carrot','carrot','cabbage','cabbage','cabbage','cabbage',
+  'tomato','tomato','tomato','tomato','potato','potato'];
+const TUTORIAL_REC_DECK=['onigiri','onigiri','onigiri','onigiri','tkgr','tkgr','tkgr',
+  'yasaiSalad','yasaiSalad','yasaiSalad','oyakodon','oyakodon','omelet','omelet','omelet'];
+
+function TutorialScreen({onBack}){
+  const [step,setStep]=useState(0);
+  const [G,setG]=useState(null);
+  const [selH,setSelH]=useState(null);
+  const [selZ,setSelZ]=useState([]);
+  const [msg,setMsg]=useState('');
+  const [stepDone,setStepDone]=useState(false);
+  const msgTimer=useRef(null);
+  const pid=0;
+
+  function showMsg(m){
+    setMsg(m);clearTimeout(msgTimer.current);
+    msgTimer.current=setTimeout(()=>setMsg(''),2500);
+  }
+
+  useEffect(()=>{
+    const mk=id=>{const d=ING_MAP[id]||REC_MAP[id];return d?(d.sat!==undefined?mkR(d):mkI(d)):null;};
+
+    // 自分の固定手札：食材5枚（rice×2・nori×2・egg）＋レシピ2枚（onigiri×2）
+    const myHand=['rice','rice','nori','nori','egg','onigiri','onigiri']
+      .map(mk).filter(Boolean);
+    // 自分の食材山札（手札以外の残り）
+    const myIngDeck=['rice','rice','nori','nori','nori','egg','egg','egg',
+      'onion','onion','onion','onion','carrot','carrot','carrot','carrot',
+      'cabbage','cabbage','cabbage','cabbage','tomato','tomato','tomato','tomato','potato','potato']
+      .map(id=>{const d=ING_MAP[id];return d?mkI(d):null;}).filter(Boolean);
+    const myRecDeck=['onigiri','onigiri','tkgr','tkgr','tkgr',
+      'yasaiSalad','yasaiSalad','yasaiSalad','oyakodon','oyakodon','omelet','omelet','omelet']
+      .map(id=>{const d=REC_MAP[id];return d?mkR(d):null;}).filter(Boolean);
+
+    // AIの固定手札
+    const aiHand=['tomato','tomato','carrot','carrot','chicken','oyakodon','yasaiSalad']
+      .map(mk).filter(Boolean);
+    const aiIngDeck=['tomato','tomato','onion','onion','onion','onion',
+      'carrot','carrot','egg','egg','egg','egg',
+      'chicken','chicken','chicken','chicken','potato','potato','potato','potato',
+      'broccoli','broccoli','broccoli','broccoli','garlic','garlic']
+      .map(id=>{const d=ING_MAP[id];return d?mkI(d):null;}).filter(Boolean);
+    const aiRecDeck=['oyakodon','oyakodon','oyakodon','yasaiSalad','yasaiSalad',
+      'yasaiSalad','curryRice','curryRice','curryRice','germanPotato','germanPotato','omelet','omelet','omelet']
+      .map(id=>{const d=REC_MAP[id];return d?mkR(d):null;}).filter(Boolean);
+
+    const mkP=(hand,ingDeck,recDeck)=>({
+      hand,ingDeck,recDeck,
+      ingZone:[],recZone:[],trash:[],satiety:0,bufNextRec:0,debuffs:{},
+      revealed:false,activatedThisTurn:false,servedLastTurn:false,
+    });
+    setG({
+      players:[mkP(myHand,myIngDeck,myRecDeck),mkP(aiHand,aiIngDeck,aiRecDeck)],
+      currentPlayer:0,phase:'draw',turn:1,firstTurn:true,winner:null,log:[],pending:null
+    });
+  },[]);
+
+  const cur=TUTORIAL_STEPS[step];
+
+  function nextStep(){setStep(s=>Math.min(s+1,TUTORIAL_STEPS.length-1));setStepDone(false);setSelH(null);setSelZ([]);}
+  function prevStep(){setStep(s=>Math.max(s-1,0));setStepDone(false);}
+
+  function doSkipPhase(){
+    if(!G)return;
+    const phases=['draw','place','activate','serve','discard'];
+    const idx=phases.indexOf(G.phase);
+    if(idx<phases.length-1){setG(prev=>({...prev,phase:phases[idx+1]}));}
+    else{
+      let s=endTurn(G);
+      s=aiTurn(s,1,'easy');
+      s=endTurn(s);
+      setG(s);
+    }
+    setStepDone(true);
+  }
+
+  function clickDeck(){
+    if(!G||step===0)return; // welcomeステップでは引けない
+    if(cur.phase!=='draw')return;
+    setG(prev=>({...drawI(prev,pid,1),phase:'place'}));
+    setStepDone(true);showMsg('ドロー完了！');
+  }
+
+  function clickHand(c){
+    if(!G)return;
+    const curPhase=cur.phase||G.phase;
+    if(curPhase==='place'&&!c._isRec){
+      if(G.players[pid].ingZone.length>=7){showMsg('食材ゾーンは最大7枚！');return;}
+      setG(prev=>{
+        const newZone=[...prev.players[pid].ingZone,{...c,_satBuff:0,_used:false,_placedThisTurn:true}];
+        const newG=addLog(ovP(prev,pid,{
+          hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),
+          ingZone:newZone,
+        }),`${c.name}を配置`);
+        // Step2：お米と海苔の両方が揃ったら次へ
+        const zoneIds=newZone.map(z=>z.id);
+        if(step===2&&zoneIds.includes('rice')&&zoneIds.includes('nori')){
+          setStepDone(true);showMsg('お米と海苔を配置しました！「次へ」を押してください');
+        } else if(step===2){
+          showMsg(`${c.name}を配置！（お米と海苔の両方を置いてください）`);
+        } else {
+          setStepDone(true);showMsg(`${c.name}を配置！`);
+        }
+        return newG;
+      });
+      return;
+    }
+    if(curPhase==='serve'&&c._isRec){setSelH(c._uid);setSelZ([]);return;}
+  }
+
+  function clickZone(c){
+    if(!G)return;
+    const curPhase=cur.phase||G.phase;
+    // Step2（place）では食材ゾーンのカードをクリックして手札に戻せる
+    if(step===2&&curPhase==='place'){
+      setG(prev=>{
+        const newZone=prev.players[pid].ingZone.filter(x=>x._uid!==c._uid);
+        const newHand=[...prev.players[pid].hand,{...c,_placedThisTurn:false}];
+        const newG=addLog(ovP(prev,pid,{ingZone:newZone,hand:newHand}),`${c.name}を手札に戻した`);
+        // 戻したことでお米か海苔がゾーンからなくなったら次へ非表示
+        const zoneIds=newZone.map(z=>z.id);
+        if(!(zoneIds.includes('rice')&&zoneIds.includes('nori'))){
+          setStepDone(false);
+        }
+        return newG;
+      });
+      showMsg(`${c.name}を手札に戻しました`);
+      return;
+    }
+    if(curPhase==='activate'&&!c._used&&ING_FN[c.id]){
+      const iz=G.players[pid].ingZone.map(x=>x._uid===c._uid?{...x,_used:true}:x);
+      let s=ovP(G,pid,{ingZone:iz,activatedThisTurn:true});
+      try{s=ING_FN[c.id](s,pid);}catch(e){}
+      setG(s);setStepDone(true);showMsg(`${c.name}の効果を発動！`);return;
+    }
+    if(curPhase==='serve'&&selH){
+      const rec=G.players[pid].hand.find(x=>x._uid===selH);
+      if(!rec)return;
+      if(selZ.includes(c._uid)){setSelZ(prev=>prev.filter(u=>u!==c._uid));return;}
+      if(selZ.length<rec.req.length){
+        const nz=[...selZ,c._uid];
+        setSelZ(nz);
+        if(nz.length===rec.req.length){
+          const after=serveRecipe(G,pid,selH,nz);
+          setG(after);setSelH(null);setSelZ([]);
+          setStepDone(true);showMsg('料理完成！相手の満腹度が上がりました！');
+        }
+      }
+    }
+  }
+
+  function doEndTurn(){
+    if(!G)return;
+    let s=endTurn(G);
+    s=aiTurn(s,1,'easy');
+    s=endTurn(s);
+    setG(s);setStepDone(true);showMsg('ターン終了！');
+  }
+
+  if(!G)return h('div',{className:'title-screen'},
+    h('div',{className:'logo'},h('h1',null,'📖 チュートリアル'),h('div',{className:'logo-en'},'読み込み中...')));
+
+  const p=G.players[pid];
+  const selRec=selH&&p.hand.find(x=>x._uid===selH);
+  const needed=selRec?selRec.req:[];
+  const zIds=p.ingZone.map(c=>c.id);
+
+  return h('div',{className:'game-screen',style:{position:'relative'}},
+    // ヘッダー
+    h('div',{className:'g-header'},
+      h('div',{className:'sat-bar-left'},
+        h('span',{className:'sat-label'},'👤 あなた'),
+        h('div',{className:'sat-track'},h('div',{className:'sat-fill p0',style:{width:`${p.satiety/20*100}%`}})),
+        h('span',{className:'sat-num',style:{color:'var(--goldD)'}},[p.satiety,'/20'])
+      ),
+      h('div',{className:'g-header-center'},
+        h('div',{className:'g-title'},'📖 チュートリアル'),
+        h('div',{className:'phase-badge'},[`Step ${step+1}/${TUTORIAL_STEPS.length}`])
+      ),
+      h('div',{className:'sat-bar-right'},
+        h('span',{className:'sat-num',style:{color:'var(--goldD)'}},[G.players[1].satiety,'/20']),
+        h('div',{className:'sat-track'},h('div',{className:'sat-fill p1',style:{width:`${G.players[1].satiety/20*100}%`}})),
+        h('span',{className:'sat-label'},'🤖 AI')
+      )
+    ),
+
+    // 自分フィールド
+    h('div',{style:{gridColumn:'1/2',gridRow:'2/3',overflow:'hidden',padding:'3px'}},
+      h('div',{className:'pfield active'},
+        h('div',{className:'plabel'},'▶ あなた'),
+        h('div',{className:'zlabel'},'食材ゾーン'),
+        h('div',{className:'ing-zone'},
+          h('div',{className:'ing-slots'},
+            p.ingZone.map(c=>h('div',{key:c._uid,
+              className:`ing-card${selZ.includes(c._uid)?' sel':''}`,onClick:()=>clickZone(c)},
+              h('div',{className:'ic-img-wrap'},h(CardImg,{id:c.id})),
+              h('div',{className:'ic-cat',style:{color:CAT_COLORS[c.cat]||''}},c.catL),
+              h('div',{className:'ic-name'},c.name),
+              ING_FN[c.id]&&!c._used&&h('div',{className:'ic-dot'})
+            )),
+            Array.from({length:Math.max(0,3-p.ingZone.length)},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
+          )
+        ),
+        h('div',{className:'zlabel'},'手札'),
+        h('div',{className:'hand-area'},
+          h('div',{className:'hand-slots'},
+            p.hand.map(c=>h('div',{key:c._uid,
+              className:`hcard${selH===c._uid?' sel':''}`,onClick:()=>clickHand(c)},
+              h('div',{className:'hcard-img-wrap'},h(CardImg,{id:c.id})),
+              h('div',{className:`hc-type ${c._isRec?'rec':'ing'}`},c._isRec?'レシピ':'食材'),
+              h('div',{className:'hc-name'},c.name),
+              c._isRec&&h('div',{className:'hc-sat'},`+${c.sat}`)
+            ))
+          )
+        )
+      )
+    ),
+
+    // チュートリアルパネル（中央）
+    h('div',{style:{gridColumn:'2/3',gridRow:'2/3',display:'flex',flexDirection:'column',gap:'6px',padding:'6px',overflow:'hidden'}},
+      h('div',{style:{display:'flex',gap:'6px',justifyContent:'center'}},
+        h('div',{className:`deck-mini clickable ing-deck`,onClick:clickDeck},
+          h('div',{className:'dm-icon'},'🃏'),
+          h('div',{className:'dm-count'},p.ingDeck.length),
+          h('div',{className:'dm-label'},'食材山札')
+        ),
+        h('div',{className:'deck-mini rec-deck'},
+          h('div',{className:'dm-icon'},'📜'),
+          h('div',{className:'dm-count'},p.recDeck.length),
+          h('div',{className:'dm-label'},'レシピ山札')
+        )
+      ),
+      // 説明パネル
+      h('div',{style:{
+        background:'rgba(255,248,220,.9)',border:'2px solid rgba(100,60,10,.45)',
+        borderRadius:'8px',padding:'12px',flex:1,display:'flex',flexDirection:'column',gap:'8px',overflow:'auto',
+      }},
+        // プログレスバー
+        h('div',{style:{display:'flex',gap:'3px',marginBottom:'2px'}},
+          TUTORIAL_STEPS.map((_,i)=>h('div',{key:i,style:{
+            flex:1,height:'4px',borderRadius:'2px',
+            background:i<=step?'var(--goldD)':'rgba(0,0,0,.15)',
+            transition:'background .3s',
+          }}))
+        ),
+        h('div',{style:{fontSize:'13px',fontWeight:'800',color:'#1a1008',lineHeight:1.4}},cur.title),
+        h('div',{style:{fontSize:'13px',color:'#2e1e0a',lineHeight:1.8,whiteSpace:'pre-line',flex:1}},cur.body),
+        selRec&&h('div',{style:{fontSize:'10px',color:'#1a5010',fontWeight:'700',background:'rgba(200,240,200,.5)',padding:'4px 8px',borderRadius:'4px'}},
+          `必要: ${selRec.req.map(r=>ING_MAP[r]?.name||r).join(' + ')} (${selZ.length}/${needed.length}枚選択中)`
+        ),
+        h('div',{style:{display:'flex',flexDirection:'column',gap:'5px'}},
+          cur.action==='finish'
+            ? h('button',{className:'btn primary',onClick:onBack,
+                style:{fontSize:'13px',padding:'10px',fontWeight:'800',color:'#fff',
+                  textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000'}},'✅ 対戦を始めよう！')
+            : h(React.Fragment,null,
+                // welcomeは操作不要なので常に「次へ」表示
+                (stepDone||cur.action===null)&&h('button',{className:'btn primary',onClick:nextStep,
+                  style:{fontSize:'12px',padding:'8px',fontWeight:'700',color:'#fff',
+                    textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000'}},'次へ →'),
+                cur.action==='endturn'&&h('button',{className:'btn',onClick:doEndTurn,style:{fontSize:'11px',padding:'6px'}},'⏩ ターン終了')
+              ),
+          h('button',{className:'btn sm danger',onClick:onBack},'✕ 中断')
+        )
+      )
+    ),
+
+    // AIフィールド
+    h('div',{style:{gridColumn:'3/4',gridRow:'2/3',overflow:'hidden',padding:'3px'}},
+      h('div',{className:'pfield ai-field'},
+        h('div',{className:'plabel'},'🤖 AI'),
+        h('div',{className:'zlabel'},'食材ゾーン'),
+        h('div',{className:'ing-zone'},
+          h('div',{className:'ing-slots'},
+            G.players[1].ingZone.map(c=>h('div',{key:c._uid,className:'ing-card'},
+              h('div',{className:'ic-img-wrap'},h(CardImg,{id:c.id})),
+              h('div',{className:'ic-name'},c.name)
+            )),
+            Array.from({length:Math.max(0,3-G.players[1].ingZone.length)},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
+          )
+        ),
+        h('div',{className:'zlabel'},'手札（非公開）'),
+        h('div',{className:'hand-area'},
+          h('div',{className:'hand-slots'},
+            G.players[1].hand.map((_,i)=>h('div',{key:i,className:'hcard back'}))
+          )
+        )
+      )
+    ),
+
+    // ログ
+    h('div',{className:'g-bottom'},
+      h('div',{className:'g-log'},
+        G.log.slice(-3).map((l,i)=>h('div',{key:i,className:'log-line'},l.msg))
+      )
+    ),
+
+    msg&&h('div',{className:'msg-toast'},msg),
+
+    // 勝利/敗北
+    G.winner!=null&&h('div',{className:'winner-overlay'},
+      h('div',{className:'winner-title'},G.winner===0?'🎉 勝利！':'😢 敗北...'),
+      h('div',{className:'winner-sub'},G.winner===0?'お見事！チュートリアル完了！':'もう一度挑戦してみましょう！'),
+      h('div',{className:'winner-btns'},
+        h('button',{className:'btn primary',onClick:onBack,
+          style:{color:'#fff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',
+            fontSize:'15px',padding:'10px 24px',fontWeight:'800'}},'タイトルへ戻る')
+      )
+    )
+  );
+}
+
+// ============================================================
 const Audio={
   _bgm:null,_vol:0.5,_seVol:0.7,_muted:false,
   _seCache:{},
@@ -1512,142 +1854,36 @@ const ING_BLOCKS={
   rice:    [{type:'drawIng',n:1}],
   flour:   [{type:'drawIng',n:1}],
   potato:  [{type:'drawIng',n:1}],
-  konjac:  [],
-  ginger:  [],
+  konjac:  [], ginger:[],
 
-  // 牛肉: 食材ゾーン1枚を山札へ→山札から1枚引いて食材ゾーンへ
-  beef:[
-    {type:'selectIngZone',then:'retAndDraw',
-     title:'食材ゾーンのカードを1枚山札に戻す',
-     desc:'戻すカードを選んでください（その後、山札から1枚引いて食材ゾーンへ）'},
-  ],
-
-  // 鮭: 食材ドロー → その後 手札1枚山札戻し
-  salmon:[
-    {type:'drawIng',n:1},
-    {type:'retHand',n:1},
-  ],
-
-  // 卵: 手札の食材カードを食材山札に戻す → レシピドロー
-  egg:[
-    {type:'selectHand',then:'retToIngDeck',filter:c=>!c._isRec,
-     title:'手札の食材カードを食材山札に戻す',
-     desc:'戻す食材カードを選んでください（その後レシピ山札から1枚ドロー）'},
-    {type:'drawRec',n:1},
-  ],
-
-  // 豆腐: ごみ箱からたんぱく質→手札
-  tofu:[
-    {type:'recoverTrash',filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein',
-     title:'ごみ箱からたんぱく質を手札へ回収'},
-  ],
-
-  // 鶏肉: 食材ドロー→直接食材ゾーンへ
+  beef:[{type:'selectIngZone',then:'retAndDraw',title:'食材ゾーンのカードを1枚山札に戻す',desc:'戻すカードを選んでください（その後、山札から1枚引いて食材ゾーンへ）'}],
+  salmon:[{type:'drawIng',n:1},{type:'retHand',n:1}],
+  egg:[{type:'selectHand',then:'retToIngDeck',filterKey:'ingredient',title:'手札の食材カードを食材山札に戻す',desc:'戻す食材カードを選んでください（その後レシピ山札から1枚引く）'},{type:'drawRec',n:1}],
+  tofu:[{type:'recoverTrash',filterKey:'protein',title:'ごみ箱からたんぱく質を手札へ回収'}],
   chicken:[{type:'drawToZone',n:1}],
-
-  // 豚肉: 食材ゾーン2枚選択→1枚手札・1枚山札
   pork:[{type:'selectIngZoneMulti',n:2}],
+  yellowtail:[{type:'drawIng',n:1},{type:'retHand',n:1}],
 
-  // ぶり: 食材ドロー → その後 手札1枚山札戻し
-  yellowtail:[
-    {type:'drawIng',n:1},
-    {type:'retHand',n:1},
-  ],
-
-  // 味噌: 手札のたんぱく質1枚ごみ箱（任意）→そうしたなら食材2ドロー
-  miso:[
-    {type:'discardHand',n:1,optional:true,
-     filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
-    {type:'ifPrev'},
-    {type:'drawIng',n:2},
-  ],
-
-  // 油揚げ: 手札のレシピ1枚をレシピ山札に戻す（任意）→レシピドロー
-  abura:[
-    {type:'selectHand',then:'retToRecDeck',optional:true,
-     filter:c=>c._isRec,
-     title:'手札のレシピカードをレシピ山札に戻す（任意）',
-     desc:'戻すレシピカードを選んでください（スキップ可）'},
-    {type:'ifPrev'},
-    {type:'drawRec',n:1},
-  ],
-
+  miso:[{type:'discardHand',n:1,optional:true,filterKey:'protein',title:'手札のたんぱく質カードをごみ箱へ（任意）',desc:'ごみ箱に送るたんぱく質カードを選んでください'},{type:'ifPrev'},{type:'drawIng',n:2}],
+  abura:[{type:'selectHand',then:'retToRecDeck',optional:true,filterKey:'recipe',title:'手札のレシピカードをレシピ山札に戻す（任意）',desc:'戻すレシピカードを選んでください（その後レシピ山札から1枚引く）'},{type:'ifPrev'},{type:'drawRec',n:1}],
   butter:[{type:'bufNextRec',n:1}],
   curryroux:[],
 
-  // キャベツ: ごみ箱から食材→食材山札へ
   cabbage:[{type:'recoverTrashToDeck'}],
-
-  // 大根: 相手食材ゾーン3枚以上→レシピドロー
-  daikon:[
-    {type:'condOppZone',op:'ge',n:3,then:[{type:'drawRec',n:1}]},
-  ],
-
-  // 唐辛子: 相手が料理を提供した時、自分の満腹度-1（相手ターン終了時まで有効）→ごみ箱
-  chili:[
-    {type:'selfTrash'},
-    {type:'setDebuff',key:'chiliWatch',val:1},
-  ],
-
-  // トマト: 自食材ゾーン3枚以下→食材2ドロー
-  tomato:[
-    {type:'condIngZone',op:'le',n:3,then:[{type:'drawIng',n:2}]},
-  ],
-
-  // にんじん: 食材ゾーン1枚→手札へ
-  carrot:[
-    {type:'selectIngZone',then:'toHand',
-     title:'食材ゾーンのカードを1枚手札に戻す',
-     desc:'手札に戻すカードを選んでください'},
-  ],
-
-  // ブロッコリー: 食材ゾーン1枚参照→同名サーチ → このカード自身をごみ箱へ
-  broccoli:[
-    {type:'selectIngZone',then:'searchSame',
-     title:'食材ゾーンのカードを1枚参照して同名サーチ',
-     desc:'参照するカードを選んでください（山札から同名カードを手札へ）'},
-    {type:'selfTrash'},
-  ],
-
-  // レタス: ごみ箱から食材→食材山札へ
+  daikon:[{type:'condOppZone',op:'ge',n:3,then:[{type:'drawRec',n:1}]}],
+  chili:[{type:'selfTrash'},{type:'setDebuff',key:'chiliWatch',val:1}],
+  tomato:[{type:'condIngZone',op:'le',n:3,then:[{type:'drawIng',n:2}]}],
+  carrot:[{type:'selectIngZone',then:'toHand',title:'食材ゾーンのカードを1枚手札に戻す',desc:'手札に戻すカードを選んでください'}],
+  broccoli:[{type:'selectIngZone',then:'searchSame',title:'食材ゾーンのカードを1枚参照して同名サーチ',desc:'参照するカードを選んでください（山札から同名カードを手札へ）'},{type:'selfTrash'}],
   lettuce:[{type:'recoverTrashToDeck'}],
-
-  // レモン: 自食材ゾーン3枚以下→レシピドロー
-  lemon:[
-    {type:'condIngZone',op:'le',n:3,then:[{type:'drawRec',n:1}]},
-  ],
-
+  lemon:[{type:'condIngZone',op:'le',n:3,then:[{type:'drawRec',n:1}]}],
   negi:[], onion:[], garlic:[], moyashi:[],
 
-  // 牛乳: ごみ箱からチーズorバター→手札
-  milk:[
-    {type:'recoverTrash',filter:c=>['cheese','butter'].includes(c.id)&&!c._isRec,filterKey:'id:cheese,butter',
-     title:'ごみ箱からチーズまたはバターを手札へ回収'},
-  ],
-
-  // さば: ごみ箱からミネラル→手札
-  saba:[
-    {type:'recoverTrash',filter:c=>c.cat==='mineral'&&!c._isRec,filterKey:'mineral',
-     title:'ごみ箱からミネラルカードを手札へ回収'},
-  ],
-
-  // しいたけ: 手札2枚ごみ箱（任意）→そうしたなら食材山札からミネラルを選んで手札へ → このカード自身をごみ箱へ
-  shiitake:[
-    {type:'discardHand',n:2,optional:true},
-    {type:'ifPrev'},
-    {type:'searchIngDeck',filter:c=>c.cat==='mineral',filterKey:'mineral',title:'食材山札からミネラルカードを選ぶ'},
-    {type:'selfTrash'},
-  ],
-
-  // チーズ: 手札1枚ごみ箱
+  milk:[{type:'recoverTrash',filterKey:'cheese_or_butter',title:'ごみ箱からチーズorバターを手札へ回収'}],
+  saba:[{type:'recoverTrash',filterKey:'mineral_ing',title:'ごみ箱からミネラルカードを手札へ回収'}],
+  shiitake:[{type:'discardHand',n:2,optional:true,title:'手札を2枚ごみ箱へ（任意）',desc:'ごみ箱に送るカードを2枚選んでください'},{type:'ifPrev'},{type:'searchIngDeck',filterKey:'mineral_ing',title:'食材山札からミネラルカードをサーチ',desc:'手札に加えるミネラルカードを選んでください'}],
   cheese:[{type:'discardHand',n:1}],
-
-  // 海苔: ごみ箱からお米→手札
-  nori:[
-    {type:'recoverTrash',filter:c=>c.id==='rice',filterKey:'id:rice',
-     title:'ごみ箱からお米を手札へ回収'},
-  ],
-
+  nori:[{type:'recoverTrash',filterKey:'id:rice',title:'ごみ箱からお米を手札へ回収'}],
   spinach:[], wakame:[],
 };
 
@@ -1717,7 +1953,7 @@ const REC_BLOCKS={
 
   // ジャーマンポテト: 手札の脂質1枚ごみ箱（任意）→そうしたなら食材山札1枚ドロー
   germanPotato:[
-    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='fat'&&!c._isRec,filterKey:'fat'},
+    {type:'discardHand',n:1,optional:true,filterKey:'fat'},
     {type:'ifPrev'},
     {type:'searchIngDeck',title:'食材山札からカードを選んで手札へ'},
   ],
@@ -1757,7 +1993,7 @@ const REC_BLOCKS={
 
   // 麻婆豆腐: 手札のたんぱく質1枚ごみ箱（任意）→そうしたならレシピ2ドロー
   maboTofu:[
-    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
+    {type:'discardHand',n:1,optional:true,filterKey:'protein'},
     {type:'ifPrev'},
     {type:'drawRec',n:2},
   ],
@@ -1832,7 +2068,7 @@ const REC_BLOCKS={
 
   // 揚げ出し豆腐: たんぱく質1枚ごみ箱（任意）→そうしたなら食材2ドロー
   agedashi:[
-    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
+    {type:'discardHand',n:1,optional:true,filterKey:'protein'},
     {type:'ifPrev'},
     {type:'drawIng',n:2},
   ],
@@ -2141,18 +2377,17 @@ function aiResolvePending(G, pi) {
   const opp = G.players[1 - pi];
   let chosen = ['skip'];
 
-  // filterKey または filter を使って候補を絞る
+  // filterKey を使って候補を絞る（game-engine.jsのmatchFilterと統一）
   function filterCands(cards){
-    if(pd.filter){try{return cards.filter(c=>pd.filter(c));}catch(e){}}
     const k=pd.filterKey;
     if(!k)return cards;
     if(k==='ingredient')return cards.filter(c=>!c._isRec);
     if(k==='recipe')return cards.filter(c=>c._isRec);
-    if(k==='protein'||k==='protein_ing')return cards.filter(c=>c.cat==='protein'&&!c._isRec);
-    if(k==='carb'||k==='carb_ing')return cards.filter(c=>c.cat==='carb'&&!c._isRec);
-    if(k==='fat'||k==='fat_ing')return cards.filter(c=>c.cat==='fat'&&!c._isRec);
-    if(k==='vitamin'||k==='vitamin_ing')return cards.filter(c=>c.cat==='vitamin'&&!c._isRec);
-    if(k==='mineral'||k==='mineral_ing')return cards.filter(c=>c.cat==='mineral'&&!c._isRec);
+    if(['protein','carb','fat','vitamin','mineral'].includes(k))return cards.filter(c=>c.cat===k&&!c._isRec);
+    if(k==='fat_ing')return cards.filter(c=>c.cat==='fat'&&!c._isRec);
+    if(k==='mineral_ing')return cards.filter(c=>c.cat==='mineral'&&!c._isRec);
+    if(k==='cheese_or_butter')return cards.filter(c=>['cheese','butter'].includes(c.id)&&!c._isRec);
+    if(k&&k.startsWith('id:'))return cards.filter(c=>c.id===k.slice(3));
     return cards;
   }
 
@@ -3942,6 +4177,7 @@ function App(){
     h('div',{className:'logo'},h('h1',null,'調理魔導書'),h('div',{className:'logo-en'},'《 RECIPE GRIMOIRE 》'),h('div',{className:'logo-tagline'},'食材とレシピを集め、先に"満腹"を叩き込め')),
     h('div',{className:'title-menu'},
       h('button',{className:'mbtn primary',onClick:()=>setScreen('deckbuild')},'🃏 デッキ構築'),
+      h('button',{className:'mbtn',onClick:()=>setScreen('tutorial')},'📖 チュートリアル'),
       h('button',{className:'mbtn',onClick:()=>openMySelect()},'🤖 クイックスタート（VS AI）'),
       h('button',{className:'mbtn',style:{borderColor:'#1a5a1a',color:'#0e3a0e'},onClick:()=>setScreen('online')},'🏠 ルームマッチ'),
       h('button',{className:'mbtn',style:{borderColor:'#1a5a2a',color:'#0e3a1a'},onClick:()=>setScreen('random-match')},'🎲 ランダムマッチ'),
@@ -4087,6 +4323,7 @@ function App(){
     );
   }
 
+  if(screen==='tutorial')return h(TutorialScreen,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave});
   if(screen==='deckbuild')return h(DeckBuilder,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave});
   // コインフリップ画面：自分のpiは ローカル=1-aiPi、オンラインはonlineMyPi
   if(screen==='coin-flip')return h(CoinFlipScreen,{first:firstPi,myPi:myLocalPi,onDone:onCoinFlipDone});

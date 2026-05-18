@@ -1169,7 +1169,7 @@ function TutorialScreen({onBack}){
               h('div',{className:'ic-name'},c.name),
               ING_FN[c.id]&&!c._used&&h('div',{className:'ic-dot'})
             )),
-            Array.from({length:Math.max(0,3-p.ingZone.length)},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
+            Array.from({length:Math.max(0,7-p.ingZone.length)},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
           )
         ),
         h('div',{className:'zlabel'},'手札'),
@@ -1247,7 +1247,7 @@ function TutorialScreen({onBack}){
               h('div',{className:'ic-img-wrap'},h(CardImg,{id:c.id})),
               h('div',{className:'ic-name'},c.name)
             )),
-            Array.from({length:Math.max(0,3-G.players[1].ingZone.length)},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
+            Array.from({length:Math.max(0,7-G.players[1].ingZone.length)},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
           )
         ),
         h('div',{className:'zlabel'},'手札（非公開）'),

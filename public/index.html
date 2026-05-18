@@ -1047,6 +1047,7 @@ function TutorialScreen({onBack}){
   function clickDeck(){
     if(!G||step===0)return; // welcomeステップでは引けない
     if(cur.phase!=='draw')return;
+    if(stepDone)return; // 既に引いた場合は引けない
     setG(prev=>({...drawI(prev,pid,1),phase:'place'}));
     setStepDone(true);showMsg('ドロー完了！');
   }

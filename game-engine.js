@@ -457,7 +457,7 @@ function execBlock(G, pi, blk, cardId) {
     }
     case 'selectIngZoneMulti': {
       if (p.ingZone.length < (blk.n || 2)) return addLog(G, `食材ゾーンに${blk.n || 2}枚以上必要`);
-      return mkPending(G, { type: 'pork_step1', pi, n: blk.n || 2 });
+      return mkPending(G, { type: 'pork_step1', pi, n: blk.n || 2, multi: blk.n || 2, candidates: [...p.ingZone], source: 'ingZone', title: '手札に戻すカードと山札に戻すカードを2枚選ぶ' });
     }
     case 'searchIngDeck': {
       const f = blk.filterKey;

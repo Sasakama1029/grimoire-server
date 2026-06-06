@@ -2,15 +2,32 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style id="orientation-lock">
+  html { background: #c0aa88; }
+</style>
 <title>調理魔導書《レシピグリモワール》</title>
 <!-- 外部サーバーURL設定: server-config.js を編集してください -->
 <script src="server-config.js"></script>
+<!-- NW.js環境で内蔵サーバーを起動 -->
+<script src="server-start.js"></script>
+<!-- ゲームエンジン共通化（NW.js/Electron対応） -->
+<script src="game-engine.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:#c0aa88}
-body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e2530;font-weight:500}
-#root{height:100vh;display:flex;flex-direction:column}
+body.allow-scroll{overflow-y:auto}
+body{
+  font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
+  color:#1e2530;font-weight:500;
+  /* iPhoneノッチ・ホームバーのセーフエリア対応 */
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+}
+#root{height:100%;display:flex;flex-direction:column;overflow:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:rgba(0,0,0,.12)}
 ::-webkit-scrollbar-thumb{background:#8a6840;border-radius:3px}
@@ -38,21 +55,22 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 }
 
 /* ── SHARED ── */
-.btn{padding:5px 14px;border-radius:5px;border:1px solid var(--borderG);background:rgba(255,248,220,.65);color:var(--goldD);cursor:pointer;font:11px/1.4 'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;font-weight:600;transition:all .15s;letter-spacing:.5px}
+.btn{padding:7px 27px;min-height:35px;min-width:93px;border-radius:6px;border:2px solid var(--borderG);background:rgba(255,248,220,.65);color:var(--goldD);cursor:pointer;font:36px/1.4 'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;font-weight:700;transition:all .15s;letter-spacing:.5px}
 .btn:hover{background:rgba(255,248,220,.95);border-color:var(--goldL)}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 .btn.primary{background:rgba(14,37,69,.18);border-color:var(--goldD);color:var(--goldD);font-weight:bold;font-size:12px}
 .btn.primary:hover{background:rgba(14,37,69,.25)}
 .btn.danger{background:rgba(140,20,20,.12);border-color:#a02020;color:#801010}
-.btn.sm{font-size:10px;padding:3px 10px}
+.btn.sm{font-size:15px;padding:7px 16px;min-height:32px}
 .btn.xs{font-size:9px;padding:2px 7px}
 .sp{flex:1}
 
 /* ── TITLE ── */
 .title-screen{
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
-  height:100vh;position:relative;overflow:hidden;
+  min-height:100vh;position:relative;overflow-y:auto;overflow-x:hidden;
+  padding:20px 0;
   background:
     repeating-linear-gradient(88deg,
       transparent 0px,transparent 22px,
@@ -89,22 +107,22 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .title-note{font-size:9px;color:var(--faint);text-align:center;line-height:2;letter-spacing:.5px}
 
 /* ── DECK BUILDER ── */
-.db-screen{display:grid;grid-template-rows:auto 1fr auto;height:100vh;overflow:hidden}
-.db-header{display:flex;align-items:center;gap:10px;padding:7px 14px;background:rgba(200,180,140,.7);border-bottom:1px solid rgba(140,100,40,.4);flex-wrap:wrap;backdrop-filter:blur(6px)}
+.db-screen{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.db-header{display:flex;align-items:center;gap:8px;padding:5px 12px;background:rgba(200,180,140,.7);border-bottom:1px solid rgba(140,100,40,.4);flex-wrap:wrap;backdrop-filter:blur(6px);flex-shrink:0}
 .db-title{font-size:13px;color:#1a1008;font-weight:800;letter-spacing:2px;flex-shrink:0}
 .db-tabs{display:flex;gap:4px}
 .db-tab{font-size:11px;padding:4px 14px;border-radius:4px;border:1px solid rgba(140,100,40,.4);background:rgba(255,248,220,.4);color:#2e1e0a;cursor:pointer;font-family:inherit;transition:all .15s;font-weight:600}
 .db-tab.active{background:rgba(74,44,8,.25);border-color:rgba(100,60,10,.6);color:#1a1008;font-weight:700}
-.deck-info{margin-left:auto;display:flex;align-items:center;gap:10px}
-.deck-count{font-size:11px;color:#2e1e0a;padding:2px 8px;border-radius:4px;border:1px solid rgba(140,100,40,.4);background:rgba(255,248,220,.5);font-weight:700}
+.deck-info{margin-left:auto;display:flex;align-items:center;gap:8px}
+.deck-count{font-size:15px;color:#2e1e0a;padding:6px 14px;border-radius:4px;border:1px solid rgba(140,100,40,.4);background:rgba(255,248,220,.5);font-weight:700}
 .deck-count.ok{color:#145808;border-color:rgba(30,100,40,.5);background:rgba(200,240,210,.4)}
 .deck-count.over{color:#900808;border-color:rgba(160,20,20,.5);background:rgba(255,210,210,.4)}
-.deck-name-input{font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid rgba(140,100,40,.5);background:rgba(255,255,255,.85);color:#1a1008;font-family:inherit;width:150px;font-weight:600}
+.deck-name-input{font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid rgba(140,100,40,.5);background:rgba(255,255,255,.85);color:#1a1008;font-family:inherit;width:140px;font-weight:600}
 .deck-name-input:focus{outline:none;border-color:rgba(100,60,10,.7);background:#ffffff;color:#1a1008}
-.db-body{display:grid;grid-template-columns:1fr 300px;overflow:hidden}
-.card-library{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #6a4822}
-.lib-filters{display:flex;gap:5px;padding:7px 10px;background:var(--bg);border-bottom:1px solid rgba(140,100,40,.3);flex-wrap:wrap;align-items:center}
-.filter-btn{font-size:11px;padding:4px 12px;border-radius:12px;border:1px solid #7a5530;background:rgba(60,36,10,.6);color:#d4b888;cursor:pointer;font-family:inherit;transition:all .12s}
+.db-body{display:flex;flex:1;overflow:hidden;min-height:0}
+.card-library{display:flex;flex-direction:column;flex:1;overflow:hidden;border-right:1px solid #6a4822;min-height:0}
+.lib-filters{display:flex;gap:4px;padding:5px 8px;background:var(--bg);border-bottom:1px solid rgba(140,100,40,.3);flex-wrap:wrap;align-items:center;flex-shrink:0}
+.filter-btn{font-size:10px;padding:3px 10px;border-radius:12px;border:1px solid #7a5530;background:rgba(60,36,10,.6);color:#d4b888;cursor:pointer;font-family:inherit;transition:all .12s}
 .filter-btn:hover{border-color:rgba(100,60,10,.6);background:rgba(255,248,220,.9)}
 .filter-btn.active{color:#1a1008;border-color:rgba(100,60,10,.5);font-weight:700}
 .filter-btn.f-all.active{background:rgba(160,110,40,.25)}
@@ -113,34 +131,34 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .filter-btn.f-fat.active{background:rgba(60,140,20,.2);color:#1a6008}
 .filter-btn.f-vitamin.active{background:rgba(20,150,80,.2);color:#0a6030}
 .filter-btn.f-mineral.active{background:rgba(120,30,160,.2);color:#5a1080}
-.search-input{font-size:11px;padding:4px 12px;border-radius:4px;border:1px solid rgba(140,100,40,.5);background:rgba(255,255,255,.85);color:#1a1008;font-family:inherit;width:140px;margin-left:auto;font-weight:600}
+.search-input{font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid rgba(140,100,40,.5);background:rgba(255,255,255,.85);color:#1a1008;font-family:inherit;width:130px;margin-left:auto;font-weight:600}
 .search-input:focus{outline:none;border-color:rgba(100,60,10,.7);background:#ffffff;color:#1a1008}
-.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;padding:12px;overflow-y:auto;align-content:start}
-.lib-card{border-radius:8px;background:#38240e;border:1px solid #7a5530;padding:12px;cursor:pointer;transition:all .15s;position:relative;user-select:none;display:flex;flex-direction:column}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(140px,calc((100% - 24px)/3)),1fr));gap:8px;padding:8px;overflow-y:auto;align-content:start;flex:1;min-height:0}
+.lib-card{border-radius:8px;background:#38240e;border:1px solid #7a5530;padding:10px;cursor:pointer;transition:all .15s;position:relative;user-select:none;display:flex;flex-direction:column}
 .lib-card:hover{border-color:#c49040;transform:translateY(-2px);background:#422a10;box-shadow:0 4px 14px rgba(0,0,0,.5)}
 .lib-card.in-deck{border-color:#c49040;background:#3e2c10}
 .lib-card.maxed{opacity:.5;cursor:default}
 .lib-card.maxed:hover{transform:none;background:#38240e;box-shadow:none}
-.lib-card .lc-badge{font-size:11px;padding:3px 7px;border-radius:4px;font-weight:bold;display:inline-block;margin-bottom:6px}
-.badge-protein{background:rgba(208,80,80,.4);color:#ffb8a0;border:1px solid rgba(208,80,80,.6)}
-.badge-carb{background:rgba(74,142,216,.4);color:#a8d4ff;border:1px solid rgba(74,142,216,.6)}
-.badge-fat{background:rgba(112,192,48,.4);color:#c0f080;border:1px solid rgba(112,192,48,.6)}
-.badge-vitamin{background:rgba(48,200,120,.4);color:#80ffcc;border:1px solid rgba(48,200,120,.6)}
-.badge-mineral{background:rgba(176,64,208,.4);color:#f0a8ff;border:1px solid rgba(176,64,208,.6)}
-.badge-recipe{background:rgba(210,110,40,.4);color:#ffb870;border:1px solid rgba(210,110,40,.6)}
-.lib-card .lc-name{font-size:14px;font-weight:bold;color:#fff8e8;line-height:1.4;margin-bottom:6px}
-.lib-card .lc-req{font-size:11px;color:#d4b888;line-height:1.6;display:flex;flex-wrap:wrap;gap:3px 5px;margin-bottom:5px}
-.lib-card .lc-req-chip{font-size:11px;color:#e8c898;background:rgba(255,200,100,.15);border:1px solid rgba(200,150,60,.5);border-radius:4px;padding:2px 7px;white-space:nowrap}
-.lib-card .lc-eff{font-size:12px;color:#d4b080;line-height:1.6;margin-top:4px;flex:1}
-.lib-card .lc-sat{font-size:18px;color:#f8d888;font-weight:bold;text-align:right;margin-top:5px}
-.lib-card .lc-count{position:absolute;top:7px;right:7px;font-size:11px;background:rgba(0,0,0,.8);border-radius:10px;padding:2px 8px;color:#f8d888;font-weight:bold}
-.lib-card .lc-add{display:block;width:100%;margin-top:8px;font-size:11px;background:rgba(140,85,10,.9);border-radius:4px;padding:4px 0;color:#f8d888;border:1px solid #c49040;text-align:center;box-sizing:border-box}
+.lib-card .lc-badge{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:bold;display:inline-block;margin-bottom:5px}
+.badge-protein{background:rgba(208,80,80,.4);color:#1a0a0a;border:1px solid rgba(208,80,80,.6)}
+.badge-carb{background:rgba(74,142,216,.4);color:#0a0a1a;border:1px solid rgba(74,142,216,.6)}
+.badge-fat{background:rgba(112,192,48,.4);color:#0a1a00;border:1px solid rgba(112,192,48,.6)}
+.badge-vitamin{background:rgba(48,200,120,.4);color:#001a0e;border:1px solid rgba(48,200,120,.6)}
+.badge-mineral{background:rgba(176,64,208,.4);color:#1a001a;border:1px solid rgba(176,64,208,.6)}
+.badge-recipe{background:rgba(210,110,40,.4);color:#1a0800;border:1px solid rgba(210,110,40,.6)}
+.lib-card .lc-name{font-size:13px;font-weight:bold;color:#fff8e8;line-height:1.4;margin-bottom:5px}
+.lib-card .lc-req{font-size:10px;color:#d4b888;line-height:1.6;display:flex;flex-wrap:wrap;gap:2px 4px;margin-bottom:4px}
+.lib-card .lc-req-chip{font-size:10px;color:#e8c898;background:rgba(255,200,100,.15);border:1px solid rgba(200,150,60,.5);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.lib-card .lc-eff{font-size:11px;color:#d4b080;line-height:1.5;margin-top:4px;flex:1}
+.lib-card .lc-sat{font-size:16px;color:#f8d888;font-weight:bold;text-align:right;margin-top:4px}
+.lib-card .lc-count{position:absolute;top:6px;right:6px;font-size:10px;background:rgba(0,0,0,.8);border-radius:10px;padding:2px 7px;color:#f8d888;font-weight:bold}
+.lib-card .lc-add{display:block;width:100%;margin-top:6px;font-size:11px;background:rgba(140,85,10,.9);border-radius:4px;padding:3px 0;color:#f8d888;border:1px solid #c49040;text-align:center;box-sizing:border-box}
 .lib-card:hover .lc-add{background:rgba(180,120,20,.95);border-color:#f8d888}
-.deck-panel{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.deck-section{padding:6px 10px;border-bottom:1px solid rgba(140,100,40,.3);background:var(--bg)}
-.deck-section h3{font-size:10px;color:#1a1008;letter-spacing:1px;margin-bottom:4px;display:flex;justify-content:space-between;font-weight:700}
+.deck-panel{display:flex;flex-direction:column;width:280px;flex-shrink:0;overflow:hidden;background:var(--bg);height:100%}
+.deck-section{padding:5px 8px;border-bottom:1px solid rgba(140,100,40,.3);background:var(--bg)}
+.deck-section h3{font-size:10px;color:#1a1008;letter-spacing:1px;margin-bottom:3px;display:flex;justify-content:space-between;font-weight:700}
 .deck-section h3 span{color:#4a2c08;font-weight:800}
-.deck-entry{display:flex;align-items:center;gap:6px;padding:3px 10px;border-bottom:1px solid rgba(140,100,40,.15);transition:background .1s}
+.deck-entry{display:flex;align-items:center;gap:5px;padding:2px 8px;border-bottom:1px solid rgba(140,100,40,.15);transition:background .1s}
 .deck-entry:hover{background:rgba(255,248,220,.6)}
 .de-name{font-size:10px;color:#1a1008;flex:1;line-height:1.4;font-weight:600}
 .de-cnt{font-size:9px;color:#4a2c08;width:18px;text-align:center;font-weight:800}
@@ -148,17 +166,17 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .de-rm{background:transparent;border:none;color:#7a5030;cursor:pointer;padding:0 3px;font-size:13px;line-height:1;transition:color .1s}
 .de-rm:hover{color:#900}
 .cat-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.deck-stats{padding:8px 10px;border-top:1px solid rgba(140,100,40,.3);margin-top:auto}
-.stat-row{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.deck-stats{padding:6px 8px;border-top:1px solid rgba(140,100,40,.3);flex-shrink:0}
+.stat-row{display:flex;align-items:center;gap:5px;margin-bottom:3px}
 .stat-label{font-size:8px;color:#2e1e0a;width:54px;flex-shrink:0;font-weight:700}
-.stat-bar{flex:1;height:5px;background:rgba(0,0,0,.18);border-radius:3px;overflow:hidden}
+.stat-bar{flex:1;height:4px;background:rgba(0,0,0,.18);border-radius:3px;overflow:hidden}
 .stat-fill{height:100%;border-radius:3px;transition:width .3s}
 .stat-num{font-size:8px;color:#2e1e0a;width:18px;text-align:right;font-weight:700}
-.db-footer{display:flex;gap:7px;align-items:center;padding:7px 12px;background:rgba(200,180,140,.7);border-top:1px solid rgba(140,100,40,.4);flex-wrap:wrap}
-.validation-msg{font-size:10px;color:#900808;font-weight:700}
-.validation-ok{font-size:10px;color:#145808;font-weight:700}
-.saved-screen{display:flex;flex-direction:column;height:100vh;overflow:hidden}
-.saved-header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(200,180,140,.7);border-bottom:1px solid rgba(140,100,40,.4)}
+.db-footer{display:flex;gap:10px;align-items:center;padding:12px 16px;background:rgba(200,180,140,.7);border-top:1px solid rgba(140,100,40,.4);flex-wrap:wrap;flex-shrink:0;min-height:76px}
+.validation-msg{font-size:15px;color:#900808;font-weight:700}
+.validation-ok{font-size:15px;color:#145808;font-weight:700}
+.saved-screen{display:flex;flex-direction:column;height:100vh;height:100dvh;overflow:hidden}
+.saved-header{display:flex;align-items:center;gap:10px;padding:8px 14px;background:rgba(200,180,140,.7);border-bottom:1px solid rgba(140,100,40,.4);flex-shrink:0}
 .saved-list{padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1}
 .saved-item{background:rgba(255,248,220,.7);border:1px solid rgba(140,100,40,.35);border-radius:7px;padding:10px 14px;display:flex;align-items:center;gap:10px;transition:border-color .15s}
 .saved-item:hover{border-color:rgba(100,60,10,.7);background:rgba(255,248,220,.9)}
@@ -166,8 +184,52 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .si-info{font-size:9px;color:#3a2010;font-weight:600}
 .si-btns{display:flex;gap:5px}
 
+/* ── アスペクト比対応 ── */
+/* ── アスペクト比対応（デッキビルダー） ── */
+/* 16:10（1920×1200等） */
+@media(min-aspect-ratio:16/10) and (max-aspect-ratio:16/9){
+  .deck-panel{width:260px}
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+}
+/* 4:3（1024×768等） */
+@media(max-aspect-ratio:4/3){
+  .deck-panel{width:220px}
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+  .lib-card .lc-eff{font-size:10px}
+}
+/* 21:9（3440×1440等） */
+@media(min-aspect-ratio:21/9){
+  .deck-panel{width:320px}
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+}
 /* ── MULLIGAN ── */
 .mulligan-screen{display:flex;flex-direction:column;height:100vh;background:var(--bg);padding:10px;gap:8px}
+/* スマホ縦画面マリガン */
+.sp-mull{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.sp-mull-opp{flex:1;display:flex;flex-direction:column;padding:6px 5px 3px;background:rgba(240,230,255,.45);border-bottom:1px solid rgba(120,80,160,.2)}
+.sp-mull-opp-header{font-size:10px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:3px;flex-shrink:0}
+.sp-mull-center{flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding:5px 8px 3px;background:rgba(255,248,220,.8);border-top:1px solid rgba(140,100,40,.2);border-bottom:1px solid rgba(140,100,40,.2)}
+.sp-mull-center h2{font-size:15px;color:var(--goldL);letter-spacing:2px;font-weight:800}
+.sp-mull-center p{font-size:10px;color:var(--muted);margin-top:2px}
+.sp-mull-self{flex:1;display:flex;flex-direction:column;padding:3px 5px 6px;background:rgba(255,248,225,.55)}
+.sp-mull-self-header{font-size:10px;font-weight:700;color:var(--text);text-align:center;margin-bottom:3px;flex-shrink:0}
+.sp-mull-grid{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(2,1fr);gap:3px;flex:1;min-height:0}
+/* 食材5枚・レシピ2枚の2行レイアウト */
+.sp-mull-rows{display:flex;flex-direction:column;gap:3px;flex:1;min-height:0}
+.sp-mull-ing-row{display:flex;gap:3px;flex:1}
+.sp-mull-ing-row>.sp-mull-card{flex:1}
+.sp-mull-rec-row{display:flex;gap:3px;flex:1;justify-content:center}
+.sp-mull-rec-row>.sp-mull-card{flex:0 0 calc(20% - 2.4px)}
+.sp-mull-card{border-radius:5px;border:2px solid var(--borderG);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 2px;cursor:pointer;overflow:hidden;position:relative;transition:all .15s}
+.sp-mull-card.selected{border-color:#e44;box-shadow:0 0 0 2px rgba(228,68,68,.4)}
+.sp-mull-card.selected::after{content:'返す';position:absolute;top:2px;left:2px;font-size:8px;background:#c22;color:#fff;padding:1px 4px;border-radius:2px;font-weight:700}
+.sp-mull-card.back{background:repeating-linear-gradient(45deg,#16100a 0,#16100a 5px,#1a1409 5px,#1a1409 10px);cursor:default}
+.sp-mull-card .smc-img{width:100%;flex:1;overflow:hidden;background:rgba(0,0,0,.06);min-height:0}
+.sp-mull-card .mc-name{font-size:6px;font-weight:700;text-align:center;line-height:1.1;width:100%;padding:0 1px}
+.sp-mull-card .mc-sat{font-size:8px;font-weight:800;color:var(--goldD)}
+.sp-mull-card .mc-type{font-size:5px;color:var(--muted);width:100%;text-align:center}
+.sp-mull-footer{flex-shrink:0;padding:5px 8px;background:rgba(255,248,220,.8);border-top:1px solid rgba(140,100,40,.2);display:flex;flex-direction:column;align-items:center;gap:5px}
+.sp-mull-status{font-size:10px;color:var(--muted);font-weight:600}
 .mull-header{text-align:center;padding:8px}
 .mull-header h2{font-size:18px;color:var(--goldL);letter-spacing:2px}
 .mull-header p{font-size:11px;color:var(--muted);margin-top:4px}
@@ -194,8 +256,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 /* ── GAME SCREEN ── */
 .game-screen{
   display:grid;
-  grid-template-rows:40px 1fr 50px;
-  grid-template-columns:1fr 220px 1fr;
+  grid-template-rows:var(--header-h,40px) 1fr var(--bottom-h,50px);
+  grid-template-columns:1fr var(--center-w,220px) 1fr;
   gap:3px;padding:3px;height:100vh;overflow:hidden;
   background:
     repeating-linear-gradient(88deg,
@@ -210,95 +272,254 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
     linear-gradient(180deg,#d8c8a0 0%,#ccbc90 30%,#c4b488 60%,#b8a878 100%);
 }
 
-/* ── スマホ対応（縦画面） ── */
-@media(max-width:700px){
-  html,body{overflow:auto}
-  #root{height:auto;min-height:100dvh}
+/* ── スマホ横画面対応 ── */
+/* 高さが500px未満＝スマホ横画面想定（iPhone SE横: 375px高、iPhone 16横: 393px高） */
+@media screen and (max-height:500px) and (orientation:landscape),
+       screen and (max-height:500px) and (max-width:1024px){
 
-  .game-screen{
-    display:flex;flex-direction:column;
-    height:auto;min-height:100dvh;overflow-y:auto;overflow-x:hidden;
-    padding:4px;gap:4px;
+  /* カードサイズをvhベースでスケーリング */
+  :root{
+    --ing-card-w: clamp(48px, 6.5vh, 64px);
+    --ing-card-h: clamp(60px, 8vh, 78px);
   }
-  /* ヘッダー：縦2行に */
-  .g-header{
-    grid-column:unset;grid-row:unset;
-    grid-template-columns:1fr 1fr;
-    flex-shrink:0;padding:4px 8px;gap:4px;
-  }
-  .g-header-center{display:none} /* タイトルは省略 */
-  .sat-bar-left,.sat-bar-right{font-size:8px;padding:2px 5px}
-  .sat-track{min-width:40px}
-  .sat-num{font-size:10px;width:28px}
 
-  /* フィールド：縦並び */
-  .fields-area-self,.fields-area-opp{
-    grid-column:unset;grid-row:unset;
-    height:auto;min-height:0;
-  }
-  .pfield{height:auto}
+  /* 食材カード */
+  .ing-card{width:var(--ing-card-w);height:var(--ing-card-h)}
+  .ic-img-wrap{height:clamp(20px,3.5vh,32px);margin:-3px -3px 2px;width:calc(100% + 6px)}
+  .ic-name{font-size:clamp(7px,1.5vh,10px)}
+  .ic-cat{font-size:clamp(5px,1vh,7px)}
+  .ing-slot-empty{width:var(--ing-card-w);height:var(--ing-card-h)}
 
-  /* 中央パネル */
-  .center-panel{
-    grid-column:unset;grid-row:unset;
-    flex-direction:row;gap:4px;
-    min-height:0;
-  }
-  .detail-panel{flex:1;min-height:80px;max-height:140px}
-  .center-btns{flex:0 0 auto;width:120px;padding:5px;gap:4px}
-  .center-btn{font-size:12px;padding:8px 6px}
+  /* 手札カード */
+  .hcard{width:clamp(60px,8vw,88px);height:clamp(72px,9.5vh,108px)}
+  .hcard-img-wrap{height:clamp(30px,4.5vh,48px);margin:-5px -5px 3px;width:calc(100% + 10px)}
+  .hc-name{font-size:clamp(8px,1.6vh,11px)}
+  .hc-type{font-size:clamp(6px,1vh,8px)}
+  .hc-sat{font-size:clamp(10px,1.8vh,14px)}
+  .hand-slot-empty{width:clamp(60px,8vw,88px);height:clamp(72px,9.5vh,108px)}
 
-  /* ログ */
-  .g-bottom{grid-column:unset;grid-row:unset;height:auto}
-  .g-log{max-height:60px}
+  /* deck-mini */
+  .deck-mini{width:clamp(42px,5.5vw,56px);height:clamp(52px,7vh,68px)}
+  .dm-icon{font-size:clamp(11px,2vh,16px)}
+  .dm-count{font-size:clamp(12px,2.2vh,18px)}
+  .dm-label{font-size:clamp(5px,0.9vh,7px)}
 
-  /* 食材カード縮小 */
-  .ing-card{width:58px;height:72px}
-  .ic-img-wrap{height:32px;margin:-3px -3px 2px;width:calc(100% + 6px)}
-  .ic-name{font-size:10px}
-  .ic-cat{font-size:6px}
-  .ing-slot-empty{width:58px;height:72px}
+  /* 完成料理カード */
+  .rcard-done{min-width:clamp(38px,5vw,52px);padding:2px 3px}
+  .rcard-done .rn{font-size:clamp(6px,1vh,8px)}
+  .rcard-done .rs{font-size:clamp(9px,1.6vh,12px)}
 
-  /* 手札カード縮小 */
-  .hcard{width:76px;height:92px}
-  .hcard-img-wrap{height:42px;margin:-5px -5px 3px;width:calc(100% + 10px)}
-  .hc-name{font-size:10px}
-  .hc-type{font-size:7px}
-  .hc-sat{font-size:12px}
-  .hand-slot-empty{width:76px;height:92px}
+  /* 満腹度バー */
+  .sat-bar-left,.sat-bar-right{font-size:clamp(7px,1.2vh,9px);padding:2px 4px}
+  .sat-num{font-size:clamp(9px,1.5vh,11px);width:24px}
+  .sat-track{min-width:clamp(30px,5vw,50px)}
 
-  /* deck-mini縮小 */
-  .deck-mini{width:54px;height:68px}
-  .dm-icon{font-size:14px}
-  .dm-count{font-size:15px}
-  .dm-label{font-size:6.5px}
+  /* センターパネル：ボタンを縦に小さく */
+  .center-btn{font-size:clamp(10px,1.8vh,13px);padding:clamp(5px,1.2vh,8px) 6px;min-height:36px}
+  .phase-badge{font-size:clamp(8px,1.5vh,11px)}
+  .turn-info{font-size:clamp(8px,1.3vh,10px)}
 
-  /* 完成料理 */
-  .rcard-done{min-width:44px;padding:3px}
-  .rcard-done .rn{font-size:8px}
-  .rcard-done .rs{font-size:11px}
-
-  /* ターンバナー */
-  .turn-banner-inner{font-size:20px;padding:12px 32px}
-
-  /* 勝利タイトル */
-  .winner-title{font-size:64px}
-  .winner-sub{font-size:20px}
+  /* ボトムログ */
+  .g-log{max-height:clamp(32px,5vh,48px)}
+  .g-log .log-line{font-size:clamp(8px,1.3vh,10px);padding:1px 0}
 
   /* タイトル画面 */
-  .title-screen{padding:20px 12px;gap:16px}
-  .logo h1{font-size:22px;letter-spacing:3px}
-  .logo-en{font-size:14px}
-  .logo-tagline{font-size:13px}
-  .mbtn{width:90%;max-width:300px;font-size:13px;padding:12px}
+  .title-screen{gap:clamp(6px,1.5vh,14px);padding:8px 0;justify-content:flex-start;padding-top:clamp(8px,2vh,16px)}
+  .logo h1{font-size:clamp(18px,4vh,26px);letter-spacing:2px}
+  .logo-en{font-size:clamp(11px,2vh,14px)}
+  .logo-tagline{font-size:clamp(10px,1.8vh,13px)}
+  .title-menu{gap:clamp(4px,1vh,8px)}
+  .mbtn{font-size:clamp(11px,2vh,14px);padding:clamp(5px,1.2vh,10px) 12px;min-height:40px;width:220px}
+  .mbtn.sm{width:160px}
 
   /* デッキビルダー */
-  .db-body{flex-direction:column}
-  .db-lib{width:100%;border-right:none;border-bottom:1px solid rgba(140,100,40,.3);height:55vh}
-  .deck-panel{height:45vh;overflow-y:auto}
-  .dp-preview{display:none} /* スマホではカード詳細プレビューを非表示 */
+  .db-body{flex-direction:row} /* 横画面なので横並びのまま */
+  .deck-panel{width:200px}
   .db-footer{flex-wrap:wrap;gap:5px}
-  .db-footer .btn{font-size:10px;padding:4px 8px}
+  .db-footer .btn{font-size:10px;padding:4px 8px;min-height:36px}
+
+  /* タップターゲット確保（最小44px） */
+  .btn, .center-btn, .mbtn{min-height:44px}
+  .ing-card, .hcard{touch-action:manipulation}
+}
+
+/* ── スマホ版デッキ構築 ── */
+.sp-db{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--bg)}
+.sp-db-header{flex-shrink:0;padding:7px 10px 5px;background:rgba(255,248,220,.95);border-bottom:2px solid rgba(140,100,40,.25)}
+.sp-db-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.sp-db-title{font-size:14px;font-weight:800;color:var(--goldD)}
+.sp-db-counts{display:flex;gap:5px}
+.sp-db-cnt{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid}
+.sp-db-cnt.ing{border-color:#5580c0;color:#2a4090;background:rgba(85,128,192,.12)}
+.sp-db-cnt.rec{border-color:#c86820;color:#7a3a00;background:rgba(200,104,32,.12)}
+.sp-db-cnt.ok{border-width:2px}
+.sp-db-cnt.over{border-color:#c03030;color:#c03030;background:rgba(200,60,60,.12)}
+.sp-db-tabs{display:flex}
+.sp-db-tab{flex:1;padding:6px;font-size:12px;font-weight:700;border:none;border-bottom:2px solid transparent;background:none;color:var(--muted);cursor:pointer;font-family:inherit}
+.sp-db-tab.active{color:var(--goldD);border-bottom:2px solid var(--goldD)}
+/* ライブラリ */
+.sp-db-lib{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.sp-db-subtabs{display:flex;gap:4px;padding:5px 8px;flex-shrink:0;background:rgba(255,248,220,.6);border-bottom:1px solid var(--borderG)}
+.sp-db-subtab{flex:1;padding:5px;font-size:11px;font-weight:700;border-radius:5px;border:1px solid var(--borderG);background:rgba(255,255,255,.5);color:var(--muted);cursor:pointer;text-align:center;font-family:inherit}
+.sp-db-subtab.active{background:var(--goldD);color:#fff;border-color:var(--goldD)}
+.sp-db-filters{display:flex;gap:3px;padding:4px 8px;flex-shrink:0;flex-wrap:wrap;background:rgba(255,248,220,.5)}
+.sp-db-flt{padding:3px 8px;font-size:10px;border-radius:3px;border:1px solid var(--borderG);background:rgba(255,255,255,.6);color:var(--muted);cursor:pointer;font-family:inherit}
+.sp-db-flt.active{background:var(--goldD);color:#fff;border-color:var(--goldD)}
+.sp-db-search-wrap{padding:4px 8px 2px;flex-shrink:0}
+.sp-db-search{width:100%;padding:5px 8px;font-size:11px;border:1px solid var(--borderG);border-radius:4px;background:rgba(255,255,255,.7);color:var(--text);font-family:inherit;outline:none}
+.sp-db-card-list{flex:1;overflow-y:auto;padding:4px 6px;display:flex;flex-direction:column;gap:4px}
+/* ライブラリカード */
+.sp-db-card{border-radius:7px;background:rgba(255,248,220,.85);border:1px solid rgba(140,100,40,.25);overflow:hidden;display:flex;align-items:stretch;min-height:54px;cursor:pointer}
+.sp-db-card.in-deck{border-color:#5580c0;background:rgba(85,128,192,.08)}
+.sp-db-card.maxed{opacity:.45}
+.sp-db-card-body{flex:1;padding:8px;display:flex;align-items:flex-start;gap:6px;min-width:0}
+.sp-db-card-main{flex:1;min-width:0}
+.sp-db-card-name{font-size:12px;font-weight:700;color:var(--text);line-height:1.3}
+.sp-db-card-eff{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.4}
+.sp-db-card-req{display:flex;gap:2px;flex-wrap:wrap;margin-top:3px}
+.sp-db-req-chip{font-size:8px;padding:1px 4px;border-radius:2px;background:rgba(140,100,40,.15);color:var(--goldD)}
+/* ＋ボタン：右端縦いっぱい */
+.sp-db-add-btn{width:44px;align-self:stretch;border:none;border-left:1px solid rgba(140,100,40,.2);background:rgba(122,80,32,.1);color:var(--goldD);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;flex-shrink:0;font-family:inherit;transition:background .15s}
+.sp-db-add-btn:active{background:rgba(122,80,32,.28)}
+.sp-db-add-btn.has-count{background:rgba(85,128,192,.12);border-left-color:rgba(85,128,192,.3)}
+.sp-db-add-btn .add-cnt{font-size:9px;font-weight:700;color:#2a4090;line-height:1}
+.sp-db-add-btn.maxed-btn{background:rgba(0,0,0,.05);color:rgba(0,0,0,.25);cursor:default;font-size:10px;font-weight:700}
+/* デッキ確認 */
+.sp-db-deck{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.sp-db-deck-namebar{display:flex;align-items:center;gap:6px;padding:5px 8px;flex-shrink:0;background:rgba(255,248,220,.7);border-bottom:1px solid var(--borderG)}
+.sp-db-deck-name-inp{flex:1;padding:4px 7px;font-size:12px;font-weight:700;border:1px solid var(--borderG);border-radius:4px;background:rgba(255,255,255,.7);color:var(--text);font-family:inherit;outline:none}
+.sp-db-deck-list{flex:1;overflow-y:auto;padding:4px 6px;display:flex;flex-direction:column;gap:3px}
+.sp-db-deck-hd{font-size:10px;font-weight:800;color:var(--goldD);padding:5px 4px 3px;border-bottom:1px solid rgba(140,100,40,.2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sp-db-entry{display:flex;align-items:stretch;border-radius:6px;background:rgba(255,248,220,.75);border:1px solid rgba(140,100,40,.2);overflow:hidden;min-height:44px}
+.sp-db-entry-body{display:flex;align-items:center;gap:6px;flex:1;padding:0 8px}
+.sp-db-entry-name{flex:1;font-size:11px;font-weight:700;color:var(--text)}
+.sp-db-entry-cnt{font-size:12px;font-weight:700;color:#2a4090;min-width:24px;text-align:right}
+.sp-db-entry-sat{font-size:10px;color:var(--goldD);min-width:24px;text-align:right}
+.sp-db-rm-btn{width:44px;align-self:stretch;border:none;border-left:1px solid rgba(200,60,60,.25);background:rgba(220,80,80,.1);color:#c03030;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.sp-db-rm-btn:active{background:rgba(220,80,80,.3)}
+/* カテゴリ分布 */
+.sp-db-stats{flex-shrink:0;padding:6px 10px;border-top:1px solid var(--borderG);background:rgba(255,248,220,.6)}
+.sp-db-stats-title{font-size:8px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
+.sp-db-stat-row{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.sp-db-stat-lbl{width:40px;font-size:8px;color:var(--muted);text-align:right}
+.sp-db-stat-bar{flex:1;height:5px;background:rgba(0,0,0,.1);border-radius:2px;overflow:hidden}
+.sp-db-stat-fill{height:100%;border-radius:2px}
+.sp-db-stat-num{width:16px;font-size:8px;color:var(--muted);text-align:right}
+/* バリデーション */
+.sp-db-valid{flex-shrink:0;padding:4px 10px;text-align:center;font-size:10px;font-weight:700}
+.sp-db-valid.ok{color:#1a6a1a;background:rgba(100,200,100,.15)}
+.sp-db-valid.ng{color:#a01010;background:rgba(200,80,80,.1)}
+/* フッター */
+.sp-db-footer{flex-shrink:0;padding:5px 8px;background:rgba(255,248,220,.95);border-top:2px solid rgba(140,100,40,.25);display:flex;flex-direction:column;gap:4px}
+.sp-db-footer-row{display:flex;gap:4px}
+.sp-db-fbtn{flex:1;padding:7px 3px;font-size:10px;font-weight:700;border-radius:6px;border:1px solid var(--borderG);background:rgba(140,100,40,.12);color:var(--goldD);cursor:pointer;font-family:inherit;white-space:nowrap;min-height:36px;text-align:center}
+.sp-db-fbtn.primary{background:var(--goldD);color:#fff;border-color:var(--goldD)}
+.sp-db-fbtn.danger{background:rgba(200,60,60,.12);color:#c03030;border-color:rgba(200,60,60,.3)}
+.sp-db-fbtn.code{background:rgba(40,80,160,.1);color:#2a4090;border-color:rgba(40,80,160,.3)}
+.sp-db-fbtn:disabled{opacity:.4;cursor:default}
+/* カード詳細ボトムシート */
+.sp-db-sheet{position:fixed;bottom:0;left:0;right:0;max-height:55vh;background:var(--bg2);border-radius:14px 14px 0 0;border:1px solid var(--goldD);border-bottom:none;z-index:200;transform:translateY(100%);transition:transform .3s ease;overflow-y:auto;padding:12px}
+.sp-db-sheet.open{transform:translateY(0)}
+
+/* ── スマホ版チュートリアル ── */
+.sp-tut{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:repeating-linear-gradient(88deg,transparent 0,transparent 22px,rgba(100,64,20,.06) 22px,rgba(100,64,20,.06) 26px,transparent 26px,transparent 50px),linear-gradient(180deg,#d8c8a0 0%,#ccbc90 30%,#c4b488 60%,#b8a878 100%)}
+.sp-tut-ai{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:5px 10px;background:rgba(240,230,255,.7);border-bottom:1px solid rgba(120,80,160,.2)}
+.sp-tut-ai-label{font-size:12px;font-weight:800;white-space:nowrap;color:var(--text)}
+.sp-tut-ai-track{flex:1;height:8px;background:rgba(0,0,0,.18);border-radius:4px;overflow:hidden}
+.sp-tut-ai-fill{height:100%;background:linear-gradient(90deg,#c01818,#e04040);border-radius:4px;transition:width .4s}
+.sp-tut-ai-num{font-size:13px;font-weight:800;color:#c01818;white-space:nowrap}
+.sp-tut-panel{flex-shrink:0;height:400px;display:flex;flex-direction:column;background:rgba(255,248,220,.95);border-bottom:2px solid rgba(140,100,40,.3);padding:6px 8px;gap:4px}
+.sp-tut-progress{display:flex;gap:2px;flex-shrink:0}
+.sp-tut-prog-dot{flex:1;height:4px;border-radius:2px;transition:background .3s}
+.sp-tut-title{font-size:12px;font-weight:800;color:#1a1008;flex-shrink:0}
+.sp-tut-body{font-size:11px;color:#2e1e0a;line-height:1.7;white-space:pre-line;flex:1;overflow-y:auto}
+.sp-tut-btns{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap}
+.sp-tut-self{flex:0 0 auto;display:flex;flex-direction:column;gap:3px;padding:4px 5px;background:rgba(255,248,225,.55)}
+.sp-tut-req{font-size:9px;color:#1a5010;font-weight:700;background:rgba(200,240,200,.6);padding:3px 6px;border-radius:4px;flex-shrink:0}
+.sp-game{display:flex;flex-direction:column;height:100vh;overflow:hidden;background:repeating-linear-gradient(88deg,transparent 0,transparent 22px,rgba(100,64,20,.06) 22px,rgba(100,64,20,.06) 26px,transparent 26px,transparent 50px,rgba(80,48,12,.04) 50px,rgba(80,48,12,.04) 52px),linear-gradient(180deg,#d8c8a0 0%,#ccbc90 30%,#c4b488 60%,#b8a878 100%)}
+.sp-area{display:flex;flex-direction:column;gap:3px;padding:4px 5px;overflow:hidden;min-height:0}
+.sp-area-opp{flex:2;background:rgba(240,230,255,.38);border-bottom:1px solid rgba(140,100,40,.2)}
+.sp-area-self{flex:2;background:rgba(255,248,225,.55);border-top:1px solid rgba(140,100,40,.2)}
+.sp-info-row{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.sp-player-label{font-size:10px;font-weight:800;color:var(--text);white-space:nowrap}
+.sp-deck-badges{display:flex;gap:3px}
+.sp-deck-btn{display:flex;align-items:center;gap:2px;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px;border:1px solid rgba(140,100,40,.4);background:rgba(255,248,220,.7);cursor:pointer;white-space:nowrap;min-height:24px}
+.sp-deck-btn.ing{border-color:var(--carb);color:#5a3800}
+.sp-deck-btn.rec{border-color:var(--goldD);color:#5a3800}
+.sp-deck-btn.trash{border-color:rgba(140,100,40,.5);color:var(--muted)}
+.sp-deck-btn.active{background:rgba(200,170,80,.4);border-width:2px}
+.sp-sat-row{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.sp-sat-label{font-size:9px;font-weight:700;white-space:nowrap}
+.sp-sat-track{flex:1;height:7px;background:rgba(0,0,0,.18);border-radius:4px;overflow:hidden}
+.sp-sat-fill{height:100%;border-radius:4px;transition:width .4s;background:linear-gradient(90deg,#208850,#40b870)}
+.sp-sat-fill.warn{background:linear-gradient(90deg,#c06010,#e08030)}
+.sp-sat-fill.danger{background:linear-gradient(90deg,#b81818,#e04040)}
+.sp-sat-num{font-size:12px;font-weight:800;min-width:34px;text-align:right}
+.sp-ing-zone{flex:none;height:70px;display:flex;gap:3px;overflow-x:auto;overflow-y:hidden;align-items:flex-start;padding:2px 1px}
+.sp-ing-zone::-webkit-scrollbar{height:2px}
+.sp-ing-zone::-webkit-scrollbar-thumb{background:rgba(140,100,40,.4);border-radius:1px}
+.sp-ing-zone.drop-target{background:rgba(100,200,100,.2);border-radius:4px;outline:2px dashed #4caf50}
+/* 空きスロット */
+.sp-ing-slot-empty{flex-shrink:0;width:52px;height:64px;border-radius:5px;border:1px dashed rgba(80,60,20,.25);background:rgba(0,0,0,.04)}
+/* ゾーンラベル */
+.sp-zone-header{display:flex;align-items:center;gap:4px;flex-shrink:0;margin-bottom:1px}
+.sp-zone-label{font-size:9px;font-weight:700;color:rgba(80,60,20,.55);letter-spacing:.5px;white-space:nowrap}
+.sp-zone-count{font-size:9px;color:rgba(80,60,20,.4)}
+.sp-rec-zone{display:flex;gap:3px;overflow-x:auto;flex-shrink:0;padding:2px 1px;min-height:26px;align-items:center}
+.sp-rec-zone::-webkit-scrollbar{height:2px}
+.sp-rec-zone::-webkit-scrollbar-thumb{background:rgba(140,100,40,.4);border-radius:1px}
+.sp-rec-zone-label{font-size:8px;color:var(--dim);font-weight:600;flex-shrink:0}
+.sp-sml-card{flex-shrink:0;width:52px;height:64px;border-radius:5px;background:rgba(255,250,230,.85);border:1px solid rgba(140,100,40,.35);padding:2px;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.sp-sml-card.sel{border:2px solid var(--goldL);box-shadow:0 0 0 1px var(--goldL)}
+.sp-sml-card.highlight{border:2px solid var(--vitaminL)}
+.sp-sml-card.activated{opacity:.6}
+.sp-sml-card .smc-img{width:100%;flex:1;overflow:hidden;border-radius:3px 3px 0 0;background:rgba(0,0,0,.06);min-height:0}
+.sp-sml-card .smc-name{font-size:7px;font-weight:700;text-align:center;line-height:1.1;margin-top:1px;width:100%}
+.sp-sml-card.protein{border-top:2px solid var(--protein)}
+.sp-sml-card.carb{border-top:2px solid var(--carb)}
+.sp-sml-card.fat{border-top:2px solid var(--fat)}
+.sp-sml-card.vitamin{border-top:2px solid var(--vitamin)}
+.sp-sml-card.mineral{border-top:2px solid var(--mineral)}
+.sp-rec-card{flex-shrink:0;padding:2px 5px;border-radius:4px;background:rgba(255,248,200,.8);border:1px solid rgba(180,140,40,.4);text-align:center}
+.sp-rec-card .rn{font-size:7px;font-weight:700;color:var(--text)}
+.sp-rec-card .rs{font-size:9px;font-weight:800;color:var(--goldD)}
+.sp-center{flex:1;display:flex;align-items:stretch;border-top:1px solid rgba(140,100,40,.25);border-bottom:1px solid rgba(140,100,40,.25);background:rgba(255,248,220,.7);flex-shrink:0;min-height:0}
+.sp-center-left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 8px;border-right:1px solid rgba(140,100,40,.2)}
+.sp-center-right{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:4px 8px;gap:4px}
+.sp-phase-badge{font-size:10px;font-weight:800;color:var(--goldD);background:rgba(200,170,80,.2);border-radius:4px;padding:2px 6px;white-space:nowrap;display:inline-block}
+.sp-turn-info{font-size:9px;color:var(--muted);margin-top:2px}
+.sp-btn{font-size:11px;padding:6px 12px;border-radius:5px;border:1px solid var(--borderG);background:rgba(74,44,8,.15);color:var(--goldD);cursor:pointer;font-family:inherit;font-weight:800;white-space:nowrap;min-height:32px;min-width:90px}
+.sp-btn.primary{background:rgba(74,44,8,.32);border-color:var(--goldD)}
+.sp-btn:disabled{opacity:.4;cursor:default}
+.sp-hint{font-size:10px;color:var(--muted);text-align:right}
+.sp-missing{font-size:9px;color:#900808;font-weight:700;text-align:right}
+.sp-hand-row{flex-shrink:0;display:flex;gap:2px;padding:3px 4px;background:rgba(255,248,220,.6);border-top:1px solid rgba(140,100,40,.25)}
+.sp-hand-row.drop-target{background:rgba(100,200,100,.25);outline:2px dashed #4caf50;border-radius:4px}
+.sp-hcard{flex:1;min-width:0;aspect-ratio:52/64;border-radius:4px;border:1px solid var(--borderG);background:var(--bg3);display:flex;flex-direction:column;align-items:center;padding:2px 1px;cursor:pointer;overflow:hidden;position:relative;transition:all .15s}
+.sp-hcard.sel{box-shadow:0 0 0 2px var(--goldL);border-color:var(--goldL)}
+.sp-hcard.dragging{opacity:.4;transform:scale(.94)}
+.sp-hcard.sh-rec{border-top:2px solid var(--goldD)}
+.sp-hcard.sh-ing{border-top:2px solid var(--carb)}
+.sp-hcard .sh-img{width:100%;flex:1;overflow:hidden;background:rgba(0,0,0,.06);min-height:20px}
+.sp-hcard .sh-name{font-size:5px;font-weight:700;text-align:center;line-height:1.1;width:100%;padding:0 1px}
+.sp-hcard .sh-sat{font-size:7px;font-weight:800;color:var(--goldD);line-height:1}
+.sp-hcard.back{background:repeating-linear-gradient(45deg,#16100a 0,#16100a 5px,#1a1409 5px,#1a1409 10px)}
+.sp-hand-empty{flex:1;min-width:0;opacity:.15;border-radius:4px;border:1px dashed rgba(140,100,40,.3)}
+.sp-detail-sheet{position:fixed;bottom:0;left:0;right:0;max-height:55vh;background:var(--bg2);border-radius:14px 14px 0 0;border:1px solid var(--goldD);border-bottom:none;z-index:200;transform:translateY(100%);transition:transform .3s ease;overflow-y:auto;padding:12px}
+.sp-detail-sheet.open{transform:translateY(0)}
+.sp-sheet-handle{width:36px;height:4px;background:rgba(140,100,40,.4);border-radius:2px;margin:0 auto 10px}
+.sp-sheet-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted)}
+/* ドラッグゴースト */
+.sp-drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:translate(-50%,-50%) scale(1.1);border-radius:5px;background:var(--bg3);border:2px solid var(--goldL);padding:4px 8px;font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+/* 4:3（縦に狭い） */
+@media(max-aspect-ratio:4/3){
+  .game-screen{grid-template-rows:var(--header-h,36px) 1fr var(--bottom-h,40px)}
+  .g-log .log-line{font-size:9px;padding:1px 0}
+}
+/* 21:9（横長） */
+@media(min-aspect-ratio:21/9){
+  .game-screen{grid-template-columns:1fr var(--center-w,260px) 1fr}
+  .hand-slots{gap:5px}
 }
 /* ヘッダー */
 .g-header{
@@ -314,6 +535,15 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .g-title{font-size:12px;color:var(--goldD);font-weight:800;letter-spacing:2px;white-space:nowrap;font-size:12px}
 .phase-badge{font-size:10px;padding:2px 10px;border-radius:10px;border:1px solid var(--borderG);color:var(--goldD);background:rgba(74,44,8,.12);white-space:nowrap;font-weight:700}
 .turn-info{font-size:10px;color:var(--muted);white-space:nowrap;font-weight:600}
+.turn-timer-wrap{width:100%;max-width:160px;margin-top:3px}
+.turn-timer-bar{height:5px;border-radius:3px;background:rgba(0,0,0,.2);overflow:hidden}
+.turn-timer-fill{height:100%;border-radius:3px;transition:width .9s linear,background .3s}
+.turn-timer-fill.safe{background:linear-gradient(90deg,#4caf50,#8bc34a)}
+.turn-timer-fill.warn{background:linear-gradient(90deg,#ff9800,#ffc107)}
+.turn-timer-fill.danger{background:#e53935;animation:timerPulse .6s ease-in-out infinite alternate}
+.turn-timer-sec{font-size:9px;text-align:center;margin-top:1px;font-weight:bold}
+.turn-timer-sec.danger{color:#e53935}
+@keyframes timerPulse{from{opacity:1}to{opacity:.5}}
 /* 満腹度バー */
 .sat-bar-left{display:flex;align-items:center;gap:5px;padding:2px 6px;background:rgba(255,248,220,.4);border-radius:4px;border:1px solid rgba(140,100,40,.25);justify-content:flex-start}
 .sat-bar-right{display:flex;align-items:center;gap:5px;padding:2px 6px;background:rgba(255,248,220,.4);border-radius:4px;border:1px solid rgba(140,100,40,.25);justify-content:flex-end}
@@ -347,7 +577,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 /* 中央パネル */
 .center-panel{grid-column:2/3;grid-row:2/3;display:flex;flex-direction:column;gap:3px;min-height:0;overflow:hidden}
 .center-btns{background:rgba(255,248,220,.55);border-radius:6px;border:1px solid rgba(140,100,40,.28);padding:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.center-btn{font-size:15px;padding:10px 12px;border-radius:6px;border:1px solid var(--borderG);background:rgba(74,44,8,.15);color:var(--goldD);cursor:pointer;font-family:inherit;font-weight:bold;transition:all .15s;width:100%;text-align:center}
+.center-btn{font-size:17px;padding:13px 12px;border-radius:6px;border:1px solid var(--borderG);background:rgba(74,44,8,.15);color:var(--goldD);cursor:pointer;font-family:inherit;font-weight:bold;transition:all .15s;width:100%;text-align:center}
 .center-btn:hover{background:rgba(14,37,69,.25);border-color:var(--goldL)}
 .center-btn.primary{background:rgba(74,44,8,.25);border-color:var(--goldD);color:var(--goldD)}
 .center-btn.primary:hover{background:rgba(74,44,8,.35)}
@@ -365,7 +595,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .ic-img-wrap{width:100%;height:42px;overflow:hidden;border-radius:3px 3px 0 0;flex-shrink:0;background:rgba(0,0,0,.06);margin:-4px -4px 3px;width:calc(100% + 8px)}
 /* 手札カード画像エリア */
 .hcard-img-wrap{width:100%;height:58px;overflow:hidden;border-radius:5px 5px 0 0;flex-shrink:0;background:rgba(0,0,0,.06);margin:-8px -6px 4px;width:calc(100% + 12px)}
-.ing-card{width:72px;height:88px;border-radius:5px;background:rgba(255,250,230,.8);border:1px solid rgba(140,100,40,.35);padding:4px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:all .15s;position:relative;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.ing-card{width:var(--ing-card-w,72px);height:var(--ing-card-h,88px);border-radius:5px;background:rgba(255,250,230,.8);border:1px solid rgba(140,100,40,.35);padding:4px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:all .15s;position:relative;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .ing-card:hover{transform:translateY(-3px);box-shadow:0 5px 14px rgba(0,0,0,.15);z-index:2}
 .ing-card.sel{box-shadow:0 0 0 2px var(--goldL);border-color:var(--goldL)}
 .ing-card.activated{opacity:.55;border-color:#38a068}
@@ -401,7 +631,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .hand-row-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;flex-shrink:0}
 .hand-area{background:rgba(0,0,0,.18);border-radius:4px;padding:6px;border:1px solid var(--border);flex:4;min-height:0;overflow-y:auto}
 .hcard{
-  width:102px;height:123px;
+  width:var(--hcard-w,102px);height:var(--hcard-h,123px);
   border-radius:6px;border:1px solid var(--borderG);background:var(--bg3);
   display:flex;flex-direction:column;align-items:center;padding:5px;
   cursor:pointer;transition:all .15s;flex-shrink:0;
@@ -565,6 +795,10 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
   animation:winFadeIn .6s ease-out .5s both;
 }
 .winner-btns{display:flex;gap:10px;margin-top:12px;animation:winFadeIn .6s ease-out .8s both}
+@media (max-width:500px),(max-height:500px){
+  .winner-title{font-size:64px;letter-spacing:3px}
+  .winner-sub{font-size:17px;letter-spacing:1px;padding:0 16px}
+}
 
 /* ── カード配置アニメ ── */
 .place-anim-overlay{position:fixed;inset:0;z-index:380;pointer-events:none;}
@@ -629,8 +863,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .g-controls{display:flex;gap:6px;padding:3px 10px;background:var(--bg2);border-radius:5px;border:1px solid var(--border);flex-wrap:wrap;align-items:center;flex-shrink:0}
 .phase-hint{font-size:10px;color:var(--muted)}
 .missing-hint{font-size:10px;color:#f84}
-.g-bottom{grid-column:1/4;grid-row:3/4;display:flex;flex-direction:column;gap:3px;overflow:hidden;min-height:0}
-.g-log{background:var(--bg2);border-radius:5px;border:1px solid var(--border);padding:2px 10px;overflow-y:auto;flex:1}
+.g-bottom{grid-column:1/4;grid-row:3/4;display:flex;flex-direction:column;gap:3px;overflow:hidden;min-height:0;padding:2px 3px}
+.g-log{background:var(--bg2);border-radius:5px;border:1px solid var(--border);padding:2px 10px;overflow-y:auto;flex:1;min-height:0}
 .log-line{font-size:9px;color:var(--muted);padding:1px 0;border-bottom:1px solid rgba(255,255,255,.04);line-height:1.5}
 .log-line.hl{color:var(--goldL)}
 .log-line.warn{color:#f08040}
@@ -643,7 +877,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .dp-empty-icon{font-size:32px;opacity:.25}
 .dp-empty-text{font-size:10px;color:var(--faint);text-align:center;line-height:1.8}
 /* dp-card はホイールでスクロールできるよう overflow-y:scroll を使う */
-.dp-card{display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:scroll;padding:8px;scroll-behavior:smooth}
+.dp-card{display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;padding:6px;scroll-behavior:smooth}
 .dp-card::-webkit-scrollbar{width:4px}
 .dp-card::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
@@ -687,9 +921,10 @@ body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;color:#1e253
 .ai-dot:nth-child(2){animation-delay:.25s}.ai-dot:nth-child(3){animation-delay:.5s}
 
 /* ── SELECTION MODAL ── */
-.sel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:150}
-.sel-box{background:var(--bg2);border:1px solid var(--goldD);border-radius:10px;padding:16px;max-width:620px;width:92%;max-height:80vh;display:flex;flex-direction:column;gap:10px}
-.sel-title{font-size:13px;color:var(--goldL);font-weight:bold;text-align:center;letter-spacing:1px}
+.sel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:150;pointer-events:auto}
+.sel-box{position:fixed;background:var(--bg2);border:1px solid var(--goldD);border-radius:10px;padding:16px;max-width:620px;width:92%;max-height:80vh;display:flex;flex-direction:column;gap:10px;z-index:151;pointer-events:auto;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+.sel-title{font-size:13px;color:var(--goldL);font-weight:bold;text-align:center;letter-spacing:1px;cursor:grab;user-select:none;padding:4px 0 6px;border-bottom:1px solid rgba(180,120,0,.2);margin-bottom:2px}
+.sel-title:active{cursor:grabbing}
 .sel-desc{font-size:10px;color:var(--muted);text-align:center;line-height:1.7}
 .sel-cards{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;overflow-y:auto;padding:4px 2px}
 .sel-card{width:90px;height:108px;border-radius:6px;background:var(--bg3);border:1.5px solid var(--border);padding:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;text-align:center}
@@ -740,31 +975,98 @@ body.electron-mode .mode-select-screen{height:calc(100vh - 32px);}
 <body>
 <div id="electron-titlebar" style="display:none">
   <div class="electron-titlebar-title">調理魔導書 Recipe Grimoire</div>
-  <button class="electron-titlebar-btn" onclick="window.electronAPI&&window.electronAPI.minimize()">─</button>
-  <button class="electron-titlebar-btn" onclick="window.electronAPI&&window.electronAPI.toggleFullscreen()">⛶</button>
-  <button class="electron-titlebar-btn close" onclick="window.electronAPI&&window.electronAPI.quit()">✕</button>
+  <button class="electron-titlebar-btn" onclick="if(typeof nw!=='undefined'){nw.Window.get().minimize();}else if(window.electronAPI)window.electronAPI.minimize()">─</button>
+  <button class="electron-titlebar-btn" onclick="if(typeof nw!=='undefined'){var w=nw.Window.get();w.isFullscreen?w.leaveFullscreen():w.enterFullscreen();}else if(window.electronAPI)window.electronAPI.toggleFullscreen()">⛶</button>
+  <button class="electron-titlebar-btn close" onclick="if(typeof nw!=='undefined'){nw.Window.get().close();}else if(window.electronAPI)window.electronAPI.quit()">✕</button>
 </div>
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
 <script>
-// ── Electron 環境初期化 ──
-if(window.electronAPI){
+// ── 解像度に応じた動的スケーリング ──
+function applyResponsiveLayout(){
+  const w=window.innerWidth;
+  const h=window.innerHeight;
+  const root=document.documentElement;
+  const headerH=Math.max(36,Math.min(48,h*0.05));
+  const bottomH=Math.max(44,Math.min(64,h*0.065));
+  const centerW=Math.max(180,Math.min(260,w*0.17));
+  const scale=Math.min(1,Math.max(0.7,h/900));
+  root.style.setProperty('--header-h',`${headerH}px`);
+  root.style.setProperty('--bottom-h',`${bottomH}px`);
+  root.style.setProperty('--center-w',`${centerW}px`);
+  root.style.setProperty('--card-scale',`${scale}`);
+  root.style.setProperty('--ing-card-w',`${Math.round(72*scale)}px`);
+  root.style.setProperty('--ing-card-h',`${Math.round(88*scale)}px`);
+  root.style.setProperty('--hcard-w',`${Math.round(102*scale)}px`);
+  root.style.setProperty('--hcard-h',`${Math.round(123*scale)}px`);
+}
+applyResponsiveLayout();
+window.addEventListener('resize',applyResponsiveLayout);
+
+// ── 環境初期化（NW.js / Electron 両対応） ──
+if(typeof nw!=='undefined'){
+  // NW.jsはframe:trueでOSネイティブタイトルバーを使用
+  // electron-modeクラスは付けない（calc(100vh - 32px)が適用されるため）
+  // カスタムタイトルバーも不要
+}else if(window.electronAPI){
   document.body.classList.add('electron-mode');
-  // macOS以外でカスタムタイトルバーを表示
   if(window.electronAPI.platform!=='darwin'){
     document.getElementById('electron-titlebar').style.display='flex';
   }
-  // メインプロセスからのメニューアクション受信
   window.electronAPI.onMenuAction(action=>{
     if(action==='gotoTitle') window.__gotoTitle&&window.__gotoTitle();
-    if(action==='serverRestarted') console.log('Server restarted');
   });
 }
 
 const {useState,useEffect,useRef,useMemo,useCallback}=React;
 const h=React.createElement;
+
+// プラットフォーム判定
+const PLATFORM=(()=>{
+  const ua=navigator.userAgent||'';
+  if(/android/i.test(ua))return 'android';
+  if(/iphone|ipad|ipod/i.test(ua))return 'ios';
+  if(/win/i.test(navigator.platform||ua))return 'windows';
+  if(/mac/i.test(navigator.platform||ua))return 'mac';
+  return 'other';
+})();
+const isMobile=()=>PLATFORM==='android'||PLATFORM==='ios';
+
+// デッキ構築カード用長押しタイマー（クロージャ問題を避けるためモジュールレベルで管理）
+let _spDbLpTimer=null;
+
+// 長押しイベントハンドラー生成
+// onLongPress: 長押し時, onTap: タップ時（省略可）, threshold: ms
+function makeLongPress(onLongPress, onTap, threshold=480){
+  let timer=null, moved=false, startX=0, startY=0;
+  return {
+    onTouchStart(e){
+      moved=false;
+      const t=e.touches[0];
+      startX=t.clientX; startY=t.clientY;
+      timer=setTimeout(()=>{
+        if(!moved){
+          if(navigator.vibrate)navigator.vibrate(30);
+          onLongPress(e);
+          timer=null;
+        }
+      },threshold);
+    },
+    onTouchMove(e){
+      const t=e.touches[0];
+      if(Math.abs(t.clientX-startX)>8||Math.abs(t.clientY-startY)>8){
+        moved=true;
+        if(timer){clearTimeout(timer);timer=null;}
+      }
+    },
+    onTouchEnd(e){
+      if(timer){clearTimeout(timer);timer=null;if(!moved&&onTap)onTap(e);}
+    },
+    onTouchCancel(){if(timer){clearTimeout(timer);timer=null;}}
+  };
+}
 
 // ============================================================
 // CARD DATA
@@ -939,6 +1241,7 @@ function decodeDeckCode(code){
 
 
 // ============================================================
+// ============================================================
 // TUTORIAL
 // ============================================================
 const TUTORIAL_STEPS=[
@@ -958,7 +1261,7 @@ const TUTORIAL_STEPS=[
    body:'レシピカードで料理を完成させましょう！\n\nおにぎりの必要食材：お米＋海苔\n\n👉手札の「おにぎり」をクリック\n→ 食材ゾーンの「お米」「海苔」を順にクリック\nで料理が完成します！',
    highlight:'hand',action:'serve',phase:'serve'},
   {id:'discard',title:'🗑️ Step5：廃棄フェーズ',
-   body:'手札が10枚を超えた場合、1枚廃棄が必要です。\n今は手札が少ないのでそのまま終了できます。\n\n👉「ターン終了」ボタンを押して次へ進みましょう。',
+   body:'自分の手札か自分の食材ゾーンの中から、1枚カードをごみ箱に送ることができます。\n不要なカードがあれば、ごみ箱に送りましょう。\n\n👉「ターン終了」ボタンを押して次へ進みましょう。',
    highlight:'btn-end',action:'endturn',phase:'discard'},
   {id:'done',title:'🎉 チュートリアル完了！',
    body:'お疲れ様でした！基本操作をマスターしました。\n\n実際の対戦では：\n・食材35種・レシピ50種のカードを使ってデッキを自由に構築！\n・クイックスタートでAIと対戦可能！\n・ルームマッチやランダムマッチで他のユーザーと対戦可能！\n\nさっそく対戦を始めてみましょう！',
@@ -981,6 +1284,18 @@ function TutorialScreen({onBack}){
   const [stepDone,setStepDone]=useState(false);
   const msgTimer=useRef(null);
   const pid=0;
+  // スマホ用state/ref（PC版でも宣言が必要）
+  const tutDragRef=useRef(null);
+  const tutMovedRef=useRef(false);
+  const tutIngRef=useRef(null);
+  const tutHandRef=useRef(null);
+  const [tutDragging,setTutDragging]=useState(null);
+  const [tutDetailCard,setTutDetailCard]=useState(null);
+  const [serveAnim,setServeAnim]=useState(null);
+  function fireServe(rec){
+    setServeAnim({name:rec.name,sat:rec.sat,icon:rec.icon||'🍽️',id:rec.id});
+    setTimeout(()=>setServeAnim(null),1500);
+  }
 
   function showMsg(m){
     setMsg(m);clearTimeout(msgTimer.current);
@@ -989,11 +1304,7 @@ function TutorialScreen({onBack}){
 
   useEffect(()=>{
     const mk=id=>{const d=ING_MAP[id]||REC_MAP[id];return d?(d.sat!==undefined?mkR(d):mkI(d)):null;};
-
-    // 自分の固定手札：食材5枚（rice×2・nori×2・egg）＋レシピ2枚（onigiri×2）
-    const myHand=['rice','rice','nori','nori','egg','onigiri','onigiri']
-      .map(mk).filter(Boolean);
-    // 自分の食材山札（手札以外の残り）
+    const myHand=['rice','rice','nori','nori','egg','onigiri','onigiri'].map(mk).filter(Boolean);
     const myIngDeck=['rice','rice','nori','nori','nori','egg','egg','egg',
       'onion','onion','onion','onion','carrot','carrot','carrot','carrot',
       'cabbage','cabbage','cabbage','cabbage','tomato','tomato','tomato','tomato','potato','potato']
@@ -1001,10 +1312,7 @@ function TutorialScreen({onBack}){
     const myRecDeck=['onigiri','onigiri','tkgr','tkgr','tkgr',
       'yasaiSalad','yasaiSalad','yasaiSalad','oyakodon','oyakodon','omelet','omelet','omelet']
       .map(id=>{const d=REC_MAP[id];return d?mkR(d):null;}).filter(Boolean);
-
-    // AIの固定手札
-    const aiHand=['tomato','tomato','carrot','carrot','chicken','oyakodon','yasaiSalad']
-      .map(mk).filter(Boolean);
+    const aiHand=['tomato','tomato','carrot','carrot','chicken','oyakodon','yasaiSalad'].map(mk).filter(Boolean);
     const aiIngDeck=['tomato','tomato','onion','onion','onion','onion',
       'carrot','carrot','egg','egg','egg','egg',
       'chicken','chicken','chicken','chicken','potato','potato','potato','potato',
@@ -1013,41 +1321,20 @@ function TutorialScreen({onBack}){
     const aiRecDeck=['oyakodon','oyakodon','oyakodon','yasaiSalad','yasaiSalad',
       'yasaiSalad','curryRice','curryRice','curryRice','germanPotato','germanPotato','omelet','omelet','omelet']
       .map(id=>{const d=REC_MAP[id];return d?mkR(d):null;}).filter(Boolean);
-
     const mkP=(hand,ingDeck,recDeck)=>({
-      hand,ingDeck,recDeck,
-      ingZone:[],recZone:[],trash:[],satiety:0,bufNextRec:0,debuffs:{},
+      hand,ingDeck,recDeck,ingZone:[],recZone:[],trash:[],satiety:0,bufNextRec:0,debuffs:{},
       revealed:false,activatedThisTurn:false,servedLastTurn:false,
     });
-    setG({
-      players:[mkP(myHand,myIngDeck,myRecDeck),mkP(aiHand,aiIngDeck,aiRecDeck)],
-      currentPlayer:0,phase:'draw',turn:1,firstTurn:true,winner:null,log:[],pending:null
-    });
+    setG({players:[mkP(myHand,myIngDeck,myRecDeck),mkP(aiHand,aiIngDeck,aiRecDeck)],
+      currentPlayer:0,phase:'draw',turn:1,firstTurn:true,winner:null,log:[],pending:null});
   },[]);
 
   const cur=TUTORIAL_STEPS[step];
-
   function nextStep(){setStep(s=>Math.min(s+1,TUTORIAL_STEPS.length-1));setStepDone(false);setSelH(null);setSelZ([]);}
-  function prevStep(){setStep(s=>Math.max(s-1,0));setStepDone(false);}
-
-  function doSkipPhase(){
-    if(!G)return;
-    const phases=['draw','place','activate','serve','discard'];
-    const idx=phases.indexOf(G.phase);
-    if(idx<phases.length-1){setG(prev=>({...prev,phase:phases[idx+1]}));}
-    else{
-      let s=endTurn(G);
-      s=aiTurn(s,1,'easy');
-      s=endTurn(s);
-      setG(s);
-    }
-    setStepDone(true);
-  }
 
   function clickDeck(){
-    if(!G||step===0)return; // welcomeステップでは引けない
+    if(!G||step===0||stepDone)return;
     if(cur.phase!=='draw')return;
-    if(stepDone)return; // 既に引いた場合は引けない
     setG(prev=>({...drawI(prev,pid,1),phase:'place'}));
     setStepDone(true);showMsg('ドロー完了！');
   }
@@ -1059,11 +1346,7 @@ function TutorialScreen({onBack}){
       if(G.players[pid].ingZone.length>=7){showMsg('食材ゾーンは最大7枚！');return;}
       setG(prev=>{
         const newZone=[...prev.players[pid].ingZone,{...c,_satBuff:0,_used:false,_placedThisTurn:true}];
-        const newG=addLog(ovP(prev,pid,{
-          hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),
-          ingZone:newZone,
-        }),`${c.name}を配置`);
-        // Step2：お米と海苔の両方が揃ったら次へ
+        const newG=addLog(ovP(prev,pid,{hand:prev.players[pid].hand.filter(x=>x._uid!==c._uid),ingZone:newZone}),`${c.name}を配置`);
         const zoneIds=newZone.map(z=>z.id);
         if(step===2&&zoneIds.includes('rice')&&zoneIds.includes('nori')){
           setStepDone(true);showMsg('お米と海苔を配置しました！「次へ」を押してください');
@@ -1073,8 +1356,7 @@ function TutorialScreen({onBack}){
           setStepDone(true);showMsg(`${c.name}を配置！`);
         }
         return newG;
-      });
-      return;
+      });return;
     }
     if(curPhase==='serve'&&c._isRec){setSelH(c._uid);setSelZ([]);return;}
   }
@@ -1082,21 +1364,14 @@ function TutorialScreen({onBack}){
   function clickZone(c){
     if(!G)return;
     const curPhase=cur.phase||G.phase;
-    // Step2（place）では食材ゾーンのカードをクリックして手札に戻せる
     if(step===2&&curPhase==='place'){
       setG(prev=>{
         const newZone=prev.players[pid].ingZone.filter(x=>x._uid!==c._uid);
-        const newHand=[...prev.players[pid].hand,{...c,_placedThisTurn:false}];
-        const newG=addLog(ovP(prev,pid,{ingZone:newZone,hand:newHand}),`${c.name}を手札に戻した`);
-        // 戻したことでお米か海苔がゾーンからなくなったら次へ非表示
+        const newG=addLog(ovP(prev,pid,{ingZone:newZone,hand:[...prev.players[pid].hand,{...c,_placedThisTurn:false}]}),`${c.name}を手札に戻した`);
         const zoneIds=newZone.map(z=>z.id);
-        if(!(zoneIds.includes('rice')&&zoneIds.includes('nori'))){
-          setStepDone(false);
-        }
+        if(!(zoneIds.includes('rice')&&zoneIds.includes('nori')))setStepDone(false);
         return newG;
-      });
-      showMsg(`${c.name}を手札に戻しました`);
-      return;
+      });showMsg(`${c.name}を手札に戻しました`);return;
     }
     if(curPhase==='activate'&&!c._used&&ING_FN[c.id]){
       const iz=G.players[pid].ingZone.map(x=>x._uid===c._uid?{...x,_used:true}:x);
@@ -1105,15 +1380,18 @@ function TutorialScreen({onBack}){
       setG(s);setStepDone(true);showMsg(`${c.name}の効果を発動！`);return;
     }
     if(curPhase==='serve'&&selH){
-      const rec=G.players[pid].hand.find(x=>x._uid===selH);
-      if(!rec)return;
+      const rec=G.players[pid].hand.find(x=>x._uid===selH);if(!rec)return;
       if(selZ.includes(c._uid)){setSelZ(prev=>prev.filter(u=>u!==c._uid));return;}
+      // 必要食材と一致するカードのみ選択可能
+      const alreadyUsed=selZ.map(uid=>G.players[pid].ingZone.find(z=>z._uid===uid)?.id).filter(Boolean);
+      const remaining=rec.req.filter(r=>{const i=alreadyUsed.indexOf(r);if(i>=0){alreadyUsed.splice(i,1);return false;}return true;});
+      if(!remaining.includes(c.id)){showMsg(`${c.name}はこのレシピに必要ありません`);return;}
       if(selZ.length<rec.req.length){
-        const nz=[...selZ,c._uid];
-        setSelZ(nz);
+        const nz=[...selZ,c._uid];setSelZ(nz);
         if(nz.length===rec.req.length){
           const after=serveRecipe(G,pid,selH,nz);
           setG(after);setSelH(null);setSelZ([]);
+          fireServe(rec);
           setStepDone(true);showMsg('料理完成！相手の満腹度が上がりました！');
         }
       }
@@ -1122,22 +1400,225 @@ function TutorialScreen({onBack}){
 
   function doEndTurn(){
     if(!G)return;
-    let s=endTurn(G);
-    s=aiTurn(s,1,'easy');
-    s=endTurn(s);
+    let s=endTurn(G);s=aiTurn(s,1,'easy');s=endTurn(s);
     setG(s);setStepDone(true);showMsg('ターン終了！');
   }
 
-  if(!G)return h('div',{className:'title-screen'},
-    h('div',{className:'logo'},h('h1',null,'📖 チュートリアル'),h('div',{className:'logo-en'},'読み込み中...')));
+  if(!G)return h('div',{className:'title-screen'},h('div',{className:'logo'},h('h1',null,'📖 チュートリアル'),h('div',{className:'logo-en'},'読み込み中...')));
 
   const p=G.players[pid];
   const selRec=selH&&p.hand.find(x=>x._uid===selH);
   const needed=selRec?selRec.req:[];
-  const zIds=p.ingZone.map(c=>c.id);
+
+  // ── スマホ版チュートリアル ──
+  if(isMobile()&&window.innerHeight>window.innerWidth){
+    // ドラッグ&ドロップ用関数
+    function tutTouchStart(e,card){
+      tutMovedRef.current=false;
+      const t=e.touches[0];
+      tutDragRef.current={card,moved:false,startX:t.clientX,startY:t.clientY,ghost:null};
+      if(!card._isRec&&(cur.phase==='place'||G.phase==='place'))setTutDragging(card._uid);
+    }
+    function tutIngTouchStart(e,card){
+      e.stopPropagation();
+      tutMovedRef.current=false;
+      const t=e.touches[0];
+      tutDragRef.current={card,moved:false,startX:t.clientX,startY:t.clientY,ghost:null,source:'zone'};
+    }
+    function tutTouchMove(e){
+      const dr=tutDragRef.current;
+      if(!dr)return;
+      e.preventDefault();
+      const t=e.touches[0];
+      if(!dr.moved&&(Math.abs(t.clientX-dr.startX)>8||Math.abs(t.clientY-dr.startY)>8)){
+        dr.moved=true;tutMovedRef.current=true;
+        let ghost=document.getElementById('sp-drag-ghost');
+        if(!ghost){ghost=document.createElement('div');ghost.id='sp-drag-ghost';ghost.className='sp-drag-ghost';document.body.appendChild(ghost);}
+        ghost.textContent=dr.card.name;ghost.style.display='block';dr.ghost=ghost;
+      }
+      if(dr.moved&&dr.ghost){dr.ghost.style.left=t.clientX+'px';dr.ghost.style.top=t.clientY+'px';}
+      const zone=tutIngRef.current;
+      const hand=tutHandRef.current;
+      if(dr.moved){
+        if(zone&&!dr.source){const r=zone.getBoundingClientRect();zone.classList.toggle('drop-target',t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom);}
+        if(hand&&dr.source==='zone'){const r=hand.getBoundingClientRect();hand.classList.toggle('drop-target',t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom);}
+      }
+    }
+    function tutTouchEnd(e){
+      const dr=tutDragRef.current;
+      if(!dr)return;
+      if(dr.ghost)dr.ghost.style.display='none';
+      const zone=tutIngRef.current;
+      const hand=tutHandRef.current;
+      if(zone)zone.classList.remove('drop-target');
+      if(hand)hand.classList.remove('drop-target');
+      const t=e.changedTouches[0];
+      if(dr.moved){
+        if(!dr.source&&zone){
+          const r=zone.getBoundingClientRect();
+          if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom)clickHand(dr.card);
+        } else if(dr.source==='zone'&&hand){
+          const r=hand.getBoundingClientRect();
+          if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom)clickZone(dr.card);
+        }
+      } else {
+        setTutDetailCard(dr.card);
+      }
+      tutDragRef.current=null;
+      setTutDragging(null);
+    }
+
+    const satPct=Math.min(100,p.satiety/20*100);
+    const aiSatPct=Math.min(100,G.players[1].satiety/20*100);
+
+    return h('div',{className:'sp-tut',onTouchMove:tutTouchMove,onTouchEnd:tutTouchEnd},
+
+      // ── 相手エリア（ゲーム画面と同様） ──
+      h('div',{className:'sp-hand-row',style:{background:'rgba(220,210,255,.45)',borderTop:'none',borderBottom:'1px solid rgba(120,80,160,.2)'}},
+        Array.from({length:10},(_,i)=>
+          i<G.players[1].hand.length
+            ? h('div',{key:i,className:'sp-hcard back'})
+            : h('div',{key:i,className:'sp-hand-empty'})
+        )
+      ),
+      h('div',{className:'sp-area sp-area-opp',style:{flex:'none'}},
+        h('div',{className:'sp-info-row'},
+          h('span',{className:'sp-player-label'},'🤖 AI'),
+          h('div',{className:'sp-deck-badges'},
+            h('span',{className:'sp-deck-btn'},`🥕 ${Array.isArray(G.players[1].ingDeck)?G.players[1].ingDeck.length:0}`),
+            h('span',{className:'sp-deck-btn'},`📖 ${Array.isArray(G.players[1].recDeck)?G.players[1].recDeck.length:0}`),
+            h('span',{className:'sp-deck-btn'},`🗑 ${G.players[1].trash.length}`)
+          )
+        ),
+        h('div',{className:'sp-sat-row'},
+          h('div',{className:'sp-sat-track'},h('div',{className:`sp-sat-fill${aiSatPct>=80?' danger':aiSatPct>=50?' warn':''}`,style:{width:aiSatPct+'%'}})),
+          h('span',{className:'sp-sat-num',style:{color:G.players[1].satiety>=16?'#c01818':G.players[1].satiety>=10?'#a03010':'var(--goldD)'}},`${G.players[1].satiety}/20`)
+        ),
+        h('div',{className:'sp-zone-header'},
+          h('span',{className:'sp-zone-label'},'🌾 食材ゾーン'),
+          h('span',{className:'sp-zone-count'},`${G.players[1].ingZone.length}/7`)
+        ),
+        h('div',{className:'sp-ing-zone'},
+          G.players[1].ingZone.map(c=>h('div',{key:c._uid,className:`sp-sml-card ${c.cat||''}`},
+            h('div',{className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+            h('div',{className:'smc-name'},c.name)
+          )),
+          Array.from({length:Math.max(0,7-G.players[1].ingZone.length)},(_,i)=>
+            h('div',{key:'eta'+i,className:'sp-ing-slot-empty'})
+          )
+        ),
+        h('div',{className:'sp-zone-header',style:{marginTop:'3px'}},
+          h('span',{className:'sp-zone-label'},'🍽 完成料理'),
+          h('span',{className:'sp-zone-count'},`${G.players[1].recZone.length}枚`)
+        ),
+        h('div',{className:'sp-rec-zone'},
+          G.players[1].recZone.length===0
+            ? h('span',{style:{fontSize:'9px',color:'rgba(80,60,20,.3)',fontStyle:'italic'}},'なし')
+            : G.players[1].recZone.map(r=>h('div',{key:r._uid,className:'sp-rec-card'},
+                h('div',{className:'rn'},r.name),h('div',{className:'rs'},`+${r.sat}`)
+              ))
+        )
+      ),
+
+      // 説明パネル（固定150px）
+      h('div',{className:'sp-tut-panel'},
+        h('div',{className:'sp-tut-progress'},
+          TUTORIAL_STEPS.map((_,i)=>h('div',{key:i,className:'sp-tut-prog-dot',style:{background:i<=step?'var(--goldD)':'rgba(0,0,0,.15)'}}))
+        ),
+        h('div',{className:'sp-tut-title'},`Step ${step+1}/${TUTORIAL_STEPS.length}　${cur.title}`),
+        h('div',{className:'sp-tut-body'},
+          cur.body
+            .replace(/クリックして食材ゾーンに配置/g,'ドラッグ＆ドロップして食材ゾーンに配置')
+            .replace(/置いたカードをクリックすると手札に戻せます/g,'配置したカードを手札エリアにドラッグすると手札に戻せます')
+        ),
+        selRec&&h('div',{className:'sp-tut-req'},`必要: ${selRec.req.map(r=>ING_MAP[r]?.name||r).join(' + ')} (${selZ.length}/${needed.length}枚選択中)`),
+        h('div',{className:'sp-tut-btns'},
+          cur.action==='finish'
+            ? h('button',{className:'btn primary',onClick:onBack,style:{fontSize:'12px',padding:'6px 12px'}},'✅ 対戦を始めよう！')
+            : h(React.Fragment,null,
+                (stepDone||cur.action===null)&&h('button',{className:'btn primary',onClick:nextStep,style:{fontSize:'12px',padding:'6px 12px'}},'次へ →'),
+                cur.action==='endturn'&&h('button',{className:'btn',onClick:doEndTurn,style:{fontSize:'11px',padding:'5px 10px'}},'⏩ ターン終了')
+              ),
+          h('button',{className:'btn sm danger',onClick:onBack,style:{fontSize:'10px',padding:'4px 8px'}},'✕ 中断')
+        )
+      ),
+
+      // 自分エリア
+      h('div',{className:'sp-tut-self'},
+        // 食材ゾーン（ドロップターゲット）
+        h('div',{className:'sp-zone-header'},
+          h('span',{className:'sp-zone-label'},'🌾 食材ゾーン'),
+          h('span',{className:'sp-zone-count'},`${p.ingZone.length}/7`)
+        ),
+        h('div',{ref:tutIngRef,className:'sp-ing-zone'},
+          p.ingZone.map(c=>{
+            const isSel=selZ.includes(c._uid);
+            const lp=makeLongPress(()=>setTutDetailCard(c),()=>clickZone(c));
+            return h('div',{key:c._uid,
+              className:`sp-sml-card ${c.cat||''}${isSel?' sel':''}`,
+              ...lp,
+              onTouchStart:e=>{tutIngTouchStart(e,c);lp.onTouchStart(e);}},
+              h('div',{className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+              h('div',{className:'smc-name'},c.name)
+            );
+          }),
+          Array.from({length:Math.max(0,7-p.ingZone.length)},(_,i)=>
+            h('div',{key:'et'+i,className:'sp-ing-slot-empty'})
+          )
+        ),
+        // 山札・満腹度
+        h('div',{style:{display:'flex',gap:'5px',flexShrink:0,alignItems:'center',flexWrap:'wrap'}},
+          h('div',{className:`sp-deck-btn ing${cur.phase==='draw'?' active':''}`,
+            onClick:clickDeck},`🥕 ${p.ingDeck.length}`),
+          h('div',{className:'sp-deck-btn'},`📖 ${p.recDeck.length}`),
+          h('span',{style:{fontSize:'9px',color:'var(--muted)',flex:1,textAlign:'right'}},`満腹度: ${p.satiety}/20`)
+        )
+      ),
+
+      // 手札（1行10枚）
+      h('div',{ref:tutHandRef,className:'sp-hand-row'},
+        p.hand.map(c=>{
+          const isDragging=tutDragging===c._uid;
+          const lp=makeLongPress(
+            ()=>{if(!tutMovedRef.current)setTutDetailCard(c);},
+            ()=>clickHand(c)
+          );
+          return h('div',{key:c._uid,
+            className:`sp-hcard ${c._isRec?'sh-rec':'sh-ing'}${selH===c._uid?' sel':''}${isDragging?' dragging':''}`,
+            onClick:()=>clickHand(c),
+            onTouchStart:e=>{tutTouchStart(e,c);lp.onTouchStart(e);},
+            onTouchMove:e=>lp.onTouchMove(e),
+            onTouchEnd:e=>lp.onTouchEnd(e),
+            onTouchCancel:lp.onTouchCancel},
+            h('div',{className:'sh-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+            h('div',{className:'sh-name'},c.name),
+            c._isRec&&h('div',{className:'sh-sat'},`+${c.sat}`)
+          );
+        }),
+        Array.from({length:Math.max(0,10-p.hand.length)},(_,i)=>h('div',{key:'e'+i,className:'sp-hand-empty'}))
+      ),
+
+      // オーバーレイ
+      msg&&h('div',{className:'msg-toast'},msg),
+      serveAnim&&h('div',{className:'serve-overlay'},h('div',{className:'serve-burst'},h('div',{className:'serve-ribbon'},'🍽️ 料理完成！'),h('div',{className:'serve-card-big'},h('div',{className:'sc-img-wrap'},h(CardImg,{id:serveAnim.id,style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'8px'}})),h('div',{className:'sc-label'},'レシピ'),h('div',{className:'sc-name'},serveAnim.name),h('div',{className:'sc-sat'},`+${serveAnim.sat}`)))),
+      G.winner!=null&&h('div',{className:'winner-overlay'},
+        h('div',{className:'winner-title'},G.winner===0?'🎉 勝利！':'😢 敗北...'),
+        h('div',{className:'winner-sub'},G.winner===0?'お見事！チュートリアル完了！':'もう一度挑戦してみましょう！'),
+        h('div',{className:'winner-btns'},h('button',{className:'btn primary',onClick:onBack,style:{color:'#fff',fontSize:'15px',padding:'10px 24px',fontWeight:'800'}},'タイトルへ戻る'))
+      ),
+      // カード詳細ボトムシート
+      h('div',{className:`sp-detail-sheet${tutDetailCard?' open':''}`,onClick:e=>e.stopPropagation()},
+        h('div',{className:'sp-sheet-handle'}),
+        h('button',{className:'sp-sheet-close',onClick:()=>setTutDetailCard(null)},'✕'),
+        tutDetailCard&&h(CardDetailPanel,{hovered:tutDetailCard,ingZone:p.ingZone})
+      ),
+      tutDetailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setTutDetailCard(null)})
+    );
+  }
+
+  // PC版（既存）
 
   return h('div',{className:'game-screen',style:{position:'relative'}},
-    // ヘッダー
     h('div',{className:'g-header'},
       h('div',{className:'sat-bar-left'},
         h('span',{className:'sat-label'},'👤 あなた'),
@@ -1154,16 +1635,13 @@ function TutorialScreen({onBack}){
         h('span',{className:'sat-label'},'🤖 AI')
       )
     ),
-
-    // 自分フィールド
     h('div',{style:{gridColumn:'1/2',gridRow:'2/3',overflow:'hidden',padding:'3px'}},
       h('div',{className:'pfield active'},
         h('div',{className:'plabel'},'▶ あなた'),
         h('div',{className:'zlabel'},'食材ゾーン'),
         h('div',{className:'ing-zone'},
           h('div',{className:'ing-slots'},
-            p.ingZone.map(c=>h('div',{key:c._uid,
-              className:`ing-card${selZ.includes(c._uid)?' sel':''}`,onClick:()=>clickZone(c)},
+            p.ingZone.map(c=>h('div',{key:c._uid,className:`ing-card${selZ.includes(c._uid)?' sel':''}`,onClick:()=>clickZone(c)},
               h('div',{className:'ic-img-wrap'},h(CardImg,{id:c.id})),
               h('div',{className:'ic-cat',style:{color:CAT_COLORS[c.cat]||''}},c.catL),
               h('div',{className:'ic-name'},c.name),
@@ -1175,8 +1653,7 @@ function TutorialScreen({onBack}){
         h('div',{className:'zlabel'},'手札'),
         h('div',{className:'hand-area'},
           h('div',{className:'hand-slots'},
-            p.hand.map(c=>h('div',{key:c._uid,
-              className:`hcard${selH===c._uid?' sel':''}`,onClick:()=>clickHand(c)},
+            p.hand.map(c=>h('div',{key:c._uid,className:`hcard${selH===c._uid?' sel':''}`,onClick:()=>clickHand(c)},
               h('div',{className:'hcard-img-wrap'},h(CardImg,{id:c.id})),
               h('div',{className:`hc-type ${c._isRec?'rec':'ing'}`},c._isRec?'レシピ':'食材'),
               h('div',{className:'hc-name'},c.name),
@@ -1186,33 +1663,18 @@ function TutorialScreen({onBack}){
         )
       )
     ),
-
-    // チュートリアルパネル（中央）
     h('div',{style:{gridColumn:'2/3',gridRow:'2/3',display:'flex',flexDirection:'column',gap:'6px',padding:'6px',overflow:'hidden'}},
       h('div',{style:{display:'flex',gap:'6px',justifyContent:'center'}},
-        h('div',{className:`deck-mini clickable ing-deck`,onClick:clickDeck},
-          h('div',{className:'dm-icon'},'🃏'),
-          h('div',{className:'dm-count'},p.ingDeck.length),
-          h('div',{className:'dm-label'},'食材山札')
+        h('div',{className:'deck-mini clickable ing-deck',onClick:clickDeck},
+          h('div',{className:'dm-icon'},'🃏'),h('div',{className:'dm-count'},p.ingDeck.length),h('div',{className:'dm-label'},'食材山札')
         ),
         h('div',{className:'deck-mini rec-deck'},
-          h('div',{className:'dm-icon'},'📜'),
-          h('div',{className:'dm-count'},p.recDeck.length),
-          h('div',{className:'dm-label'},'レシピ山札')
+          h('div',{className:'dm-icon'},'📜'),h('div',{className:'dm-count'},p.recDeck.length),h('div',{className:'dm-label'},'レシピ山札')
         )
       ),
-      // 説明パネル
-      h('div',{style:{
-        background:'rgba(255,248,220,.9)',border:'2px solid rgba(100,60,10,.45)',
-        borderRadius:'8px',padding:'12px',flex:1,display:'flex',flexDirection:'column',gap:'8px',overflow:'auto',
-      }},
-        // プログレスバー
+      h('div',{style:{background:'rgba(255,248,220,.9)',border:'2px solid rgba(100,60,10,.45)',borderRadius:'8px',padding:'12px',flex:1,display:'flex',flexDirection:'column',gap:'8px',overflow:'auto'}},
         h('div',{style:{display:'flex',gap:'3px',marginBottom:'2px'}},
-          TUTORIAL_STEPS.map((_,i)=>h('div',{key:i,style:{
-            flex:1,height:'4px',borderRadius:'2px',
-            background:i<=step?'var(--goldD)':'rgba(0,0,0,.15)',
-            transition:'background .3s',
-          }}))
+          TUTORIAL_STEPS.map((_,i)=>h('div',{key:i,style:{flex:1,height:'4px',borderRadius:'2px',background:i<=step?'var(--goldD)':'rgba(0,0,0,.15)',transition:'background .3s'}}))
         ),
         h('div',{style:{fontSize:'13px',fontWeight:'800',color:'#1a1008',lineHeight:1.4}},cur.title),
         h('div',{style:{fontSize:'13px',color:'#2e1e0a',lineHeight:1.8,whiteSpace:'pre-line',flex:1}},cur.body),
@@ -1221,22 +1683,15 @@ function TutorialScreen({onBack}){
         ),
         h('div',{style:{display:'flex',flexDirection:'column',gap:'5px'}},
           cur.action==='finish'
-            ? h('button',{className:'btn primary',onClick:onBack,
-                style:{fontSize:'13px',padding:'10px',fontWeight:'800',color:'#fff',
-                  textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000'}},'✅ 対戦を始めよう！')
+            ? h('button',{className:'btn primary',onClick:onBack,style:{fontSize:'13px',padding:'10px',fontWeight:'800',color:'#fff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000'}},'✅ 対戦を始めよう！')
             : h(React.Fragment,null,
-                // welcomeは操作不要なので常に「次へ」表示
-                (stepDone||cur.action===null)&&h('button',{className:'btn primary',onClick:nextStep,
-                  style:{fontSize:'12px',padding:'8px',fontWeight:'700',color:'#fff',
-                    textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000'}},'次へ →'),
+                (stepDone||cur.action===null)&&h('button',{className:'btn primary',onClick:nextStep,style:{fontSize:'12px',padding:'8px',fontWeight:'700',color:'#fff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000'}},'次へ →'),
                 cur.action==='endturn'&&h('button',{className:'btn',onClick:doEndTurn,style:{fontSize:'11px',padding:'6px'}},'⏩ ターン終了')
               ),
           h('button',{className:'btn sm danger',onClick:onBack},'✕ 中断')
         )
       )
     ),
-
-    // AIフィールド
     h('div',{style:{gridColumn:'3/4',gridRow:'2/3',overflow:'hidden',padding:'3px'}},
       h('div',{className:'pfield ai-field'},
         h('div',{className:'plabel'},'🤖 AI'),
@@ -1244,44 +1699,30 @@ function TutorialScreen({onBack}){
         h('div',{className:'ing-zone'},
           h('div',{className:'ing-slots'},
             G.players[1].ingZone.map(c=>h('div',{key:c._uid,className:'ing-card'},
-              h('div',{className:'ic-img-wrap'},h(CardImg,{id:c.id})),
-              h('div',{className:'ic-name'},c.name)
+              h('div',{className:'ic-img-wrap'},h(CardImg,{id:c.id})),h('div',{className:'ic-name'},c.name)
             )),
             Array.from({length:Math.max(0,7-G.players[1].ingZone.length)},(_,i)=>h('div',{key:'e'+i,className:'ing-slot-empty'}))
           )
         ),
         h('div',{className:'zlabel'},'手札（非公開）'),
-        h('div',{className:'hand-area'},
-          h('div',{className:'hand-slots'},
-            G.players[1].hand.map((_,i)=>h('div',{key:i,className:'hcard back'}))
-          )
-        )
+        h('div',{className:'hand-area'},h('div',{className:'hand-slots'},G.players[1].hand.map((_,i)=>h('div',{key:i,className:'hcard back'}))))
       )
     ),
-
-    // ログ
     h('div',{className:'g-bottom'},
-      h('div',{className:'g-log'},
-        G.log.slice(-3).map((l,i)=>h('div',{key:i,className:'log-line'},l.msg))
-      )
+      h('div',{className:'g-log'},G.log.slice(-3).map((l,i)=>h('div',{key:i,className:'log-line'},l.msg)))
     ),
-
     msg&&h('div',{className:'msg-toast'},msg),
-
-    // 勝利/敗北
+    serveAnim&&h('div',{className:'serve-overlay'},h('div',{className:'serve-burst'},h('div',{className:'serve-ribbon'},'🍽️ 料理完成！'),h('div',{className:'serve-card-big'},h('div',{className:'sc-img-wrap'},h(CardImg,{id:serveAnim.id,style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'8px'}})),h('div',{className:'sc-label'},'レシピ'),h('div',{className:'sc-name'},serveAnim.name),h('div',{className:'sc-sat'},`+${serveAnim.sat}`)))),
     G.winner!=null&&h('div',{className:'winner-overlay'},
       h('div',{className:'winner-title'},G.winner===0?'🎉 勝利！':'😢 敗北...'),
       h('div',{className:'winner-sub'},G.winner===0?'お見事！チュートリアル完了！':'もう一度挑戦してみましょう！'),
       h('div',{className:'winner-btns'},
-        h('button',{className:'btn primary',onClick:onBack,
-          style:{color:'#fff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',
-            fontSize:'15px',padding:'10px 24px',fontWeight:'800'}},'タイトルへ戻る')
+        h('button',{className:'btn primary',onClick:onBack,style:{color:'#fff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',fontSize:'15px',padding:'10px 24px',fontWeight:'800'}},'タイトルへ戻る')
       )
     )
   );
 }
 
-// ============================================================
 const Audio={
   _bgm:null,_vol:0.5,_seVol:0.7,_muted:false,
   _seCache:{},
@@ -1369,14 +1810,14 @@ function CardImg({id,style}){
 }
 
 function checkWin(G){
-  if(G.players[0].satiety>=20)return{...G,winner:1};
-  if(G.players[1].satiety>=20)return{...G,winner:0};
-  // ingDeck/recDeckは数値（オンライン）または配列（ローカル）の両方に対応
+  if(G.players[0].satiety>=20)return{...G,winner:1,winReason:'satiety'};
+  if(G.players[1].satiety>=20)return{...G,winner:0,winReason:'satiety'};
   function deckLen(d){return Array.isArray(d)?d.length:(typeof d==='number'?d:0);}
-  // 両方の山札が切れたプレイヤーが負け（引こうとした側＝currentPlayerが負け）
-  const p=G.players[G.currentPlayer];
-  if(deckLen(p.ingDeck)===0&&deckLen(p.recDeck)===0&&p.hand.length===0){
-    return{...G,winner:1-G.currentPlayer};
+  for(let pi=0;pi<2;pi++){
+    const p=G.players[pi];
+    if(deckLen(p.ingDeck)===0&&deckLen(p.recDeck)===0){
+      return{...G,winner:1-pi,winReason:'deck'};
+    }
   }
   return G;
 }
@@ -1641,6 +2082,15 @@ function execBlock(G,pi,blk,cardId){
         candidates:cands2,
         filter:filter2,source:'ingDeck'});
     }
+    case 'searchRecDeck':{
+      const recArr=Array.isArray(p.recDeck)?p.recDeck:[];
+      if(!recArr.length)return addLog(G,`P${pi+1}: レシピ山札に対象なし`);
+      return mkPending(G,{type:'searchRecDeck',pi,
+        title:blk.title||'レシピ山札からカードを選ぶ',
+        desc:'手札に加えるレシピカードを選んでください',
+        candidates:recArr,
+        source:'recDeck'});
+    }
     case 'addSelfSat':{
       return addLog(ovP(G,pi,{satiety:Math.min(20,G.players[pi].satiety+(blk.n||1))}),`P${pi+1}: 自満腹+${blk.n||1}`);
     }
@@ -1855,36 +2305,142 @@ const ING_BLOCKS={
   rice:    [{type:'drawIng',n:1}],
   flour:   [{type:'drawIng',n:1}],
   potato:  [{type:'drawIng',n:1}],
-  konjac:  [], ginger:[],
+  konjac:  [],
+  ginger:  [],
 
-  beef:[{type:'selectIngZone',then:'retAndDraw',title:'食材ゾーンのカードを1枚山札に戻す',desc:'戻すカードを選んでください（その後、山札から1枚引いて食材ゾーンへ）'}],
-  salmon:[{type:'drawIng',n:1},{type:'retHand',n:1}],
-  egg:[{type:'selectHand',then:'retToIngDeck',filterKey:'ingredient',title:'手札の食材カードを食材山札に戻す',desc:'戻す食材カードを選んでください（その後レシピ山札から1枚引く）'},{type:'drawRec',n:1}],
-  tofu:[{type:'recoverTrash',filterKey:'protein',title:'ごみ箱からたんぱく質を手札へ回収'}],
+  // 牛肉: 食材ゾーン1枚を山札へ→山札から1枚引いて食材ゾーンへ
+  beef:[
+    {type:'selectIngZone',then:'retAndDraw',
+     title:'食材ゾーンのカードを1枚山札に戻す',
+     desc:'戻すカードを選んでください（その後、山札から1枚引いて食材ゾーンへ）'},
+  ],
+
+  // 鮭: 食材ドロー → その後 手札1枚山札戻し
+  salmon:[
+    {type:'drawIng',n:1},
+    {type:'retHand',n:1},
+  ],
+
+  // 卵: 手札の食材カードを食材山札に戻す → レシピドロー
+  egg:[
+    {type:'selectHand',then:'retToIngDeck',filter:c=>!c._isRec,
+     title:'手札の食材カードを食材山札に戻す',
+     desc:'戻す食材カードを選んでください（その後レシピ山札から1枚ドロー）'},
+    {type:'drawRec',n:1},
+  ],
+
+  // 豆腐: ごみ箱からたんぱく質→手札
+  tofu:[
+    {type:'recoverTrash',filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein',
+     title:'ごみ箱からたんぱく質を手札へ回収'},
+  ],
+
+  // 鶏肉: 食材ドロー→直接食材ゾーンへ
   chicken:[{type:'drawToZone',n:1}],
-  pork:[{type:'selectIngZoneMulti',n:2}],
-  yellowtail:[{type:'drawIng',n:1},{type:'retHand',n:1}],
 
-  miso:[{type:'discardHand',n:1,optional:true,filterKey:'protein',title:'手札のたんぱく質カードをごみ箱へ（任意）',desc:'ごみ箱に送るたんぱく質カードを選んでください'},{type:'ifPrev'},{type:'drawIng',n:2}],
-  abura:[{type:'selectHand',then:'retToRecDeck',optional:true,filterKey:'recipe',title:'手札のレシピカードをレシピ山札に戻す（任意）',desc:'戻すレシピカードを選んでください（その後レシピ山札から1枚引く）'},{type:'ifPrev'},{type:'drawRec',n:1}],
+  // 豚肉: 食材ゾーン2枚選択→1枚手札・1枚山札
+  pork:[{type:'selectIngZoneMulti',n:2}],
+
+  // ぶり: 食材ドロー → その後 手札1枚山札戻し
+  yellowtail:[
+    {type:'drawIng',n:1},
+    {type:'retHand',n:1},
+  ],
+
+  // 味噌: 手札のたんぱく質1枚ごみ箱（任意）→そうしたなら食材2ドロー
+  miso:[
+    {type:'discardHand',n:1,optional:true,
+     filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
+    {type:'ifPrev'},
+    {type:'drawIng',n:2},
+  ],
+
+  // 油揚げ: 手札のレシピ1枚をレシピ山札に戻す（任意）→レシピドロー
+  abura:[
+    {type:'selectHand',then:'retToRecDeck',optional:true,
+     filter:c=>c._isRec,
+     title:'手札のレシピカードをレシピ山札に戻す（任意）',
+     desc:'戻すレシピカードを選んでください（スキップ可）'},
+    {type:'ifPrev'},
+    {type:'drawRec',n:1},
+  ],
+
   butter:[{type:'bufNextRec',n:1}],
   curryroux:[],
 
+  // キャベツ: ごみ箱から食材→食材山札へ
   cabbage:[{type:'recoverTrashToDeck'}],
-  daikon:[{type:'condOppZone',op:'ge',n:3,then:[{type:'drawRec',n:1}]}],
-  chili:[{type:'selfTrash'},{type:'setDebuff',key:'chiliWatch',val:1}],
-  tomato:[{type:'condIngZone',op:'le',n:3,then:[{type:'drawIng',n:2}]}],
-  carrot:[{type:'selectIngZone',then:'toHand',title:'食材ゾーンのカードを1枚手札に戻す',desc:'手札に戻すカードを選んでください'}],
-  broccoli:[{type:'selectIngZone',then:'searchSame',title:'食材ゾーンのカードを1枚参照して同名サーチ',desc:'参照するカードを選んでください（山札から同名カードを手札へ）'},{type:'selfTrash'}],
+
+  // 大根: 相手食材ゾーン3枚以上→レシピドロー
+  daikon:[
+    {type:'condOppZone',op:'ge',n:3,then:[{type:'drawRec',n:1}]},
+  ],
+
+  // 唐辛子: 相手が料理を提供した時、自分の満腹度-1（相手ターン終了時まで有効）→ごみ箱
+  chili:[
+    {type:'selfTrash'},
+    {type:'setDebuff',key:'chiliWatch',val:1},
+  ],
+
+  // トマト: 自食材ゾーン3枚以下→食材2ドロー
+  tomato:[
+    {type:'condIngZone',op:'le',n:3,then:[{type:'drawIng',n:2}]},
+  ],
+
+  // にんじん: 食材ゾーン1枚→手札へ
+  carrot:[
+    {type:'selectIngZone',then:'toHand',
+     title:'食材ゾーンのカードを1枚手札に戻す',
+     desc:'手札に戻すカードを選んでください'},
+  ],
+
+  // ブロッコリー: 食材ゾーン1枚参照→同名サーチ → このカード自身をごみ箱へ
+  broccoli:[
+    {type:'selectIngZone',then:'searchSame',
+     title:'食材ゾーンのカードを1枚参照して同名サーチ',
+     desc:'参照するカードを選んでください（山札から同名カードを手札へ）'},
+    {type:'selfTrash'},
+  ],
+
+  // レタス: ごみ箱から食材→食材山札へ
   lettuce:[{type:'recoverTrashToDeck'}],
-  lemon:[{type:'condIngZone',op:'le',n:3,then:[{type:'drawRec',n:1}]}],
+
+  // レモン: 自食材ゾーン3枚以下→レシピドロー
+  lemon:[
+    {type:'condIngZone',op:'le',n:3,then:[{type:'drawRec',n:1}]},
+  ],
+
   negi:[], onion:[], garlic:[], moyashi:[],
 
-  milk:[{type:'recoverTrash',filterKey:'cheese_or_butter',title:'ごみ箱からチーズorバターを手札へ回収'}],
-  saba:[{type:'recoverTrash',filterKey:'mineral_ing',title:'ごみ箱からミネラルカードを手札へ回収'}],
-  shiitake:[{type:'discardHand',n:2,optional:true,title:'手札を2枚ごみ箱へ（任意）',desc:'ごみ箱に送るカードを2枚選んでください'},{type:'ifPrev'},{type:'searchIngDeck',filterKey:'mineral_ing',title:'食材山札からミネラルカードをサーチ',desc:'手札に加えるミネラルカードを選んでください'}],
+  // 牛乳: ごみ箱からチーズorバター→手札
+  milk:[
+    {type:'recoverTrash',filter:c=>['cheese','butter'].includes(c.id)&&!c._isRec,filterKey:'id:cheese,butter',
+     title:'ごみ箱からチーズまたはバターを手札へ回収'},
+  ],
+
+  // さば: ごみ箱からミネラル→手札
+  saba:[
+    {type:'recoverTrash',filter:c=>c.cat==='mineral'&&!c._isRec,filterKey:'mineral',
+     title:'ごみ箱からミネラルカードを手札へ回収'},
+  ],
+
+  // しいたけ: 手札2枚ごみ箱（任意）→そうしたなら食材山札からミネラルを選んで手札へ → このカード自身をごみ箱へ
+  shiitake:[
+    {type:'discardHand',n:2,optional:true},
+    {type:'ifPrev'},
+    {type:'searchIngDeck',filter:c=>c.cat==='mineral',filterKey:'mineral',title:'食材山札からミネラルカードを選ぶ'},
+    {type:'selfTrash'},
+  ],
+
+  // チーズ: 手札1枚ごみ箱
   cheese:[{type:'discardHand',n:1}],
-  nori:[{type:'recoverTrash',filterKey:'id:rice',title:'ごみ箱からお米を手札へ回収'}],
+
+  // 海苔: ごみ箱からお米→手札
+  nori:[
+    {type:'recoverTrash',filter:c=>c.id==='rice',filterKey:'id:rice',
+     title:'ごみ箱からお米を手札へ回収'},
+  ],
+
   spinach:[], wakame:[],
 };
 
@@ -1954,7 +2510,7 @@ const REC_BLOCKS={
 
   // ジャーマンポテト: 手札の脂質1枚ごみ箱（任意）→そうしたなら食材山札1枚ドロー
   germanPotato:[
-    {type:'discardHand',n:1,optional:true,filterKey:'fat'},
+    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='fat'&&!c._isRec,filterKey:'fat'},
     {type:'ifPrev'},
     {type:'searchIngDeck',title:'食材山札からカードを選んで手札へ'},
   ],
@@ -1994,7 +2550,7 @@ const REC_BLOCKS={
 
   // 麻婆豆腐: 手札のたんぱく質1枚ごみ箱（任意）→そうしたならレシピ2ドロー
   maboTofu:[
-    {type:'discardHand',n:1,optional:true,filterKey:'protein'},
+    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
     {type:'ifPrev'},
     {type:'drawRec',n:2},
   ],
@@ -2069,7 +2625,7 @@ const REC_BLOCKS={
 
   // 揚げ出し豆腐: たんぱく質1枚ごみ箱（任意）→そうしたなら食材2ドロー
   agedashi:[
-    {type:'discardHand',n:1,optional:true,filterKey:'protein'},
+    {type:'discardHand',n:1,optional:true,filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
     {type:'ifPrev'},
     {type:'drawIng',n:2},
   ],
@@ -2256,8 +2812,12 @@ function aiTurn(G, pi, difficulty='normal'){
     const candidates=ap2.ingZone.filter(c=>!c._used&&ING_FN[c.id]);
     let target=null;
     if(difficulty==='hard'&&candidates.length>0){
-      // 有効な起動を優先（唐辛子は相手が提供できる状況なら優先）
+      // むずかしい：複数起動できるなら最も効果的なものを選ぶ
+      // ドロー系を優先（手札を増やして選択肢を広げる）
       target=candidates.find(c=>c.id==='chili'&&opp().ingZone.length>=2)
+        ||candidates.find(c=>['rice','flour','potato','chicken','salmon','yellowtail'].includes(c.id))
+        ||candidates.find(c=>c.id==='tomato'&&p().ingZone.length<=3)
+        ||candidates.find(c=>c.id==='daikon'&&opp().ingZone.length>=3)
         ||candidates[0];
     } else if(difficulty==='easy'){
       // かんたん：80%の確率で発動（少し忘れることがある）
@@ -2295,9 +2855,10 @@ function aiTurn(G, pi, difficulty='normal'){
             // かんたん：順番通りに出す（優先度計算なし）
             priority=1;
           } else if(difficulty==='hard'){
-            // むずかしい：トドメ・大ダメージを最優先、効率も考慮
+            // むずかしい：トドメ最優先、高ダメージ優先、食材効率も考慮
             const isKill=oppSat+gain>=20;
-            priority=isKill?99999:oppSat>=14?gain*15:(gain*gain/rec.req.length);
+            const nearKill=oppSat+gain>=17;
+            priority=isKill?999999:nearKill?gain*50:oppSat>=12?gain*20:(gain*gain*gain/(rec.req.length*rec.req.length));
           } else {
             // ふつう
             priority=oppSat>=16?gain*10:(gain/rec.req.length);
@@ -2330,17 +2891,20 @@ function aiTurn(G, pi, difficulty='normal'){
       }),`AI: ${dis.name}を廃棄`,'ai-log');
     }
   } else if(difficulty==='hard'){
-    // むずかしい：積極的に廃棄（手札5枚以上でも不要牌を捨てる）
-    const threshold=5;
+    // むずかしい：手札4枚以上で積極廃棄、不要牌を徹底して切る
+    const threshold=4;
     if(dp.hand.length>=threshold){
+      // 不要な食材を優先して捨てる（レシピに必要な食材・ゾーンにある食材は残す）
       const dis=dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id)&&!zoneIdsSet.has(c.id))
         ||dp.hand.find(c=>!c._isRec&&!wantedIds.has(c.id))
-        ||(dp.hand.length>=8?dp.hand[dp.hand.length-1]:null);
+        ||(dp.hand.length>=7?dp.hand.find(c=>!c._isRec):null);
       if(dis)s=addLog(ovP(s,pi,{
         hand:s.players[pi].hand.filter(c=>c._uid!==dis._uid),
         trash:[...s.players[pi].trash,dis]
       }),`AI: ${dis.name}を廃棄`,'ai-log');
-    } else if(dp.ingZone.length>3){
+    }
+    // 食材ゾーンに不要なカードがあれば廃棄
+    if(dp.ingZone.length>3){
       const dis=dp.ingZone.find(c=>!wantedIds.has(c.id));
       if(dis)s=addLog(ovP(s,pi,{
         ingZone:s.players[pi].ingZone.filter(c=>c._uid!==dis._uid),
@@ -2378,17 +2942,18 @@ function aiResolvePending(G, pi) {
   const opp = G.players[1 - pi];
   let chosen = ['skip'];
 
-  // filterKey を使って候補を絞る（game-engine.jsのmatchFilterと統一）
+  // filterKey または filter を使って候補を絞る
   function filterCands(cards){
+    if(pd.filter){try{return cards.filter(c=>pd.filter(c));}catch(e){}}
     const k=pd.filterKey;
     if(!k)return cards;
     if(k==='ingredient')return cards.filter(c=>!c._isRec);
     if(k==='recipe')return cards.filter(c=>c._isRec);
-    if(['protein','carb','fat','vitamin','mineral'].includes(k))return cards.filter(c=>c.cat===k&&!c._isRec);
-    if(k==='fat_ing')return cards.filter(c=>c.cat==='fat'&&!c._isRec);
-    if(k==='mineral_ing')return cards.filter(c=>c.cat==='mineral'&&!c._isRec);
-    if(k==='cheese_or_butter')return cards.filter(c=>['cheese','butter'].includes(c.id)&&!c._isRec);
-    if(k&&k.startsWith('id:'))return cards.filter(c=>c.id===k.slice(3));
+    if(k==='protein'||k==='protein_ing')return cards.filter(c=>c.cat==='protein'&&!c._isRec);
+    if(k==='carb'||k==='carb_ing')return cards.filter(c=>c.cat==='carb'&&!c._isRec);
+    if(k==='fat'||k==='fat_ing')return cards.filter(c=>c.cat==='fat'&&!c._isRec);
+    if(k==='vitamin'||k==='vitamin_ing')return cards.filter(c=>c.cat==='vitamin'&&!c._isRec);
+    if(k==='mineral'||k==='mineral_ing')return cards.filter(c=>c.cat==='mineral'&&!c._isRec);
     return cards;
   }
 
@@ -2468,6 +3033,62 @@ function validateDeck(ing,rec){
 function SelectionModal({G,onResolve,canOperate}){
   const pd=G.pending;
   const [picked,setPicked]=useState([]);
+  const [pos,setPos]=useState(null); // {x,y} or null=中央
+  const boxRef=useRef(null);
+  const dragRef=useRef(null); // {startX,startY,origX,origY}
+
+  // pending が変わったらリセット（位置は引き継ぐ）
+  useEffect(()=>{setPicked([]);},[pd&&pd.type]);
+
+  // ドラッグ開始（マウス・タッチ共通）
+  function getClientXY(e){
+    if(e.touches&&e.touches.length>0)return{x:e.touches[0].clientX,y:e.touches[0].clientY};
+    return{x:e.clientX,y:e.clientY};
+  }
+  function startDrag(e){
+    if(e.button!=null&&e.button!==0)return;
+    e.preventDefault();
+    const box=boxRef.current;
+    if(!box)return;
+    const rect=box.getBoundingClientRect();
+    const{x,y}=getClientXY(e);
+    dragRef.current={startX:x,startY:y,origX:rect.left,origY:rect.top};
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('mouseup',onEnd);
+    window.addEventListener('touchmove',onMove,{passive:false});
+    window.addEventListener('touchend',onEnd);
+  }
+  function onMove(e){
+    if(!dragRef.current)return;
+    if(e.cancelable)e.preventDefault();
+    const{startX,startY,origX,origY}=dragRef.current;
+    const{x,y}=getClientXY(e);
+    const dx=x-startX, dy=y-startY;
+    const box=boxRef.current;
+    const bw=box?box.offsetWidth:400, bh=box?box.offsetHeight:300;
+    const newX=Math.max(0,Math.min(window.innerWidth-bw,origX+dx));
+    const newY=Math.max(0,Math.min(window.innerHeight-bh,origY+dy));
+    setPos({x:newX,y:newY});
+  }
+  function onEnd(){
+    dragRef.current=null;
+    window.removeEventListener('mousemove',onMove);
+    window.removeEventListener('mouseup',onEnd);
+    window.removeEventListener('touchmove',onMove);
+    window.removeEventListener('touchend',onEnd);
+  }
+  useEffect(()=>()=>{
+    window.removeEventListener('mousemove',onMove);
+    window.removeEventListener('mouseup',onEnd);
+    window.removeEventListener('touchmove',onMove);
+    window.removeEventListener('touchend',onEnd);
+  },[]);
+
+  // 位置スタイル：pos がnullなら画面中央
+  const boxStyle=pos
+    ?{left:pos.x,top:pos.y,transform:'none'}
+    :{left:'50%',top:'50%',transform:'translate(-50%,-50%)'};
+
   if(!pd)return null;
 
   const pi=pd.pi;
@@ -2542,11 +3163,13 @@ function SelectionModal({G,onResolve,canOperate}){
     onResolve(['skip']);setPicked([]);
   }
 
-  return h('div',{className:'sel-overlay'},
-    h('div',{className:'sel-box'},
-      h('div',{className:'sel-title'},
+  return h('div',null,
+    h('div',{className:'sel-overlay'}),
+    h('div',{className:'sel-box',ref:boxRef,style:boxStyle},
+      h('div',{className:'sel-title',onMouseDown:startDrag,onTouchStart:startDrag},
         h('span',{style:{fontSize:'10px',color:'var(--goldL)',background:'rgba(180,120,0,.3)',border:'1px solid var(--goldD)',borderRadius:'4px',padding:'2px 8px',marginRight:'8px'}},`P${pi+1}が選択`),
-        pd.title||'カードを選択'
+        pd.title||'カードを選択',
+
       ),
       !canOperate&&h('div',{style:{fontSize:'12px',color:'#f8a040',background:'rgba(200,100,0,.2)',border:'1px solid rgba(200,100,0,.4)',borderRadius:'6px',padding:'6px 10px',marginBottom:'8px',textAlign:'center'}},
         `P${pi+1}の操作番です。P${pi+1}の方が選択してください。`
@@ -2600,6 +3223,49 @@ function CardDetailPanel({hovered,ingZone}){
   const catColor=isRec?'#c86820':(CAT_COLORS[c.cat]||'var(--muted)');
   const catTypeClass=isRec?'recipe-type':(c.cat||'');
 
+  // スマホ版：カード名 → イラスト｜効果（横並び）
+  if(isMobile()){
+    return h('div',{className:'detail-panel'},
+      h('div',{className:'dp-card',ref:scrollRef},
+        h('div',{style:{display:'flex',alignItems:'center',gap:'6px',flexShrink:0,marginBottom:'6px'}},
+          h('span',{className:`dp-type-badge ${isRec?'badge-recipe':`badge-${c.cat}`}`},isRec?'レシピ':c.catL),
+          h('div',{className:'dp-card-name',style:{margin:0}},c.name),
+          isRec&&h('span',{style:{marginLeft:'auto',fontSize:'13px',fontWeight:'800',color:'var(--goldD)',flexShrink:0}},`+${c.sat}`)
+        ),
+        h('div',{style:{display:'flex',gap:'8px',minHeight:0}},
+          h('div',{className:'dp-illust-area',style:{
+            flexShrink:0,width:'80px',height:'100px',
+            background:`linear-gradient(135deg,rgba(0,0,0,.15),${catColor}22)`,
+            border:`1px solid ${catColor}44`,position:'relative',overflow:'hidden',borderRadius:'6px'
+          }},
+            h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'5px'}})
+          ),
+          h('div',{style:{flex:1,display:'flex',flexDirection:'column',gap:'6px',minWidth:0,overflow:'auto'}},
+            h('div',{className:'dp-section',style:{margin:0,padding:0,border:'none'}},
+              h('div',{className:'dp-section-title'},isRec?'▶ 料理完成時の効果':'▶ 起動効果'),
+              h('div',{className:`dp-eff-text${(!c.eff)?' no-eff':''}`},c.eff||'効果なし'),
+              c.eff&&c.eff.includes('満腹バフ')&&h('div',{className:'dp-keyword-box'},
+                h('div',{className:'dp-keyword-title'},'【満腹バフ：x】'),
+                h('div',{className:'dp-keyword-desc'},'このバフが付与された食材を含む料理を提供したなら、相手の満腹度+x。')
+              )
+            ),
+            isRec&&h('div',{className:'dp-section',style:{margin:0,padding:0,border:'none'}},
+              h('div',{className:'dp-section-title'},'▶ 必要食材'),
+              h('div',{className:'dp-req-list'},
+                c.req.map(rid=>{
+                  const have=ingZone&&ingZone.some(z=>z.id===rid);
+                  return h('div',{key:rid,className:`dp-req-chip${have?' have':''}`},ING_NAME[rid]||rid);
+                })
+              )
+            ),
+            !isRec&&c.cat&&h('div',{style:{fontSize:'11px',color:catColor,fontWeight:'bold'}},c.catL)
+          )
+        )
+      )
+    );
+  }
+
+  // PC版：縦並びレイアウト（元の実装）
   return h('div',{className:'detail-panel'},
     h('div',{className:'dp-card',ref:scrollRef},
       // big preview card
@@ -2611,7 +3277,6 @@ function CardDetailPanel({hovered,ingZone}){
         h('div',{className:'dp-cat-label'},isRec?`満腹度: +${c.sat}`:(c.catL||'')),
         h('div',{className:'dp-illust-area',style:{background:`linear-gradient(135deg,rgba(0,0,0,.15),${catColor}22)`,border:`1px solid ${catColor}44`,position:'relative',overflow:'hidden'}},
           h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'4px'}}),
-          // 画像がない場合のフォールバック装飾
           h('div',{style:{position:'absolute',bottom:'4px',right:'6px',width:'40px',height:'3px',borderRadius:'2px',background:catColor,opacity:.4}})
         ),
         isRec&&h('div',null,
@@ -2676,6 +3341,9 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
   const [copyDone,setCopyDone]=useState(false);
   // 最後に保存した状態のスナップショット（保存後に変更がなければダイアログ不要）
   const [savedSnap,setSavedSnap]=useState(null); // {ing,rec,name} or null
+  // スマホ用state
+  const [spMobileView,setSpMobileView]=useState('lib'); // 'lib'|'deck'
+  const [spDbDetail,setSpDbDetail]=useState(null); // カード詳細ボトムシート用
 
   // 現在の状態が保存済みスナップショットと一致するか
   const isSaved=savedSnap!==null
@@ -2800,6 +3468,220 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
     )
   );
 
+  // ── スマホ版デッキ構築 ──
+  if(isMobile()&&window.innerHeight>window.innerWidth){
+    function spLibCard(def,isR){
+      const cnt=isR?(rec[def.id]||0):(ing[def.id]||0);
+      const tot=isR?rT:iT;
+      const lim=isR?15:30;
+      const maxed=cnt>=4||(tot>=lim&&!cnt);
+      return h('div',{key:def.id,
+        className:`sp-db-card${cnt?' in-deck':''}${maxed?' maxed':''}`,
+        onClick:()=>setSpDbDetail(def),
+        onTouchStart:()=>{_spDbLpTimer=setTimeout(()=>{_spDbLpTimer=null;setSpDbDetail(def);},480);},
+        onTouchEnd:()=>{if(_spDbLpTimer){clearTimeout(_spDbLpTimer);_spDbLpTimer=null;}},
+        onTouchCancel:()=>{if(_spDbLpTimer){clearTimeout(_spDbLpTimer);_spDbLpTimer=null;}}},
+        h('div',{className:'sp-db-card-body'},
+          h('span',{className:`lc-badge badge-${isR?'recipe':def.cat}`},isR?'レシピ':def.catL),
+          h('div',{className:'sp-db-card-main'},
+            h('div',{className:'sp-db-card-name'},
+              def.name,
+              isR&&h('span',{style:{fontSize:'10px',color:'#c86820',fontWeight:800,marginLeft:5}},`+${def.sat}`)
+            ),
+            isR&&h('div',{className:'sp-db-card-req'},
+              def.req.map(r=>h('span',{key:r,className:'sp-db-req-chip'},ING_NAME[r]||r))
+            ),
+            h('div',{className:'sp-db-card-eff'},def.eff||'効果なし')
+          )
+        ),
+        maxed
+          ? h('button',{className:'sp-db-add-btn maxed-btn',onClick:e=>e.stopPropagation()},cnt?`×${cnt} 上限`:'上限')
+          : h('button',{className:`sp-db-add-btn${cnt?' has-count':''}`,onClick:e=>{e.stopPropagation();add(def.id,isR);}},
+              '＋',cnt>0&&h('div',{className:'add-cnt'},`×${cnt}`)
+            )
+      );
+    }
+
+    return h('div',{className:'sp-db'},
+      // ヘッダー
+      h('div',{className:'sp-db-header'},
+        h('div',{className:'sp-db-title-row'},
+          h('div',{className:'sp-db-title'},'📖 デッキ構築'),
+          h('div',{className:'sp-db-counts'},
+            h('span',{className:`sp-db-cnt ing${iT===30?' ok':iT>30?' over':''}`},`食材 ${iT}/30`),
+            h('span',{className:`sp-db-cnt rec${rT===15?' ok':rT>15?' over':''}`},`レシピ ${rT}/15`)
+          )
+        ),
+        h('div',{className:'sp-db-tabs'},
+          h('button',{className:`sp-db-tab${spMobileView==='lib'?' active':''}`,onClick:()=>setSpMobileView('lib')},'📚 ライブラリ'),
+          h('button',{className:`sp-db-tab${spMobileView==='deck'?' active':''}`,onClick:()=>setSpMobileView('deck')},'📋 デッキ確認')
+        )
+      ),
+
+      // ── ライブラリタブ ──
+      spMobileView==='lib'&&h('div',{className:'sp-db-lib'},
+        h('div',{className:'sp-db-subtabs'},
+          h('button',{className:`sp-db-subtab${tab==='ing'?' active':''}`,onClick:()=>{setTab('ing');setFilter('all');}},`🥕 食材カード`),
+          h('button',{className:`sp-db-subtab${tab==='rec'?' active':''}`,onClick:()=>{setTab('rec');setFilter('all');}},`📖 レシピカード`)
+        ),
+        h('div',{className:'sp-db-filters'},
+          tab==='ing'&&['all','protein','carb','fat','vitamin','mineral'].map(f=>
+            h('button',{key:f,className:`sp-db-flt${filter===f?' active':''}`,onClick:()=>setFilter(f)},
+              f==='all'?'すべて':CAT_LABELS[f]||f)
+          ),
+          tab==='rec'&&[['default','デフォルト'],['sat','満腹度'],['kana','五十音']].map(([v,l])=>
+            h('button',{key:v,className:`sp-db-flt${recSort===v?' active':''}`,onClick:()=>setRecSort(v)},l)
+          )
+        ),
+        h('div',{className:'sp-db-search-wrap'},
+          h('input',{className:'sp-db-search',value:search,onChange:e=>setSearch(e.target.value),placeholder:'カード検索...'})
+        ),
+        h('div',{className:'sp-db-card-list'},
+          tab==='ing'?iShow.map(d=>spLibCard(d,false)):rShow.map(d=>spLibCard(d,true))
+        )
+      ),
+
+      // ── デッキ確認タブ ──
+      spMobileView==='deck'&&h('div',{className:'sp-db-deck'},
+        h('div',{className:'sp-db-deck-namebar'},
+          h('span',{style:{fontSize:'10px',color:'var(--muted)',whiteSpace:'nowrap'}},'デッキ名:'),
+          h('input',{className:'sp-db-deck-name-inp',value:name,onChange:e=>setName(e.target.value),placeholder:'デッキ名'})
+        ),
+        h('div',{className:'sp-db-deck-list'},
+          h('div',{className:'sp-db-deck-hd'},
+            h('span',null,'🥕 食材デッキ'),h('span',{style:{fontSize:'10px',color:'var(--muted)'}},`${iT}/30`)
+          ),
+          !iT&&h('div',{style:{fontSize:'10px',color:'var(--muted)',padding:'8px'}},'食材カードを追加してください'),
+          iEnt.map(([id,cnt])=>{const d=ING_MAP[id];if(!d)return null;
+            return h('div',{key:id,className:'sp-db-entry'},
+              h('div',{className:'sp-db-entry-body'},
+                h('div',{className:'cat-dot',style:{background:CAT_COLORS[d.cat]||'#a08060'}}),
+                h('div',{className:'sp-db-entry-name'},d.name),
+                h('div',{className:'sp-db-entry-cnt'},`×${cnt}`)
+              ),
+              h('button',{className:'sp-db-rm-btn',onClick:()=>rm(id,false)},'－')
+            );
+          }),
+          h('div',{className:'sp-db-deck-hd',style:{marginTop:6}},
+            h('span',null,'📖 レシピデッキ'),h('span',{style:{fontSize:'10px',color:'var(--muted)'}},`${rT}/15`)
+          ),
+          !rT&&h('div',{style:{fontSize:'10px',color:'var(--muted)',padding:'8px'}},'レシピカードを追加してください'),
+          rEnt.map(([id,cnt])=>{const d=REC_MAP[id];if(!d)return null;
+            return h('div',{key:id,className:'sp-db-entry'},
+              h('div',{className:'sp-db-entry-body'},
+                h('div',{className:'cat-dot',style:{background:'#c86820'}}),
+                h('div',{className:'sp-db-entry-name'},d.name),
+                h('div',{className:'sp-db-entry-cnt'},`×${cnt}`),
+                h('div',{className:'sp-db-entry-sat'},`+${d.sat}`)
+              ),
+              h('button',{className:'sp-db-rm-btn',onClick:()=>rm(id,true)},'－')
+            );
+          })
+        ),
+        h('div',{className:'sp-db-stats'},
+          h('div',{className:'sp-db-stats-title'},'食材カテゴリ分布'),
+          Object.entries(cats).map(([cat,val])=>
+            h('div',{key:cat,className:'sp-db-stat-row'},
+              h('div',{className:'sp-db-stat-lbl'},CAT_LABELS[cat]),
+              h('div',{className:'sp-db-stat-bar'},h('div',{className:'sp-db-stat-fill',style:{width:Math.min(100,iT?val/iT*100:0)+'%',background:CAT_COLORS[cat]}})),
+              h('div',{className:'sp-db-stat-num'},val)
+            )
+          )
+        )
+      ),
+
+      // バリデーション
+      h('div',{className:`sp-db-valid${isOk?' ok':' ng'}`},
+        isOk?'✓ デッキ完成':(errs[0]||'デッキを作成してください')
+      ),
+
+      // フッター（2行）
+      h('div',{className:'sp-db-footer'},
+        h('div',{className:'sp-db-footer-row'},
+          h('button',{className:'sp-db-fbtn danger',onClick:handleBack},'← 戻る'),
+          h('button',{className:'sp-db-fbtn',onClick:auto},'オートフィル'),
+          h('button',{className:'sp-db-fbtn',onClick:()=>{setIng({});setRec({});}},'クリア'),
+          h('button',{className:'sp-db-fbtn',onClick:()=>setViewSaved(true)},`保存済み(${savedDecks.length})`),
+          h('button',{className:'sp-db-fbtn primary',onClick:()=>save(false),disabled:!isOk},'💾 保存')
+        ),
+        h('div',{className:'sp-db-footer-row'},
+          h('button',{className:'sp-db-fbtn code',onClick:()=>setShowImportModal(true)},'📥 コード読み込み'),
+          h('button',{className:'sp-db-fbtn code',onClick:()=>isOk&&setShowCodeModal(true),disabled:!isOk},'📤 コード作成')
+        )
+      ),
+
+      // カード詳細ボトムシート
+      h('div',{className:`sp-db-sheet${spDbDetail?' open':''}`,onClick:e=>e.stopPropagation()},
+        h('div',{className:'sp-sheet-handle'}),
+        h('button',{className:'sp-sheet-close',onClick:()=>setSpDbDetail(null)},'✕'),
+        spDbDetail&&h(CardDetailPanel,{hovered:spDbDetail,ingZone:[]})
+      ),
+      spDbDetail&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setSpDbDetail(null)}),
+
+      // 保存済み・コード・確認ダイアログはPC版と共通（モーダルはfixed配置なのでそのまま表示）
+      viewSaved&&h('div',{className:'trash-modal-overlay',onClick:()=>setViewSaved(false)},
+        h('div',{className:'trash-modal',style:{maxWidth:'95vw'},onClick:e=>e.stopPropagation()},
+          h('div',{className:'trash-modal-header'},
+            h('h3',null,'📂 保存済みデッキ'),
+            h('button',{className:'trash-modal-close',onClick:()=>setViewSaved(false)},'✕')
+          ),
+          h('div',{style:{padding:'10px',maxHeight:'60vh',overflowY:'auto'}},
+            !savedDecks.length&&h('div',{style:{color:'var(--muted)',fontSize:'12px',padding:'10px'}},'保存済みデッキがありません'),
+            savedDecks.map((dk,i)=>h('div',{key:i,style:{display:'flex',alignItems:'center',gap:'8px',padding:'8px',borderBottom:'1px solid var(--borderG)'}},
+              h('div',{style:{flex:1}},
+                h('div',{style:{fontWeight:700,fontSize:'12px'}},dk.name),
+                h('div',{style:{fontSize:'10px',color:'var(--muted)'}},`食材${Object.values(dk.ing||{}).reduce((a,b)=>a+b,0)}枚 レシピ${Object.values(dk.rec||{}).reduce((a,b)=>a+b,0)}枚`)
+              ),
+              h('button',{className:'btn sm primary',onClick:()=>{setName(dk.name);setIng(dk.ing||{});setRec(dk.rec||{});setViewSaved(false);}},'読み込む'),
+              h('button',{className:'btn sm danger',onClick:()=>{const n=[...savedDecks];n.splice(i,1);onSaveDecks(n);}},'削除')
+            ))
+          )
+        )
+      ),
+      showCodeModal&&h('div',{className:'trash-modal-overlay',onClick:()=>setShowCodeModal(false)},
+        h('div',{className:'trash-modal',style:{maxWidth:'95vw'},onClick:e=>e.stopPropagation()},
+          h('div',{className:'trash-modal-header'},h('h3',null,'📤 デッキコード'),h('button',{className:'trash-modal-close',onClick:()=>setShowCodeModal(false)},'✕')),
+          h('div',{style:{padding:'14px 16px'}},
+            h('div',{style:{fontSize:'11px',color:'var(--muted)',marginBottom:'8px'}},'このコードをコピーしてフレンドに共有できます。'),
+            h('div',{style:{fontFamily:'monospace',fontSize:'11px',background:'rgba(255,248,220,.8)',border:'1px solid rgba(140,100,40,.3)',borderRadius:'5px',padding:'10px 12px',wordBreak:'break-all',lineHeight:1.6,color:'#1a1008',userSelect:'all',cursor:'text',maxHeight:'120px',overflowY:'auto'}},encodeDeckCode(name,ing,rec)||''),
+            h('div',{style:{display:'flex',gap:'8px',marginTop:'12px',justifyContent:'flex-end'}},
+              h('button',{className:'btn sm',onClick:copyCode},copyDone?'✅ コピーしました！':'📋 クリップボードにコピー'),
+              h('button',{className:'btn sm',onClick:()=>setShowCodeModal(false)},'閉じる')
+            )
+          )
+        )
+      ),
+      showImportModal&&h('div',{className:'trash-modal-overlay',onClick:()=>setShowImportModal(false)},
+        h('div',{className:'trash-modal',style:{maxWidth:'95vw'},onClick:e=>e.stopPropagation()},
+          h('div',{className:'trash-modal-header'},h('h3',null,'📥 コードを読み込む'),h('button',{className:'trash-modal-close',onClick:()=>setShowImportModal(false)},'✕')),
+          h('div',{style:{padding:'14px 16px'}},
+            h('div',{style:{fontSize:'11px',color:'var(--muted)',marginBottom:'8px'}},'デッキコードを貼り付けてください。現在のデッキは上書きされます。'),
+            h('textarea',{value:importInput,onChange:e=>setImportInput(e.target.value),placeholder:'デッキコードをここに貼り付け...',style:{width:'100%',height:'90px',resize:'vertical',fontFamily:'monospace',fontSize:'11px',background:'rgba(255,248,220,.8)',border:'1px solid rgba(140,100,40,.3)',borderRadius:'5px',padding:'8px 10px',color:'#1a1008',outline:'none'}}),
+            importError&&h('div',{style:{color:'#c03030',fontSize:'11px',marginTop:'6px'}},importError),
+            h('div',{style:{display:'flex',gap:'8px',marginTop:'12px',justifyContent:'flex-end'}},
+              h('button',{className:'btn sm primary',onClick:()=>{
+                const r=decodeDeckCode(importInput.trim());
+                if(!r){setImportError('コードが正しくありません');return;}
+                setName(r.name);setIng(r.ing);setRec(r.rec);setImportInput('');setImportError('');setShowImportModal(false);
+              }},'読み込む'),
+              h('button',{className:'btn sm',onClick:()=>{setShowImportModal(false);setImportError('');}},'キャンセル')
+            )
+          )
+        )
+      ),
+      showBackConfirm&&h('div',{className:'trash-modal-overlay'},
+        h('div',{className:'trash-modal',style:{maxWidth:'95vw'},onClick:e=>e.stopPropagation()},
+          h('div',{className:'trash-modal-header'},h('h3',null,'⚠️ 未保存の変更'),h('button',{className:'trash-modal-close',onClick:()=>setShowBackConfirm(false)},'✕')),
+          h('div',{style:{padding:'12px 16px',fontSize:'12px',color:'var(--text)'}},'デッキが保存されていません。保存しますか？'),
+          h('div',{style:{display:'flex',gap:'10px',padding:'0 16px 16px',justifyContent:'flex-end'}},
+            h('button',{className:'btn sm',onClick:()=>{setShowBackConfirm(false);onBack();}},'保存しない'),
+            h('button',{className:'btn sm primary',disabled:!isOk,onClick:()=>{if(isOk)save(true);setShowBackConfirm(false);onBack();}},isOk?'保存する':'保存（デッキ未完成）')
+          )
+        )
+      )
+    );
+  }
+
   return h('div',{className:'db-screen'},
     h('div',{className:'db-header'},
       h('div',{className:'db-title'},'デッキ構築'),
@@ -2857,9 +3739,9 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
         )
       ),
       h('div',{className:'deck-panel'},
-        h('div',{className:'deck-section'},
-          h('h3',null,'食材デッキ',h('span',null,`${iT}/30`)),
-          h('div',{style:{maxHeight:'175px',overflowY:'auto'}},
+        h('div',{style:{flex:1,overflowY:'auto',minHeight:0,display:'flex',flexDirection:'column'}},
+          h('div',{className:'deck-section'},
+            h('h3',null,'食材デッキ',h('span',null,`${iT}/30`)),
             iEnt.map(([id,cnt])=>{const d=ING_MAP[id];if(!d)return null;
               return h('div',{key:id,className:'deck-entry'},
                 h('div',{className:'cat-dot',style:{background:CAT_COLORS[d.cat]||'#a08060'}}),
@@ -2869,11 +3751,9 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
               );
             }),
             !iT&&h('div',{style:{fontSize:'10px',color:'#7a6050',padding:'8px'}},'食材カードを追加')
-          )
-        ),
-        h('div',{className:'deck-section'},
-          h('h3',null,'レシピデッキ',h('span',null,`${rT}/15`)),
-          h('div',{style:{maxHeight:'135px',overflowY:'auto'}},
+          ),
+          h('div',{className:'deck-section'},
+            h('h3',null,'レシピデッキ',h('span',null,`${rT}/15`)),
             rEnt.map(([id,cnt])=>{const d=REC_MAP[id];if(!d)return null;
               return h('div',{key:id,className:'deck-entry'},
                 h('div',{className:'cat-dot',style:{background:'#c86820'}}),
@@ -2886,7 +3766,7 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
             !rT&&h('div',{style:{fontSize:'10px',color:'#7a6050',padding:'8px'}},'レシピカードを追加')
           )
         ),
-        h('div',{className:'deck-stats'},
+        h('div',{className:'deck-stats',style:{flexShrink:0}},
           h('div',{style:{fontSize:'8px',color:'var(--muted)',marginBottom:'5px',letterSpacing:'1px'}},'食材カテゴリ分布'),
           Object.entries(cats).map(([cat,val])=>
             h('div',{key:cat,className:'stat-row'},
@@ -2904,8 +3784,8 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
       h('button',{className:'btn sm',onClick:auto},'オートフィル'),
       h('button',{className:'btn sm danger',onClick:()=>{setIng({});setRec({});}},'クリア'),
       h('div',{className:'sp'}),
-      !isOk&&h('span',{className:'validation-msg'},errs[0]),
-      isOk&&h('span',{className:'validation-ok'},'✓ デッキ完成'),
+      !isOk&&h('span',{className:'validation-msg',style:{fontSize:'15px'}},errs[0]),
+      isOk&&h('span',{className:'validation-ok',style:{fontSize:'15px'}},'✓ デッキ完成'),
       h('button',{className:'btn sm',onClick:()=>setShowImportModal(true)},'📥 コード読込'),
       h('button',{className:'btn sm',onClick:()=>isOk&&setShowCodeModal(true),disabled:!isOk},'📤 コード発行'),
       h('button',{className:'btn sm',onClick:()=>save(false),disabled:!isOk},'保存')
@@ -3017,7 +3897,7 @@ function CoinFlipScreen({first,myPi,onDone}){
 
 function MulliganScreen({players,onConfirm,isAI,aiPi=1}){
   const [sel,setSel]=useState([new Set(),new Set()]);
-  const [hovered,setHovered]=useState(null);
+  const [detailCard,setDetailCard]=useState(null);
   useEffect(()=>{
     if(!isAI)return;
     const p=players[aiPi];const ii=new Set(p.hand.filter(c=>!c._isRec).map(c=>c.id));
@@ -3025,14 +3905,92 @@ function MulliganScreen({players,onConfirm,isAI,aiPi=1}){
     setSel(prev=>{const n=[...prev];n[aiPi]=as;return n;});
   },[]);
   function tog(pi,uid_){if(pi===aiPi&&isAI)return;setSel(prev=>{const n=[...prev];const s=new Set(n[pi]);s.has(uid_)?s.delete(uid_):s.add(uid_);n[pi]=s;return n;});}
+  const myMullPi=1-aiPi;
+  const oppMullPi=aiPi;
+
+  // スマホ縦画面レイアウト
+  if(isMobile()&&window.innerHeight>window.innerWidth){
+    function spCard(c,pi,clickable){
+      const sel_=sel[pi].has(c._uid);
+      const back=!clickable;
+      const lp=clickable?makeLongPress(
+        ()=>setDetailCard(c),           // 長押し → 詳細
+        ()=>tog(pi,c._uid)              // タップ → 選択/解除
+      ):null;
+      return h('div',{key:c._uid,
+        className:`sp-mull-card${sel_?' selected':''}${back?' back':''}`,
+        ...(lp||{})},
+        !back&&[
+          h('div',{key:'i',className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+          h('div',{key:'t',className:'mc-type'},c._isRec?'レシピ':'食材'),
+          h('div',{key:'n',className:'mc-name'},c.name),
+          c._isRec?h('div',{key:'s',className:'mc-sat'},`+${c.sat}`):null,
+        ]
+      );
+    }
+    return h('div',{className:'sp-mull'},
+      // 相手手札（上・裏向き）
+      h('div',{className:'sp-mull-opp'},
+        h('div',{className:'sp-mull-opp-header'},
+          `${isAI?'🤖 AI':'相手'}の手札 — ${sel[oppMullPi].size?`${sel[oppMullPi].size}枚返す予定`:'変更なし'}`
+        ),
+        h('div',{className:'sp-mull-rows'},
+          h('div',{className:'sp-mull-ing-row'},
+            (()=>{const ings=players[oppMullPi].hand.filter(c=>!c._isRec);
+              return Array.from({length:5},(_,i)=>ings[i]?spCard(ings[i],oppMullPi,false):h('div',{key:'ei'+i,className:'sp-mull-card back'}));})()
+          ),
+          h('div',{className:'sp-mull-rec-row'},
+            (()=>{const recs=players[oppMullPi].hand.filter(c=>c._isRec);
+              return[0,1].map(i=>recs[i]?spCard(recs[i],oppMullPi,false):h('div',{key:'er'+i,className:'sp-mull-card back'}));})()
+          )
+        )
+      ),
+      // 中央タイトル
+      h('div',{className:'sp-mull-center'},
+        h('h2',null,'🃏 マリガン'),
+        h('p',null,'戻したいカードをタップして選択（なしでもOK）')
+      ),
+      // 自分手札（下）
+      h('div',{className:'sp-mull-self'},
+        h('div',{className:'sp-mull-self-header'},'あなたの手札'),
+        h('div',{className:'sp-mull-rows'},
+          h('div',{className:'sp-mull-ing-row'},
+            (()=>{const ings=players[myMullPi].hand.filter(c=>!c._isRec);
+              return Array.from({length:5},(_,i)=>ings[i]?spCard(ings[i],myMullPi,true):h('div',{key:'ei'+i,className:'sp-mull-card',style:{opacity:.15,cursor:'default'}}));})()
+          ),
+          h('div',{className:'sp-mull-rec-row'},
+            (()=>{const recs=players[myMullPi].hand.filter(c=>c._isRec);
+              return[0,1].map(i=>recs[i]?spCard(recs[i],myMullPi,true):h('div',{key:'er'+i,className:'sp-mull-card',style:{opacity:.15,cursor:'default'}}));})()
+          )
+        )
+      ),
+      // フッター
+      h('div',{className:'sp-mull-footer'},
+        h('div',{className:'sp-mull-status'},
+          sel[myMullPi].size?`${sel[myMullPi].size}枚を戻して引き直し`:'変更なし（そのままゲーム開始）'
+        ),
+        h('button',{className:'btn primary',style:{width:'100%',fontSize:'14px',padding:'10px'},
+          onClick:()=>onConfirm(sel)},'マリガン確定 → ゲーム開始')
+      ),
+      // カード詳細ボトムシート
+      h('div',{className:`sp-detail-sheet${detailCard?' open':''}`,onClick:e=>e.stopPropagation()},
+        h('div',{className:'sp-sheet-handle'}),
+        h('button',{className:'sp-sheet-close',onClick:()=>setDetailCard(null)},'✕'),
+        detailCard&&h(CardDetailPanel,{hovered:detailCard,ingZone:[]})
+      ),
+      detailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setDetailCard(null)})
+    );
+  }
+
+  // PC版（既存）
   function card(c,pi){
     const sel_=sel[pi].has(c._uid),back=pi===aiPi&&isAI;
     return h('div',{
       key:c._uid,
       className:`mull-card${sel_?' selected':''}${back?' back':''}`,
       onClick:()=>!back&&tog(pi,c._uid),
-      onMouseEnter:()=>!back&&setHovered(c),
-      onMouseLeave:()=>setHovered(null),
+      onMouseEnter:isMobile()?null:()=>!back&&setDetailCard(c),
+      onMouseLeave:isMobile()?null:()=>setDetailCard(null),
     },
       !back&&[
         h('div',{key:'t',className:'mc-type'},c._isRec?'レシピ':'食材'),
@@ -3043,26 +4001,20 @@ function MulliganScreen({players,onConfirm,isAI,aiPi=1}){
       ]
     );
   }
-  // プレイヤーのpi（左側に表示）
-  const myMullPi=1-aiPi;
-  const oppMullPi=aiPi;
   return h('div',{className:'mulligan-screen'},
     h('div',{className:'mull-header'},
       h('h2',null,'🃏 マリガン'),
       h('p',null,'戻したいカードを選択（選択なしでもOK）')
     ),
     h('div',{className:'mull-area'},
-      // 自分（プレイヤー）手札 — 左側固定
       h('div',{className:'mull-player'},
         h('h3',null,'あなたの手札'),
         h('div',{className:'mull-hand'},players[myMullPi].hand.map(c=>card(c,myMullPi))),
         h('div',{className:'mull-info'},sel[myMullPi].size?`${sel[myMullPi].size}枚を戻して引き直し`:'変更なし')
       ),
-      // 中央プレビュー
       h('div',{className:'mull-preview-wrap',style:{width:'220px',flexShrink:0,display:'flex',flexDirection:'column'}},
-        h(CardDetailPanel,{hovered,ingZone:[]})
+        h(CardDetailPanel,{hovered:detailCard,ingZone:[]})
       ),
-      // 相手（AI）手札 — 右側固定
       h('div',{className:`mull-player${isAI?' ai-panel':''}`},
         h('h3',null,isAI?'🤖 AI の手札（非公開）':'相手の手札'),
         h('div',{className:'mull-hand'},players[oppMullPi].hand.map(c=>card(c,oppMullPi))),
@@ -3081,7 +4033,7 @@ function MulliganScreen({players,onConfirm,isAI,aiPi=1}){
 // ============================================================
 const PHASE_LABELS={draw:'ドロー',place:'食材配置',activate:'起動',serve:'料理提供',discard:'廃棄'};
 
-function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=null,myName='あなた',oppName=null,difficulty='normal'}){
+function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=null,myName='あなた',oppName=null,difficulty='normal',turnTimeLeft=null,turnTimerPi=null}){
   const [G,setG]=useState(initG);
   const [selH,setSelH]=useState(null);
   const [selZ,setSelZ]=useState([]);
@@ -3377,6 +4329,10 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
     setHovered(null);
     if(el)el.removeEventListener('wheel',onCardWheel);
   }
+  // タッチ用：タップでプレビューをトグル（同じカードなら閉じる）
+  function onTapPreview(card){
+    setHovered(prev=>prev&&prev._uid===card._uid?null:card);
+  }
 
   function renderField(fpi){
     const fp=G.players[fpi];
@@ -3403,8 +4359,9 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
               className:`ing-card ${c.cat||''}${isSel?' sel':''}${isHi?' highlight':''}${c._used?' activated':''}${isAct&&G.phase==='place'&&c._placedThisTurn?' placed-this-turn':''}${c._satBuff?' toast-mark':''}`,
               style:{cursor:isAct?'pointer':'default'},
               onClick:()=>clickZone(c,fpi),
-              onMouseEnter:e=>onEnter(c,e.currentTarget),
-              onMouseLeave:e=>onLeave(e.currentTarget)},
+              onMouseEnter:isMobile()?null:e=>onEnter(c,e.currentTarget),
+              onMouseLeave:isMobile()?null:e=>onLeave(e.currentTarget),
+              onTouchEnd:isMobile()?e=>{e.preventDefault();onTapPreview(c);}:null},
               // 画像エリア（画像があれば表示）
               h('div',{className:'ic-img-wrap'},
                 h(CardImg,{id:c.id,style:{borderRadius:'3px 3px 0 0'}})
@@ -3424,8 +4381,9 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       h('div',{className:'recipe-zone'},
         h('div',{className:'card-row'},
           fp.recZone.map(r=>h('div',{key:r._uid,className:'rcard-done',
-            onMouseEnter:e=>onEnter(r,e.currentTarget),
-            onMouseLeave:e=>onLeave(e.currentTarget)},
+            onMouseEnter:isMobile()?null:e=>onEnter(r,e.currentTarget),
+            onMouseLeave:isMobile()?null:e=>onLeave(e.currentTarget),
+            onTouchEnd:isMobile()?e=>{e.preventDefault();onTapPreview(r);}:null},
             h('div',{className:'rn'},r.name),h('div',{className:'rs'},`+${r.sat}`)
           ))
         )
@@ -3486,8 +4444,9 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
             return h('div',{key:c._uid,
               className:`hcard${isAct&&selH===c._uid?' sel':''}${!isAct?' disabled':''}${back?' back':''}`,
               onClick:()=>isAct&&!back&&clickHand(c),
-              onMouseEnter:e=>{if(!back)onEnter(c,e.currentTarget);},
-              onMouseLeave:e=>onLeave(e.currentTarget)},
+              onMouseEnter:isMobile()?null:e=>{if(!back)onEnter(c,e.currentTarget);},
+              onMouseLeave:isMobile()?null:e=>onLeave(e.currentTarget),
+              onTouchEnd:isMobile()?e=>{e.preventDefault();if(!back)onTapPreview(c);if(isAct&&!back)clickHand(c);}:null},
               !back&&h('div',{key:'img',className:'hcard-img-wrap'},
                 h(CardImg,{id:c.id,style:{borderRadius:'5px 5px 0 0'}})
               ),
@@ -3524,6 +4483,314 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
   }
   if(G.winner==null)particlesRef.current=null;
 
+  // ── スマホ縦画面レイアウト ──
+  const [spDetailCard,setSpDetailCard]=useState(null);
+  const [spDragging,setSpDragging]=useState(null);
+  const dragGhostRef=useRef(null);
+  const ingZoneRef=useRef(null);
+  const handRef=useRef(null);
+  const dragMovedRef=useRef(false); // ドラッグで実際に移動があったか
+
+  function onHandTouchStart(e,card){
+    dragMovedRef.current=false;
+    const t=e.touches[0];
+    dragGhostRef.current={card,moved:false,startX:t.clientX,startY:t.clientY,ghost:null,source:'hand'};
+    if(!card._isRec&&G.phase==='place'&&G.currentPlayer===myPiLocal){
+      setSpDragging(card._uid);
+    }
+  }
+  function onIngTouchStart(e,card){
+    e.stopPropagation();
+    dragMovedRef.current=false;
+    const t=e.touches[0];
+    dragGhostRef.current={card,moved:false,startX:t.clientX,startY:t.clientY,ghost:null,source:'zone'};
+  }
+  function onHandTouchMove(e){
+    const dr=dragGhostRef.current;
+    if(!dr)return;
+    e.preventDefault();
+    const t=e.touches[0];
+    if(!dr.moved&&(Math.abs(t.clientX-dr.startX)>8||Math.abs(t.clientY-dr.startY)>8)){
+      dr.moved=true;
+      dragMovedRef.current=true;
+      let ghost=document.getElementById('sp-drag-ghost');
+      if(!ghost){ghost=document.createElement('div');ghost.id='sp-drag-ghost';ghost.className='sp-drag-ghost';document.body.appendChild(ghost);}
+      ghost.textContent=dr.card.name;
+      ghost.style.display='block';
+      dr.ghost=ghost;
+    }
+    if(dr.moved&&dr.ghost){dr.ghost.style.left=t.clientX+'px';dr.ghost.style.top=t.clientY+'px';}
+    const zone=ingZoneRef.current;
+    const hand=handRef.current;
+    if(dr.moved){
+      if(zone&&dr.source==='hand'){const r=zone.getBoundingClientRect();zone.classList.toggle('drop-target',t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom);}
+      if(hand&&dr.source==='zone'){const r=hand.getBoundingClientRect();hand.classList.toggle('drop-target',t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom);}
+    }
+  }
+  function onHandTouchEnd(e){
+    const dr=dragGhostRef.current;
+    if(!dr)return;
+    if(dr.ghost)dr.ghost.style.display='none';
+    const zone=ingZoneRef.current;
+    const hand=handRef.current;
+    if(zone)zone.classList.remove('drop-target');
+    if(hand)hand.classList.remove('drop-target');
+    const t=e.changedTouches[0];
+    if(dr.moved){
+      // ドラッグ完了 → カード詳細は出さない
+      if(dr.source==='hand'&&zone){
+        const r=zone.getBoundingClientRect();
+        if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom){
+          const card=p.hand.find(c=>c._uid===dr.card._uid);
+          if(card)clickHand(card);
+        }
+      } else if(dr.source==='zone'&&hand){
+        const r=hand.getBoundingClientRect();
+        if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom){
+          clickZone(dr.card,myPiLocal);
+        }
+      }
+    } else {
+      // タップ → カード詳細を表示
+      setSpDetailCard(dr.card);
+    }
+    dragGhostRef.current=null;
+    setSpDragging(null);
+  }
+
+  function renderMobileGame(){
+    const oppPi=1-myPiLocal;
+    const opp=G.players[oppPi];
+    const self=G.players[myPiLocal];
+    const ingDeckLen=Array.isArray(self.ingDeck)?self.ingDeck.length:(self.ingDeck||0);
+    const recDeckLen=Array.isArray(self.recDeck)?self.recDeck.length:(self.recDeck||0);
+    const oppIngDeckLen=Array.isArray(opp.ingDeck)?opp.ingDeck.length:(opp.ingDeck||0);
+    const oppRecDeckLen=Array.isArray(opp.recDeck)?opp.recDeck.length:(opp.recDeck||0);
+    const isMyAct=G.currentPlayer===myPiLocal&&!isAiTurn;
+    const selfSatPct=Math.min(100,self.satiety/20*100);
+    const selfSatCls=self.satiety>=16?'danger':self.satiety>=10?'warn':'';
+    const oppSatPct=Math.min(100,opp.satiety/20*100);
+
+    // 小カード共通レンダー（長押しで詳細、タップで通常操作）
+    function smlCard(c,opts={}){
+      const isSel=opts.selZ&&opts.selZ.includes(c._uid);
+      const isHi=opts.isHi&&opts.needed&&opts.needed.includes(c.id)&&!(opts.sZids||[]).includes(c.id);
+      const lp=makeLongPress(
+        ()=>{
+          if(dragMovedRef.current)return;
+          setSpDetailCard(c);
+        },
+        opts.onTap?()=>opts.onTap(c):undefined
+      );
+      return h('div',{key:c._uid,
+        className:`sp-sml-card ${c.cat||''}${isSel?' sel':''}${isHi?' highlight':''}${c._used?' activated':''}`,
+        style:{border:isSel?'2px solid var(--goldL)':isHi?'2px solid var(--vitaminL)':undefined},
+        ...lp,
+        onTouchStart:e=>{if(opts.onTS)opts.onTS(e,c);lp.onTouchStart(e);}
+      },
+        h('div',{className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+        h('div',{className:'smc-name'},c.name)
+      );
+    }
+
+    return h('div',{className:'sp-game',style:{position:'relative'},
+        onTouchMove:onHandTouchMove,onTouchEnd:onHandTouchEnd},
+      aiThink&&h('div',{className:'ai-thinking-overlay'},h('p',null,'🤖 AIが思考中...'),h('div',null,h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}))),
+
+      // ── 相手手札（最上部・裏向き or revealed時は表） ──
+      h('div',{className:'sp-hand-row',style:{background:'rgba(220,210,255,.45)',borderTop:'none',borderBottom:'1px solid rgba(120,80,160,.2)'}},
+        Array.from({length:10},(_,i)=>{
+          const c=opp.hand[i];
+          if(!c) return h('div',{key:i,className:'sp-hand-empty'});
+          const revealed=opp.revealed; // ペペロンチーノ等で公開中
+          if(revealed){
+            const lp=makeLongPress(()=>setSpDetailCard(c));
+            return h('div',{key:c._uid||i,
+              className:`sp-hcard ${c._isRec?'sh-rec':'sh-ing'}`,
+              ...lp},
+              h('div',{className:'sh-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+              h('div',{className:'sh-name'},c.name),
+              c._isRec&&h('div',{className:'sh-sat'},`+${c.sat}`)
+            );
+          }
+          return h('div',{key:c._uid||i,className:'sp-hcard back'});
+        })
+      ),
+
+      // ── 相手エリア ──
+      h('div',{className:'sp-area sp-area-opp'},
+        h('div',{className:'sp-info-row'},
+          h('span',{className:'sp-player-label'},isAI?'🤖 AI':oppName?`👤 ${oppName}`:'👤 相手'),
+          h('div',{className:'sp-deck-badges'},
+            h('span',{className:'sp-deck-btn'},`🥕 ${oppIngDeckLen}`),
+            h('span',{className:'sp-deck-btn'},`📖 ${oppRecDeckLen}`),
+            h('span',{className:'sp-deck-btn'},`🗑 ${opp.trash.length}`)
+          )
+        ),
+        h('div',{className:'sp-sat-row'},
+          h('div',{className:'sp-sat-track'},h('div',{className:`sp-sat-fill${oppSatPct>=80?' danger':oppSatPct>=50?' warn':''}`,style:{width:oppSatPct+'%'}})),
+          h('span',{className:'sp-sat-num',style:{color:opp.satiety>=16?'#c01818':opp.satiety>=10?'#a03010':'var(--goldD)'}},`${opp.satiety}/20`)
+        ),
+        h('div',{className:'sp-zone-header'},
+          h('span',{className:'sp-zone-label'},'🌾 食材ゾーン'),
+          h('span',{className:'sp-zone-count'},`${opp.ingZone.length}/7`)
+        ),
+        h('div',{className:'sp-ing-zone'},
+          opp.ingZone.map(c=>smlCard(c,{onTS:(e,c2)=>onIngTouchStart(e,c2)})),
+          Array.from({length:Math.max(0,7-opp.ingZone.length)},(_,i)=>
+            h('div',{key:'eo'+i,className:'sp-ing-slot-empty'})
+          )
+        ),
+        h('div',{className:'sp-zone-header',style:{marginTop:'3px'}},
+          h('span',{className:'sp-zone-label'},'🍽 完成料理'),
+          h('span',{className:'sp-zone-count'},`${opp.recZone.length}枚`)
+        ),
+        h('div',{className:'sp-rec-zone'},
+          opp.recZone.length===0
+            ? h('span',{style:{fontSize:'9px',color:'rgba(80,60,20,.3)',fontStyle:'italic'}},'なし')
+            : opp.recZone.map(r=>h('div',{key:r._uid,className:'sp-rec-card',onTouchStart:e=>onIngTouchStart(e,r)},
+                h('div',{className:'rn'},r.name),h('div',{className:'rs'},`+${r.sat}`)
+              ))
+        )
+      ),
+
+      // ── センターパネル ──
+      h('div',{className:'sp-center'},
+        h('div',{className:'sp-center-left'},
+          h('div',{className:'sp-phase-badge'},PHASE_LABELS[G.phase]+'フェイズ'),
+          h('div',{className:'sp-turn-info'},`Turn ${G.turn} | ${isAI&&G.currentPlayer===aiPi?'AIのターン':isMyAct?'あなたのターン':'相手のターン'}`)
+        ),
+        h('div',{className:'sp-center-right'},
+          !isAiTurn&&G.phase==='place'&&h('button',{className:'sp-btn',onClick:nextPhase},'配置完了 →'),
+          !isAiTurn&&G.phase==='activate'&&h('button',{className:'sp-btn',onClick:nextPhase},'起動完了 →'),
+          !isAiTurn&&G.phase==='serve'&&[
+            selH&&canServe&&h('button',{key:'s',className:'sp-btn primary',onClick:serve},'🍽 提供！'),
+            h('button',{key:'n',className:'sp-btn',onClick:nextPhase},'提供終了 →'),
+            selH&&!canServe&&h('div',{key:'m',className:'sp-missing'},`不足: ${needed.filter(r=>!sZids.includes(r)).map(r=>ING_NAME[r]||r).join('・')}`),
+            !selH&&h('div',{key:'h',className:'sp-hint'},'レシピを選択'),
+          ],
+          !isAiTurn&&G.phase==='discard'&&h('button',{className:'sp-btn primary',onClick:nextPhase},'ターン終了'),
+          !isAiTurn&&G.phase==='draw'&&h('div',{className:'sp-hint'},'山札をタップ'),
+          isAiTurn&&h('div',{className:'sp-hint'},'🤖 考え中...')
+        )
+      ),
+
+      // ── 自分エリア ──
+      h('div',{className:'sp-area sp-area-self'},
+        h('div',{className:'sp-zone-header'},
+          h('span',{className:'sp-zone-label'},'🌾 食材ゾーン'),
+          h('span',{className:'sp-zone-count'},`${self.ingZone.length}/7`)
+        ),
+        h('div',{ref:ingZoneRef,className:'sp-ing-zone'},
+          self.ingZone.map(c=>smlCard(c,{
+            selZ,
+            isHi:isMyAct&&G.phase==='serve'&&!!selH,
+            needed,sZids,
+            onTap:isMyAct&&G.phase!=='place'?(c2)=>clickZone(c2,myPiLocal):undefined,
+            onTS:(e,c2)=>onIngTouchStart(e,c2)
+          })),
+          Array.from({length:Math.max(0,7-self.ingZone.length)},(_,i)=>
+            h('div',{key:'es'+i,className:'sp-ing-slot-empty'})
+          )
+        ),
+        h('div',{className:'sp-zone-header',style:{marginTop:'3px'}},
+          h('span',{className:'sp-zone-label'},'🍽 完成料理'),
+          h('span',{className:'sp-zone-count'},`${self.recZone.length}枚`)
+        ),
+        h('div',{className:'sp-rec-zone'},
+          self.recZone.length===0
+            ? h('span',{style:{fontSize:'9px',color:'rgba(80,60,20,.3)',fontStyle:'italic'}},'なし')
+            : self.recZone.map(r=>h('div',{key:r._uid,className:'sp-rec-card',onTouchStart:e=>onIngTouchStart(e,r)},
+                h('div',{className:'rn'},r.name),h('div',{className:'rs'},`+${r.sat}`)
+              ))
+        ),
+        h('div',{className:'sp-info-row',style:{marginTop:'2px'}},
+          h('span',{className:'sp-player-label'},`👤 ${myName}`),
+          h('div',{className:'sp-deck-badges'},
+            h('div',{className:`sp-deck-btn ing${isMyAct&&G.phase==='draw'&&ingDeckLen?' active':''}`,
+              onClick:()=>{if(isMyAct&&G.phase==='draw'&&ingDeckLen)drawCard('ing');}},`🥕 ${ingDeckLen}`),
+            h('div',{className:`sp-deck-btn rec${isMyAct&&G.phase==='draw'&&recDeckLen?' active':''}`,
+              onClick:()=>{if(isMyAct&&G.phase==='draw'&&recDeckLen)drawCard('rec');}},`📖 ${recDeckLen}`),
+            h('div',{className:'sp-deck-btn trash',onClick:()=>setShowTrash({pi:myPiLocal})},`🗑 ${self.trash.length}`)
+          )
+        ),
+        h('div',{className:'sp-sat-row'},
+          h('span',{className:'sp-sat-label'},`満腹度`),
+          h('div',{className:'sp-sat-track'},h('div',{className:`sp-sat-fill${selfSatCls?' '+selfSatCls:''}`,style:{width:selfSatPct+'%'}})),
+          h('span',{className:'sp-sat-num',style:{color:self.satiety>=16?'#c01818':self.satiety>=10?'#a03010':'var(--goldD)'}},`${self.satiety}/20`)
+        )
+      ),
+
+      // ── 手札（1行・10枚全表示） ──
+      h('div',{ref:handRef,className:'sp-hand-row'},
+        self.hand.map(c=>{
+          const isDragging=spDragging===c._uid;
+          const lp=makeLongPress(
+            ()=>{
+              if(dragMovedRef.current)return;
+              setSpDetailCard(c);
+            },
+            ()=>clickHand(c)
+          );
+          return h('div',{key:c._uid,
+            className:`sp-hcard ${c._isRec?'sh-rec':'sh-ing'}${selH===c._uid?' sel':''}${isDragging?' dragging':''}`,
+            onClick:()=>clickHand(c),
+            onTouchStart:e=>{onHandTouchStart(e,c);lp.onTouchStart(e);},
+            onTouchMove:e=>lp.onTouchMove(e),
+            onTouchEnd:e=>lp.onTouchEnd(e),
+            onTouchCancel:lp.onTouchCancel},
+            h('div',{className:'sh-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+            h('div',{className:'sh-name'},c.name),
+            c._isRec&&h('div',{className:'sh-sat'},`+${c.sat}`)
+          );
+        }),
+        Array.from({length:Math.max(0,10-self.hand.length)},(_,i)=>h('div',{key:'e'+i,className:'sp-hand-empty'}))
+      ),
+
+      // ── 共通オーバーレイ ──
+      G.pending&&!G.winner&&h(SelectionModal,{G,onResolve:onPendingResolve,canOperate:isOnline?(myOnlinePi===G.pending.pi):(isAI?G.pending.pi===0:true)}),
+      msg&&h('div',{className:'msg-toast'},msg),
+      turnBanner&&h('div',{className:'turn-banner'},h('div',{className:`turn-banner-inner ${turnBanner==='my'?'my-turn':'opp-turn'}`},turnBanner==='my'?'⚔️ あなたのターン':'🛡️ 相手のターン')),
+      serveAnim&&h('div',{className:'serve-overlay'},h('div',{className:'serve-burst'},h('div',{className:'serve-ribbon'},'🍽️ 料理完成！'),h('div',{className:'serve-card-big'},h('div',{className:'sc-img-wrap'},h(CardImg,{id:serveAnim.id,style:{width:'100%',height:'100%',objectFit:'cover',borderRadius:'8px'}})),h('div',{className:'sc-label'},'レシピ'),h('div',{className:'sc-name'},serveAnim.name),h('div',{className:'sc-sat'},`+${serveAnim.sat}`)))),
+      drawAnim&&h('div',{className:'draw-flash'},h('div',{className:`draw-card-anim ${drawAnim._hidden?'hidden':drawAnim._isRec?'rec':'ing'}`},drawAnim._hidden?h('div',{style:{fontSize:'28px',color:'var(--muted)'}},'🂠'):[h('div',{key:'t',className:'dca-type',style:{color:drawAnim._isRec?'var(--goldD)':CAT_COLORS[drawAnim.cat]||'var(--muted)'}},drawAnim._isRec?'レシピ':'食材'),h('div',{key:'n',className:'dca-name'},drawAnim.name)])),
+      damageAnims.map(d=>h('div',{key:d.id,className:'damage-num',style:{left:`${d.x}%`,top:`${d.y}%`,color:d.color}},`+${d.val}`)),
+      showTrash&&h('div',{className:'trash-modal-overlay',onClick:()=>setShowTrash(null)},
+        h('div',{className:'trash-modal',style:{maxWidth:'95vw',maxHeight:'70vh'},onClick:e=>e.stopPropagation()},
+          h('div',{className:'trash-modal-header'},
+            h('h3',null,`🗑 ごみ箱 — P${showTrash.pi+1} (${G.players[showTrash.pi].trash.length}枚)`),
+            h('button',{className:'trash-modal-close',onClick:()=>setShowTrash(null)},'✕')
+          ),
+          h('div',{className:'trash-modal-body',style:{display:'flex',flexWrap:'wrap',gap:'6px',padding:'10px',overflowY:'auto'}},
+            G.players[showTrash.pi].trash.length===0
+              ? h('div',{className:'trash-modal-empty'},'ごみ箱は空です')
+              : G.players[showTrash.pi].trash.map((c,i)=>{
+                  const lp=makeLongPress(()=>setSpDetailCard(c));
+                  return h('div',{key:c._uid||i,
+                    className:`sp-sml-card ${c.cat||''}`,
+                    ...lp},
+                    h('div',{className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+                    h('div',{className:'smc-name'},c.name)
+                  );
+                })
+          )
+        )
+      ),
+      !isOnline&&G.winner!=null&&h('div',{className:'winner-overlay'},h('div',{className:'winner-particles'},(particlesRef.current||[]).map(pt=>h('div',{key:pt.id,className:'winner-particle',style:{left:`${pt.left}%`,width:`${pt.size}px`,height:`${pt.size}px`,background:pt.color,animationDuration:`${pt.dur}s`,animationDelay:`${pt.delay}s`}}))),h('div',{className:'winner-title'},G.winner===myPiLocal?'🎉 勝利！':'😢 敗北...'),h('div',{className:'winner-sub'},G.winReason==='deck'?(G.winner===myPiLocal?'相手の山札が無くなりました...':'山札が無くなりました...'):(G.winner===myPiLocal?'相手を満腹にさせました！':'相手に満腹にされました...')),h('div',{className:'winner-btns'},h('button',{className:'btn primary',style:{fontSize:'16px',padding:'10px 28px',fontWeight:'800'},onClick:()=>window.location.reload()},'タイトルへ戻る'))),
+
+      // カード詳細ボトムシート
+      h('div',{className:`sp-detail-sheet${spDetailCard?' open':''}`,onClick:e=>e.stopPropagation()},
+        h('div',{className:'sp-sheet-handle'}),
+        h('button',{className:'sp-sheet-close',onClick:()=>setSpDetailCard(null)},'✕'),
+        spDetailCard&&h(CardDetailPanel,{hovered:spDetailCard,ingZone:self.ingZone})
+      ),
+      spDetailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setSpDetailCard(null)})
+    );
+  }
+
+  // スマホ縦画面の場合はモバイル専用レイアウトを返す
+    // スマホ縦画面の場合はモバイル専用レイアウトを返す
+  if(isMobile()&&window.innerHeight>window.innerWidth)return renderMobileGame();
+
   return h('div',{className:'game-screen',style:{position:'relative'}},
     aiThink&&h('div',{className:'ai-thinking-overlay'},h('p',null,'🤖 AIが思考中...'),h('div',null,h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}),h('span',{className:'ai-dot'}))),
 
@@ -3557,7 +4824,20 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
         h('div',{className:'turn-info'},`Turn ${G.turn} | ${
           isAI&&G.currentPlayer===aiPi?'AIのターン':
           G.currentPlayer===myPiLocal?'あなたのターン':'相手のターン'
-        }`)
+        }`),
+        isOnline&&turnTimeLeft!=null&&(()=>{
+          const t=turnTimeLeft; const pct=Math.max(0,t/90*100);
+          const cls=t<=15?'danger':t<=30?'warn':'safe';
+          const isMyTimer=turnTimerPi===myOnlinePi;
+          return h('div',{className:'turn-timer-wrap'},
+            h('div',{className:'turn-timer-bar'},
+              h('div',{className:`turn-timer-fill ${cls}`,style:{width:pct+'%'}})
+            ),
+            h('div',{className:`turn-timer-sec${cls==='danger'?' danger':''}`},
+              `${isMyTimer?'⏱ あなた':'⏱ 相手'} ${t}秒`
+            )
+          );
+        })()
       ),
       h(CardDetailPanel,{hovered,ingZone:p.ingZone}),
       h('div',{className:'center-btns'},
@@ -3665,8 +4945,9 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
             : G.players[showTrash.pi].trash.map((c,i)=>h('div',{
                 key:c._uid||i,
                 className:'trash-card-item',
-                onMouseEnter:()=>setHovered(c),
-                onMouseLeave:()=>setHovered(null),
+                onMouseEnter:isMobile()?null:()=>setHovered(c),
+                onMouseLeave:isMobile()?null:()=>setHovered(null),
+                onTouchEnd:isMobile()?e=>{e.preventDefault();onTapPreview(c);}:null,
               },
                 h('div',{className:'ti-type'},c._isRec?'レシピ':'食材'),
                 h('div',{className:'ti-name'},c.name),
@@ -3685,7 +4966,11 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
         }}))
       ),
       h('div',{className:'winner-title'},G.winner===myPiLocal?'🎉 勝利！':'😢 敗北...'),
-      h('div',{className:'winner-sub'},G.winner===myPiLocal?'相手を満腹にさせました！':'相手に満腹にされました...'),
+      h('div',{className:'winner-sub'},
+        G.winReason==='deck'
+          ? (G.winner===myPiLocal?'相手の山札が無くなりました...':'山札が無くなりました...')
+          : (G.winner===myPiLocal?'相手を満腹にさせました！':'相手に満腹にされました...')
+      ),
       h('div',{className:'winner-btns'},
         h('button',{className:'btn primary',style:{color:'#ffffff',textShadow:'-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000',fontSize:'16px',padding:'10px 28px',fontWeight:'800'},onClick:()=>window.location.reload()},'タイトルへ戻る')
       )
@@ -3733,15 +5018,75 @@ async function resolveServerURL() {
 resolveServerURL();
 
 function OnlineMulliganScreen({hand,sel,setSel,onConfirm,myPi}){
-  const [hovered,setHovered]=useState(null);
+  const [detailCard,setDetailCard]=useState(null);
   function tog(uid_){setSel(prev=>{const n=new Set(prev);n.has(uid_)?n.delete(uid_):n.add(uid_);return n;});}
+
+  // スマホ縦画面レイアウト
+  if(isMobile()&&window.innerHeight>window.innerWidth){
+    return h('div',{className:'sp-mull'},
+      // 相手エリア（待機中）
+      h('div',{className:'sp-mull-opp'},
+        h('div',{className:'sp-mull-opp-header'},'相手のマリガン中...'),
+        h('div',{className:'sp-mull-rows'},
+          h('div',{className:'sp-mull-ing-row'},
+            Array.from({length:5},(_,i)=>h('div',{key:'o'+i,className:'sp-mull-card back'}))
+          ),
+          h('div',{className:'sp-mull-rec-row'},
+            h('div',{key:'or0',className:'sp-mull-card back'}),
+            h('div',{key:'or1',className:'sp-mull-card back'})
+          )
+        )
+      ),
+      h('div',{className:'sp-mull-center'},
+        h('h2',null,'🃏 マリガン'),
+        h('p',null,'戻したいカードをタップして選択（なしでもOK）')
+      ),
+      h('div',{className:'sp-mull-self'},
+        h('div',{className:'sp-mull-self-header'},`P${myPi+1}（あなた）の手札`),
+        h('div',{className:'sp-mull-rows'},
+          h('div',{className:'sp-mull-ing-row'},
+            (()=>{const ings=hand.filter(c=>!c._isRec);return Array.from({length:5},(_,i)=>{
+              const c=ings[i];if(!c)return h('div',{key:'ei'+i,className:'sp-mull-card',style:{opacity:.15,cursor:'default'}});
+              const s=sel.has(c._uid);const lp=makeLongPress(()=>setDetailCard(c),()=>tog(c._uid));
+              return h('div',{key:c._uid,className:`sp-mull-card${s?' selected':''}`, ...lp},
+                h('div',{className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+                h('div',{className:'mc-type'},'食材'),h('div',{className:'mc-name'},c.name));
+            });})()
+          ),
+          h('div',{className:'sp-mull-rec-row'},
+            (()=>{const recs=hand.filter(c=>c._isRec);return[0,1].map(i=>{
+              const c=recs[i];if(!c)return h('div',{key:'er'+i,className:'sp-mull-card',style:{opacity:.15,cursor:'default'}});
+              const s=sel.has(c._uid);const lp=makeLongPress(()=>setDetailCard(c),()=>tog(c._uid));
+              return h('div',{key:c._uid,className:`sp-mull-card${s?' selected':''}`, ...lp},
+                h('div',{className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
+                h('div',{className:'mc-type'},'レシピ'),h('div',{className:'mc-name'},c.name),h('div',{className:'mc-sat'},`+${c.sat}`));
+            });})()
+          )
+        )
+      ),
+      h('div',{className:'sp-mull-footer'},
+        h('div',{className:'sp-mull-status'},
+          sel.size?`${sel.size}枚を戻して引き直し`:'変更なし（そのままゲーム開始）'
+        ),
+        h('button',{className:'btn primary',style:{width:'100%',fontSize:'14px',padding:'10px'},
+          onClick:onConfirm},'確定 → 相手を待機中...')
+      ),
+      h('div',{className:`sp-detail-sheet${detailCard?' open':''}`,onClick:e=>e.stopPropagation()},
+        h('div',{className:'sp-sheet-handle'}),
+        h('button',{className:'sp-sheet-close',onClick:()=>setDetailCard(null)},'✕'),
+        detailCard&&h(CardDetailPanel,{hovered:detailCard,ingZone:[]})
+      ),
+      detailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setDetailCard(null)})
+    );
+  }
+
+  // PC版（既存）
   return h('div',{className:'mulligan-screen'},
     h('div',{className:'mull-header'},
       h('h2',null,'🃏 マリガン'),
       h('p',null,'戻したいカードを選択してください（選択なしでもOK）')
     ),
     h('div',{className:'mull-area'},
-      // 自分の手札
       h('div',{className:'mull-player'},
         h('h3',null,`P${myPi+1}（あなた）の手札`),
         h('div',{className:'mull-hand'},
@@ -3751,8 +5096,8 @@ function OnlineMulliganScreen({hand,sel,setSel,onConfirm,myPi}){
               key:c._uid,
               className:`mull-card${s?' selected':''}`,
               onClick:()=>tog(c._uid),
-              onMouseEnter:()=>setHovered(c),
-              onMouseLeave:()=>setHovered(null),
+              onMouseEnter:isMobile()?null:()=>setDetailCard(c),
+              onMouseLeave:isMobile()?null:()=>setDetailCard(null),
             },
               h('div',{className:'mc-type'},c._isRec?'レシピ':'食材'),
               h('div',{className:'mc-name'},c.name),
@@ -3762,11 +5107,9 @@ function OnlineMulliganScreen({hand,sel,setSel,onConfirm,myPi}){
         ),
         h('div',{className:'mull-info'},sel.size?`${sel.size}枚を戻して引き直し`:'変更なし')
       ),
-      // 中央プレビュー
       h('div',{className:'mull-preview-wrap',style:{width:'220px',flexShrink:0,display:'flex',flexDirection:'column'}},
-        h(CardDetailPanel,{hovered,ingZone:[]})
+        h(CardDetailPanel,{hovered:detailCard,ingZone:[]})
       ),
-      // 相手待機パネル
       h('div',{className:'mull-player'},
         h('h3',null,'相手のマリガン中...'),
         h('div',{style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--faint)',fontSize:'12px'}},
@@ -3799,6 +5142,8 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
   const [iWantRematch,setIWantRematch]=useState(false);
   const [queueSize,setQueueSize]=useState(0);       // 待機人数
   const [matchOpponent,setMatchOpponent]=useState(''); // マッチした相手の名前
+  const [turnTimeLeft,setTurnTimeLeft]=useState(null); // ターン残り時間
+  const [turnTimerPi,setTurnTimerPi]=useState(null);   // タイマー対象プレイヤー
   const sockRef=useRef(null);
 
   useEffect(()=>{
@@ -3842,6 +5187,8 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
       });
       sock.on('rematchMatched',()=>{setShowResult(null);setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);setPlayerDeck(null);setMode('deck-select-rematch');});
       sock.on('rematchExpired',()=>{setRematchSec(null);setIWantRematch(false);setOpponentWantsRematch(false);setShowResult(null);goTitle();});
+      sock.on('turnTimer',({timeLeft,currentPlayer})=>{setTurnTimeLeft(timeLeft);setTurnTimerPi(currentPlayer);});
+      sock.on('turnTimeout',()=>{/* タイムアウトはstateで自動反映 */});
     });
     return()=>{if(sock)sock.disconnect();};
   },[]);
@@ -3927,7 +5274,7 @@ function OnlineLobby({onBack,savedDecks,onSaveDecks,initialMode='menu'}){
   );
 
   if(mode==='game'&&onlineG&&!showResult){
-    return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction,myName:myNameOnline2,oppName:oppNameOnline2});
+    return h(GameScreen,{initG:onlineG,isAI:false,isOnline:true,myOnlinePi:onlineMyPi,onAction:sendAction,myName:myNameOnline2,oppName:oppNameOnline2,turnTimeLeft,turnTimerPi});
   }
   if(mode==='coin-flip')return h(CoinFlipScreen,{first:coinFirst,myPi:onlineMyPi,onDone:()=>{}});
   if(mode==='mulligan')return h(OnlineMulliganScreen,{hand:mulHand,sel:mulSel,setSel:setMulSel,onConfirm:doMulConfirm,myPi:onlineMyPi});
@@ -4123,14 +5470,6 @@ function App(){
   useEffect(()=>{
     if(screen==='title')Audio.playBgm('bgm_title');
   },[screen]);
-
-  // タイトル表示中に全カード画像をプリロード（ゲーム中の遅延防止）
-  useEffect(()=>{
-    Object.values(CARD_IMG_MAP).forEach(name=>{
-      const img=new Image();
-      img.src=`images/${name}.png`;
-    });
-  },[]);
   const [savedDecks,setSavedDecks]=useState(LS.load);
   const [isAI,setIsAI]=useState(false);
   const [aiPi,setAiPi]=useState(1);
@@ -4170,6 +5509,22 @@ function App(){
   function openMySelect(){setMyDeck(null);setAiDeck(null);setScreen('my-deck-select');}
   function openAiSelect(from){setAiSelectFrom(from);setScreen('ai-deck-select');}
   function startMul(c0,c1,ai){startCoinFlip(c0,c1,ai);}
+
+  // タイトル系画面ではbodyのスクロールを許可（コンテンツが溢れた場合に備えて）
+  const SCROLLABLE_SCREENS=['title','my-deck-select','ai-deck-select','deckbuild'];
+  useEffect(()=>{
+    if(SCROLLABLE_SCREENS.includes(screen)){
+      document.body.classList.add('allow-scroll');
+    } else {
+      document.body.classList.remove('allow-scroll');
+    }
+    return ()=>document.body.classList.remove('allow-scroll');
+  },[screen]);
+
+  // 縦画面回転補正：React初期化完了後に実行（これが最も確実なタイミング）
+  useEffect(() => {
+    if (window.applyPortraitFix) window.applyPortraitFix();
+  }, []);
 
   // Electronメニューからのタイトル遷移フック
   useEffect(()=>{window.__gotoTitle=()=>setScreen('title');},[]);
@@ -4324,7 +5679,7 @@ function App(){
     );
   }
 
-  if(screen==='tutorial')return h(TutorialScreen,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave});
+  if(screen==='tutorial')return h(TutorialScreen,{onBack:()=>setScreen('title')});
   if(screen==='deckbuild')return h(DeckBuilder,{onBack:()=>setScreen('title'),savedDecks,onSaveDecks:handleSave});
   // コインフリップ画面：自分のpiは ローカル=1-aiPi、オンラインはonlineMyPi
   if(screen==='coin-flip')return h(CoinFlipScreen,{first:firstPi,myPi:myLocalPi,onDone:onCoinFlipDone});

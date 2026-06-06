@@ -242,6 +242,7 @@ io.on('connection', (socket) => {
       room.phase = 'game';
       sendState(room);
       broadcast(roomId, 'gameStarted', {});
+      startTurnTimer(room);
     }
   });
 
@@ -308,9 +309,15 @@ io.on('connection', (socket) => {
       default: socket.emit('error', '不明なアクション'); return;
     }
     if (result.error) { socket.emit('error', result.error); return; }
+    const prevPlayer = room.G.currentPlayer;
     room.G = result.G;
     sendState(room);
+    // ターンが切り替わったらタイマーリスタート
+    if (room.G.winner == null && room.G.currentPlayer !== prevPlayer) {
+      startTurnTimer(room);
+    }
     if (room.G.winner != null) {
+      clearTurnTimer(room);
       const winnerPl = room.players[room.G.winner];
       const loserPl = room.players[1 - room.G.winner];
       // ランクマッチならレート更新
@@ -367,6 +374,53 @@ io.on('connection', (socket) => {
     console.log('disconnect', socket.id, roomId);
   });
 });
+
+// ── ターンタイマー ──
+const TURN_TIME_LIMIT = 90; // 秒
+
+function startTurnTimer(room) {
+  clearTurnTimer(room);
+  room.turnTimeLeft = TURN_TIME_LIMIT;
+  broadcastTurnTimer(room);
+  room.turnTimerInterval = setInterval(() => {
+    room.turnTimeLeft--;
+    broadcastTurnTimer(room);
+    if (room.turnTimeLeft <= 0) {
+      clearTurnTimer(room);
+      // 時間切れ：現在の手番プレイヤーを強制endTurn
+      if (room.G && room.phase === 'game' && room.G.winner == null) {
+        const result = engine.doForceEndTurn(room.G, room.G.currentPlayer);
+        if (!result.error) {
+          room.G = result.G;
+          sendState(room);
+          // 勝敗確認
+          if (room.G.winner != null) {
+            const winnerPl = room.players[room.G.winner];
+            broadcast(room.id, 'gameOver', { winner: room.G.winner, winnerName: winnerPl.name });
+          } else {
+            startTurnTimer(room);
+          }
+        }
+        broadcast(room.id, 'turnTimeout', { pi: room.G.currentPlayer });
+      }
+    }
+  }, 1000);
+}
+
+function clearTurnTimer(room) {
+  if (room.turnTimerInterval) {
+    clearInterval(room.turnTimerInterval);
+    room.turnTimerInterval = null;
+  }
+  room.turnTimeLeft = null;
+}
+
+function broadcastTurnTimer(room) {
+  broadcast(room.id, 'turnTimer', {
+    timeLeft: room.turnTimeLeft,
+    currentPlayer: room.G ? room.G.currentPlayer : null,
+  });
+}
 
 function startMulligan(room) {
   const configs = room.players.map(p => p.deck);

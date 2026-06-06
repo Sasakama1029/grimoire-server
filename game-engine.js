@@ -1,3 +1,5 @@
+'use strict';
+(function(){
 // ============================================================
 // game-engine.js  ─  サーバー権威ゲームロジック
 // ============================================================
@@ -171,12 +173,15 @@ function initPlayer(cfg) {
 }
 
 function checkWin(G) {
-  if (G.players[0].satiety >= 20) return { ...G, winner: 1 };
-  if (G.players[1].satiety >= 20) return { ...G, winner: 0 };
+  if (G.players[0].satiety >= 20) return { ...G, winner: 1, winReason: 'satiety' };
+  if (G.players[1].satiety >= 20) return { ...G, winner: 0, winReason: 'satiety' };
   function deckLen(d) { return Array.isArray(d) ? d.length : (typeof d === 'number' ? d : 0); }
-  const p = G.players[G.currentPlayer];
-  if (deckLen(p.ingDeck) === 0 && deckLen(p.recDeck) === 0 && p.hand.length === 0) {
-    return { ...G, winner: 1 - G.currentPlayer };
+  // 食材山札・レシピ山札が両方0枚になった瞬間に負け
+  for (let pi = 0; pi < 2; pi++) {
+    const p = G.players[pi];
+    if (deckLen(p.ingDeck) === 0 && deckLen(p.recDeck) === 0) {
+      return { ...G, winner: 1 - pi, winReason: 'deck' };
+    }
   }
   return G;
 }
@@ -873,7 +878,7 @@ function endTurn(G) {
   const piDebuffs = { ...np[pi].debuffs };
   // noServeはdoNextPhaseでチェック・消費するためここでは減らさない
   // chiliWatchはpiのターン中に起動→oppのターン終了時にクリア（ここではクリアしない）
-  np[pi] = { ...np[pi], activatedThisTurn: false, servedLastTurn: false,
+  np[pi] = { ...np[pi], activatedThisTurn: false, servedLastTurn: false, bufNextRec: 0,
     ingZone: np[pi].ingZone.map(c => ({ ...c, _used: false, _placedThisTurn: false })),
     revealed: false, debuffs: piDebuffs };
   // opp.chiliWatchクリア：oppのターンが今終わった＝oppが唐辛子起動者だったので効果終了
@@ -916,11 +921,65 @@ function createGame(configs) {
   };
 }
 
-module.exports = {
+// ブラウザ用 serveRecipe（REC_FN を使うクライアント側版）
+// NW.js移行後はこの関数をindex.htmlから呼ぶ
+function doServeRecipeLocal(G, pi, recUid, ingUids) {
+  const p = G.players[pi];
+  const rec = p.hand.find(c => c._uid === recUid);
+  if (!rec) return G;
+  const buf = p.bufNextRec || 0;
+  const gain = rec.sat + buf;
+  const opp = 1 - pi;
+  const used = p.ingZone.filter(c => ingUids.includes(c._uid));
+  const toastBonus = used.reduce((a, c) => a + (c._satBuff || 0), 0);
+  let G2 = ovP(G, pi, {
+    hand: p.hand.filter(c => c._uid !== recUid),
+    ingZone: p.ingZone.filter(c => !ingUids.includes(c._uid)),
+    trash: [...p.trash, ...used],
+    recZone: [...p.recZone, rec],
+    bufNextRec: 0, servedLastTurn: true,
+  });
+  G2 = ovP(G2, opp, { satiety: Math.min(20, G2.players[opp].satiety + gain + toastBonus) });
+  const toastMsg = toastBonus > 0 ? `（満腹バフ+${toastBonus}）` : '';
+  G2 = addLog(G2, `P${pi + 1}: 【${rec.name}】完成！相手+${gain + toastBonus}！${toastMsg}`, 'hl');
+  if (G2.players[opp] && G2.players[opp].debuffs && G2.players[opp].debuffs.chiliWatch) {
+    G2 = ovP(G2, opp, { satiety: Math.max(0, G2.players[opp].satiety - 1) });
+    G2 = addLog(G2, `唐辛子の効果！P${opp + 1}の満腹度-1`, 'warn');
+  }
+  G2 = checkWin(G2); if (G2.winner != null) return G2;
+  // REC_FNはブラウザ側で定義されているので、window経由で呼ぶ
+  const fn = (typeof REC_FN !== 'undefined' ? REC_FN : (typeof window !== 'undefined' ? window.REC_FN : null));
+  if (fn && fn[rec.id]) { try { G2 = fn[rec.id](G2, pi); } catch (e) { console.error(e); } }
+  if (G2.pending) return G2;
+  return checkWin(G2);
+}
+
+// 時間切れ強制ターン終了（pending解除 → endTurn）
+function doForceEndTurn(G, pi) {
+  if (G.currentPlayer !== pi) return { error: '手番外' };
+  let s = G;
+  if (s.pending) s = { ...s, pending: null }; // 選択モーダルを強制クリア
+  s = addLog(s, `P${pi + 1}: 時間切れ → 強制ターン終了`, 'warn');
+  return { G: checkWin(endTurn(s)) };
+}
+
+// Node.js（サーバー）でもブラウザ（NW.js/index.html）でも動作
+const _exports = {
   ING_DEFS, REC_DEFS, ING_MAP, REC_MAP,
-  createGame, doMulligan, publicState,
+  ING_BLOCKS, REC_BLOCKS,
+  mkI, mkR, uid, ovP, addLog, shuffle,
+  checkWin, drawI, drawR, runBlocks, resumeBlocks, matchFilter,
+  endTurn, doMulligan, serveRecipe: doServeRecipeLocal,
+  createGame, publicState,
   doDrawCard, doPlaceCard, doReturnCard,
   doActivate, doServeRecipe, doDiscard,
-  doNextPhase, doResolveChoice,
+  doNextPhase, doResolveChoice, doForceEndTurn,
   initPlayer,
 };
+if(typeof module !== 'undefined' && module.exports) {
+  module.exports = _exports;
+}
+if(typeof window !== 'undefined') {
+  window.GE = _exports;
+}
+})();

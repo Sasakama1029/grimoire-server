@@ -162,7 +162,9 @@ function buildFromConfig(ic, rc) {
 }
 
 function initPlayer(cfg) {
-  const { i, r } = cfg ? buildFromConfig(cfg.ingDeck, cfg.recDeck) : buildRandom();
+  const ingCfg = cfg && (cfg.ingDeck || cfg.ing);
+  const recCfg = cfg && (cfg.recDeck || cfg.rec);
+  const { i, r } = (ingCfg && recCfg) ? buildFromConfig(ingCfg, recCfg) : buildRandom();
   return {
     ingDeck: i.slice(5), recDeck: r.slice(2),
     hand: [...i.slice(0, 5), ...r.slice(0, 2)],
@@ -706,7 +708,7 @@ const REC_BLOCKS = {
   biscuit: [{ type: 'condOppZone', op: 'le', n: 3, then: [{ type: 'drawIng', n: 3 }] }],
   carpaccio: [{ type: 'searchIngDeck', title: '食材山札から1枚目を選ぶ' }, { type: 'searchIngDeck', title: '食材山札から2枚目を選ぶ' }],
   curryBread: [{ type: 'drawToZone', n: 1 }],
-  chaahan: [{ type: 'discardHand', n: 1, optional: true }, { type: 'elsePrev', blocks: [{ type: 'redSelfSat', n: 1 }] }],
+  chaahan: [{ type: 'discardHand', n: 1, optional: true }, { type: 'elsePrev', blocks: [{ type: 'addSelfSat', n: 1 }] }],
   omurice: [{ type: 'condOppServedLast' }, { type: 'ifPrev', blocks: [{ type: 'addOppSat', n: 2 }] }, { type: 'drawRec', n: 3 }],
 };
 

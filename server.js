@@ -220,10 +220,10 @@ io.on('connection', (socket) => {
     if (!room) return;
     const pl = room.players.find(p => p.socketId === socket.id);
     if (!pl) return;
-    pl.deck = deck || null;
+    if (deck) pl.deck = deck; // nullで上書きしない（クロージャの古い値対策）
     pl.ready = true;
     broadcast(roomId, 'roomInfo', { roomId, players: room.players.map(p => ({ name: p.name, ready: p.ready })) });
-    if (room.players.length === 2 && room.players.every(p => p.ready)) {
+    if (room.phase === 'waiting' && room.players.length === 2 && room.players.every(p => p.ready)) {
       startMulligan(room);
     }
   });

@@ -1988,7 +1988,10 @@ function execBlock(G,pi,blk,cardId){
     case 'discAllHand':return discAll(G,pi,blk.ing||0,blk.rec||0);
     case 'retAllDrawByOpp':return retByOpp(G,pi);
     case 'selfTrash':{
-      const target=p.ingZone.find(c=>c.id===cardId);
+      // cardIdは文字列ID or カードオブジェクトどちらでも対応
+      const cid=cardId&&cardId._uid?cardId._uid:null;
+      const cname=cardId&&cardId.id?cardId.id:cardId;
+      const target=cid?p.ingZone.find(c=>c._uid===cid):p.ingZone.find(c=>c.id===cname);
       if(!target)return G;
       return addLog(ovP(G,pi,{ingZone:p.ingZone.filter(c=>c._uid!==target._uid),trash:[...p.trash,target]}),`P${pi+1}: ${target.name}をごみ箱へ`);
     }

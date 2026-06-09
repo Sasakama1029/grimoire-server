@@ -418,7 +418,7 @@ body{
 .sp-db-fbtn.code{background:rgba(40,80,160,.1);color:#2a4090;border-color:rgba(40,80,160,.3)}
 .sp-db-fbtn:disabled{opacity:.4;cursor:default}
 /* カード詳細ボトムシート */
-.sp-db-sheet{position:fixed;bottom:0;left:0;right:0;max-height:55vh;background:var(--bg2);border-radius:14px 14px 0 0;border:1px solid var(--goldD);border-bottom:none;z-index:200;transform:translateY(100%);transition:transform .3s ease;overflow-y:auto;padding:12px}
+.sp-db-sheet{position:fixed;bottom:0;left:0;right:0;max-height:55vh;background:var(--bg2);border-radius:14px 14px 0 0;border:1px solid var(--goldD);border-bottom:none;z-index:200;transform:translateY(100%);transition:transform .3s ease;overflow:hidden;padding:0}
 .sp-db-sheet.open{transform:translateY(0)}
 
 /* ── スマホ版チュートリアル ── */
@@ -473,6 +473,9 @@ body{
 .sp-sml-card.sel{border:2px solid var(--goldL);box-shadow:0 0 0 1px var(--goldL)}
 .sp-sml-card.highlight{border:2px solid var(--vitaminL)}
 .sp-sml-card.activated{opacity:.6}
+/* 満腹バフマーク */
+.sp-sml-card{position:relative}
+.sp-buff-badge{position:absolute;top:2px;right:2px;background:#d45000;color:#fff;font-size:7px;font-weight:800;padding:1px 3px;border-radius:3px;line-height:1.2;z-index:2}
 .sp-sml-card .smc-img{width:100%;flex:1;overflow:hidden;border-radius:3px 3px 0 0;background:rgba(0,0,0,.06);min-height:0}
 .sp-sml-card .smc-name{font-size:7px;font-weight:700;text-align:center;line-height:1.1;margin-top:1px;width:100%}
 .sp-sml-card.protein{border-top:2px solid var(--protein)}
@@ -505,10 +508,12 @@ body{
 .sp-hcard .sh-sat{font-size:7px;font-weight:800;color:var(--goldD);line-height:1}
 .sp-hcard.back{background:repeating-linear-gradient(45deg,#16100a 0,#16100a 5px,#1a1409 5px,#1a1409 10px)}
 .sp-hand-empty{flex:1;min-width:0;opacity:.15;border-radius:4px;border:1px dashed rgba(140,100,40,.3)}
-.sp-detail-sheet{position:fixed;bottom:0;left:0;right:0;max-height:55vh;background:var(--bg2);border-radius:14px 14px 0 0;border:1px solid var(--goldD);border-bottom:none;z-index:200;transform:translateY(100%);transition:transform .3s ease;overflow-y:auto;padding:12px}
+.sp-detail-sheet{position:fixed;bottom:0;left:0;right:0;max-height:55vh;background:var(--bg2);border-radius:14px 14px 0 0;border:1px solid var(--goldD);border-bottom:none;z-index:200;transform:translateY(100%);transition:transform .3s ease;overflow:hidden;padding:0}
 .sp-detail-sheet.open{transform:translateY(0)}
 .sp-sheet-handle{width:36px;height:4px;background:rgba(140,100,40,.4);border-radius:2px;margin:0 auto 10px}
-.sp-sheet-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted)}
+.sp-sheet-header{display:flex;align-items:center;justify-content:center;padding:8px 12px 4px;flex-shrink:0;position:relative}
+.sp-sheet-close{position:absolute;top:8px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1;padding:4px;z-index:1}
+.sp-sheet-body{overflow-y:auto;padding:12px 12px 16px;flex:1}
 /* ドラッグゴースト */
 .sp-drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;transform:translate(-50%,-50%) scale(1.1);border-radius:5px;background:var(--bg3);border:2px solid var(--goldL);padding:4px 8px;font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 /* 4:3（縦に狭い） */
@@ -1150,7 +1155,7 @@ const REC_DEFS=[  {id:'onigiri',name:'おにぎり',sat:3,req:['rice','nori'],ef
   {id:'carbonara',name:'カルボナーラ',sat:8,req:['flour','egg','pork','milk','cheese'],eff:'手札を全て山札に戻す。その後、食材山札から5枚引き、レシピ山札から2枚引く。',icon:'🍝'},
   {id:'nikujaga',name:'肉じゃが',sat:9,req:['potato','beef','carrot','onion','konjac'],eff:'ごみ箱からレシピカードを1枚選び手札に加える。その後、手札を1枚ごみ箱に送る。',icon:'🍲'},
   {id:'croquette',name:'コロッケ',sat:10,req:['potato','flour','egg','beef','onion'],eff:null,icon:'🍤'},
-  {id:'minestrone',name:'ミネストローネ',sat:7,req:['potato','pork','carrot','cabbage','tomato','onion'],eff:'ごみ箱から食材カードを2枚選び手札に加える。その後、自分の満腹度-4。',icon:'🍵'},
+  {id:'minestrone',name:'ミネストローネ',sat:7,req:['potato','pork','carrot','cabbage','tomato','onion'],eff:'ごみ箱から食材カードを2枚選び手札に加える。その後、自分の満腹度-2。',icon:'🍵'},
   {id:'creamStew',name:'クリームシチュー',sat:9,req:['potato','chicken','milk','butter','carrot','onion'],eff:'レシピ山札からレシピカードを2枚選び手札に加える。',icon:'🍲'},
   {id:'omurice',name:'オムライス',sat:10,req:['rice','egg','butter','tomato','onion','chicken'],eff:'前の相手のターン中、相手が料理を提供していたなら、相手の満腹度+2。その後、自分はレシピ山札からカードを3枚引く。',icon:'🍳'},
   {id:'meatSauce',name:'ミートソースパスタ',sat:10,req:['flour','beef','tomato','carrot','onion','garlic'],eff:'手札を全て山札に戻す。その後、食材山札からX枚引く（X=相手の食材ゾーンの枚数）。',icon:'🍝'},
@@ -1253,7 +1258,7 @@ const TUTORIAL_STEPS=[
    body:'手札の食材カードを食材ゾーンに配置します。\n\n手札には「お米」「海苔」「卵」があります。\n👉「お米」と「海苔」の両方をクリックして食材ゾーンに配置してください。\n\n✏️ 置いたカードをクリックすると手札に戻せます。',
    highlight:'hand',action:'place',phase:'place'},
   {id:'activate',title:'⚡ Step3：起動フェーズ',
-   body:'食材カードの起動効果を使えます。\n\nお米は「食材山札から1枚引く」効果があります。\n👉食材ゾーンの「お米」をクリックして効果を発動！',
+   body:'食材カードの起動効果を使えます。\n\nお米は「食材山札から1枚引く」効果があります。\n👉食材ゾーンの「お米」をクリックして効果を発動！\n\n※食材カードの起動効果はカードを長押しすると見ることができます。\n\n※レシピカードの提供時効果はカードを長押しすると見ることができます。',
    highlight:'ing-zone',action:'activate',phase:'activate'},
   {id:'serve',title:'🍙 Step4：料理提供フェーズ',
    body:'レシピカードで料理を完成させましょう！\n\nおにぎりの必要食材：お米＋海苔\n\n👉手札の「おにぎり」をクリック\n→ 食材ゾーンの「お米」「海苔」を順にクリック\nで料理が完成します！',
@@ -1374,7 +1379,7 @@ function TutorialScreen({onBack}){
     if(curPhase==='activate'&&!c._used&&ING_FN[c.id]){
       const iz=G.players[pid].ingZone.map(x=>x._uid===c._uid?{...x,_used:true}:x);
       let s=ovP(G,pid,{ingZone:iz,activatedThisTurn:true});
-      try{s=ING_FN[c.id](s,pid);}catch(e){}
+      try{s=ING_FN[c.id](s,pid,c);}catch(e){}
       setG(s);setStepDone(true);showMsg(`${c.name}の効果を発動！`);return;
     }
     if(curPhase==='serve'&&selH){
@@ -1606,9 +1611,8 @@ function TutorialScreen({onBack}){
       ),
       // カード詳細ボトムシート
       h('div',{className:`sp-detail-sheet${tutDetailCard?' open':''}`,onClick:e=>e.stopPropagation()},
-        h('div',{className:'sp-sheet-handle'}),
-        h('button',{className:'sp-sheet-close',onClick:()=>setTutDetailCard(null)},'✕'),
-        tutDetailCard&&h(CardDetailPanel,{hovered:tutDetailCard,ingZone:p.ingZone})
+        h('div',{className:'sp-sheet-header'},h('div',{className:'sp-sheet-handle'}),h('button',{className:'sp-sheet-close',onClick:()=>setTutDetailCard(null)},'✕')),
+        h('div',{className:'sp-sheet-body'},tutDetailCard&&h(CardDetailPanel,{hovered:tutDetailCard,ingZone:p.ingZone}))
       ),
       tutDetailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setTutDetailCard(null)})
     );
@@ -2118,6 +2122,12 @@ function execBlock(G,pi,blk,cardId){
         desc:`${n3}枚選んでください`,
         filter:filter3,filterKey:blk.filterKey||null,candidates:cands3,source:'trash',multi:n3});
     }
+    case 'markSelf':{
+      if(!cardId||typeof cardId==='string')return G; // cardオブジェクトが必要
+      const buffVal=blk.n||1;
+      const iz=p.ingZone.map(z=>z._uid===cardId._uid?{...z,_satBuff:(z._satBuff||0)+buffVal}:z);
+      return addLog(ovP(G,pi,{ingZone:iz}),`P${pi+1}: ${cardId.name}に満腹バフ+${buffVal}付与`);
+    }
     case 'markIngZone':{
       if(!p.ingZone.length)return addLog(G,`P${pi+1}: 食材ゾーンが空`);
       return mkPending(G,{type:'markIngZone',pi,
@@ -2329,8 +2339,8 @@ const ING_BLOCKS={
 
   // 豆腐: ごみ箱からたんぱく質→手札
   tofu:[
-    {type:'recoverTrash',filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein',
-     title:'ごみ箱からたんぱく質を手札へ回収'},
+    {type:'recoverTrash',filter:c=>c.id==='miso'&&!c._isRec,filterKey:'miso_only',
+     title:'ごみ箱から「味噌」を手札へ回収'},
   ],
 
   // 鶏肉: 食材ドロー→直接食材ゾーンへ
@@ -2345,12 +2355,12 @@ const ING_BLOCKS={
     {type:'retHand',n:1},
   ],
 
-  // 味噌: 手札のたんぱく質1枚ごみ箱（任意）→そうしたなら食材2ドロー
+  // 味噌: 手札のたんぱく質1枚ごみ箱（任意）→そうしたなら食材1ドロー
   miso:[
     {type:'discardHand',n:1,optional:true,
      filter:c=>c.cat==='protein'&&!c._isRec,filterKey:'protein'},
     {type:'ifPrev'},
-    {type:'drawIng',n:2},
+    {type:'drawIng',n:1},
   ],
 
   // 油揚げ: 手札のレシピ1枚をレシピ山札に戻す（任意）→レシピドロー
@@ -2363,7 +2373,7 @@ const ING_BLOCKS={
     {type:'drawRec',n:1},
   ],
 
-  butter:[{type:'bufNextRec',n:1}],
+  butter:[{type:'markSelf',n:1}],
   curryroux:[],
 
   // キャベツ: ごみ箱から食材→食材山札へ
@@ -2380,9 +2390,9 @@ const ING_BLOCKS={
     {type:'setDebuff',key:'chiliWatch',val:1},
   ],
 
-  // トマト: 自食材ゾーン3枚以下→食材2ドロー
+  // トマト: 自食材ゾーン2枚以下→食材2ドロー
   tomato:[
-    {type:'condIngZone',op:'le',n:3,then:[{type:'drawIng',n:2}]},
+    {type:'condIngZone',op:'le',n:2,then:[{type:'drawIng',n:2}]},
   ],
 
   // にんじん: 食材ゾーン1枚→手札へ
@@ -2656,7 +2666,7 @@ const ING_FN={};
 Object.keys(ING_BLOCKS).forEach(id=>{
   const blocks=ING_BLOCKS[id];
   if(blocks && blocks.length){
-    ING_FN[id]=(G,pi)=>runBlocks(G,pi,blocks,id);
+    ING_FN[id]=(G,pi,card)=>runBlocks(G,pi,blocks,card);
   }
 });
 
@@ -3256,7 +3266,8 @@ function CardDetailPanel({hovered,ingZone}){
                 })
               )
             ),
-            !isRec&&c.cat&&h('div',{style:{fontSize:'11px',color:catColor,fontWeight:'bold'}},c.catL)
+            !isRec&&c.cat&&h('div',{style:{fontSize:'11px',color:catColor,fontWeight:'bold'}},c.catL),
+
           )
         )
       )
@@ -3314,7 +3325,8 @@ function CardDetailPanel({hovered,ingZone}){
         h('div',{style:{display:'flex',alignItems:'center',gap:'8px'}},
           h('span',{style:{fontSize:'11px',color:catColor,fontWeight:'bold'}},c.catL)
         )
-      )
+      ),
+
     )
   );
 }
@@ -3610,9 +3622,8 @@ function DeckBuilder({onBack,savedDecks,onSaveDecks}){
 
       // カード詳細ボトムシート
       h('div',{className:`sp-db-sheet${spDbDetail?' open':''}`,onClick:e=>e.stopPropagation()},
-        h('div',{className:'sp-sheet-handle'}),
-        h('button',{className:'sp-sheet-close',onClick:()=>setSpDbDetail(null)},'✕'),
-        spDbDetail&&h(CardDetailPanel,{hovered:spDbDetail,ingZone:[]})
+        h('div',{className:'sp-sheet-header'},h('div',{className:'sp-sheet-handle'}),h('button',{className:'sp-sheet-close',onClick:()=>setSpDbDetail(null)},'✕')),
+        h('div',{className:'sp-sheet-body'},spDbDetail&&h(CardDetailPanel,{hovered:spDbDetail,ingZone:[]}))
       ),
       spDbDetail&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setSpDbDetail(null)}),
 
@@ -3972,9 +3983,8 @@ function MulliganScreen({players,onConfirm,isAI,aiPi=1}){
       ),
       // カード詳細ボトムシート
       h('div',{className:`sp-detail-sheet${detailCard?' open':''}`,onClick:e=>e.stopPropagation()},
-        h('div',{className:'sp-sheet-handle'}),
-        h('button',{className:'sp-sheet-close',onClick:()=>setDetailCard(null)},'✕'),
-        detailCard&&h(CardDetailPanel,{hovered:detailCard,ingZone:[]})
+        h('div',{className:'sp-sheet-header'},h('div',{className:'sp-sheet-handle'}),h('button',{className:'sp-sheet-close',onClick:()=>setDetailCard(null)},'✕')),
+        h('div',{className:'sp-sheet-body'},detailCard&&h(CardDetailPanel,{hovered:detailCard,ingZone:[]}))
       ),
       detailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setDetailCard(null)})
     );
@@ -4253,7 +4263,7 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       const iz=p.ingZone.map(x=>x._uid===c._uid?{...x,_used:true}:x);
       let s=ovP(G,pid,{ingZone:iz,activatedThisTurn:true});
       Audio.se('se_activate');
-      try{s=ING_FN[c.id](s,pid);}catch(e){console.error(e);}
+      try{s=ING_FN[c.id](s,pid,c);}catch(e){console.error(e);}
       if(!s.pending)s=addLog(s,`P${pid+1}: ${c.name}の効果発動`);
       setG(checkWin(s));return;
     }
@@ -4587,7 +4597,8 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
         onTouchStart:e=>{if(opts.onTS)opts.onTS(e,c);lp.onTouchStart(e);}
       },
         h('div',{className:'smc-img'},h(CardImg,{id:c.id,style:{width:'100%',height:'100%',objectFit:'cover'}})),
-        h('div',{className:'smc-name'},c.name)
+        h('div',{className:'smc-name'},c.name),
+        c._satBuff>0&&h('div',{className:'sp-buff-badge'},`★+${c._satBuff}`)
       );
     }
 
@@ -4777,9 +4788,8 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
 
       // カード詳細ボトムシート
       h('div',{className:`sp-detail-sheet${spDetailCard?' open':''}`,onClick:e=>e.stopPropagation()},
-        h('div',{className:'sp-sheet-handle'}),
-        h('button',{className:'sp-sheet-close',onClick:()=>setSpDetailCard(null)},'✕'),
-        spDetailCard&&h(CardDetailPanel,{hovered:spDetailCard,ingZone:self.ingZone})
+        h('div',{className:'sp-sheet-header'},h('div',{className:'sp-sheet-handle'}),h('button',{className:'sp-sheet-close',onClick:()=>setSpDetailCard(null)},'✕')),
+        h('div',{className:'sp-sheet-body'},spDetailCard&&h(CardDetailPanel,{hovered:spDetailCard,ingZone:self.ingZone}))
       ),
       spDetailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setSpDetailCard(null)})
     );
@@ -5070,9 +5080,8 @@ function OnlineMulliganScreen({hand,sel,setSel,onConfirm,myPi}){
           onClick:onConfirm},'確定 → 相手を待機中...')
       ),
       h('div',{className:`sp-detail-sheet${detailCard?' open':''}`,onClick:e=>e.stopPropagation()},
-        h('div',{className:'sp-sheet-handle'}),
-        h('button',{className:'sp-sheet-close',onClick:()=>setDetailCard(null)},'✕'),
-        detailCard&&h(CardDetailPanel,{hovered:detailCard,ingZone:[]})
+        h('div',{className:'sp-sheet-header'},h('div',{className:'sp-sheet-handle'}),h('button',{className:'sp-sheet-close',onClick:()=>setDetailCard(null)},'✕')),
+        h('div',{className:'sp-sheet-body'},detailCard&&h(CardDetailPanel,{hovered:detailCard,ingZone:[]}))
       ),
       detailCard&&h('div',{style:{position:'fixed',inset:0,zIndex:199},onClick:()=>setDetailCard(null)})
     );

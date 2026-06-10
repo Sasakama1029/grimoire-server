@@ -955,6 +955,91 @@ function doServeRecipeLocal(G, pi, recUid, ingUids) {
 }
 
 // Node.js（サーバー）でもブラウザ（NW.js/index.html）でも動作
+// 強制ターン終了（タイムアウト時）：pendingを解決してendTurnへ
+function doForceEndTurn(G, pi) {
+  if (!G) return { error: 'ゲーム状態がありません' };
+  if (G.winner != null) return { error: 'ゲーム終了済み' };
+  let s = G;
+
+  // pendingがある場合：任意はスキップ、必須はランダム解決
+  let safetyLimit = 10; // 無限ループ防止
+  while (s.pending && safetyLimit-- > 0) {
+    const pd = s.pending;
+    const p = s.players[pd.pi];
+
+    // optional（任意）の場合はスキップ
+    if (pd.optional) {
+      s = resumeBlocks(s, ['skip']);
+      continue;
+    }
+
+    // pendingタイプ別にランダムで候補を選択
+    let chosen = ['skip'];
+    const rnd = arr => arr.length ? [arr[Math.floor(Math.random() * arr.length)]._uid] : ['skip'];
+
+    if (pd.type === 'discardHand') {
+      const cands = pd.filter ? p.hand.filter(c => pd.filter(c)) : p.hand;
+      chosen = cands.length ? [cands[Math.floor(Math.random() * cands.length)]._uid] : ['skip'];
+    } else if (pd.type === 'retHand') {
+      chosen = rnd(p.hand.filter(c => !c._isRec));
+    } else if (pd.type === 'trash_to_hand' || pd.type === 'trash_to_hand_rec' || pd.type === 'trash_to_ingdeck') {
+      const cands = pd.candidates || p.trash;
+      chosen = rnd(cands);
+    } else if (pd.type === 'trash_to_hand_multi') {
+      const cands = pd.candidates || p.trash;
+      const n = pd.n || 1;
+      const picked = shuffle([...cands]).slice(0, n);
+      chosen = picked.length ? picked.map(c => c._uid) : ['skip'];
+    } else if (pd.type === 'selectIngZone_toHand' || pd.type === 'selectIngZone_retAndDraw' || pd.type === 'selectIngZone_searchSame') {
+      chosen = rnd(p.ingZone);
+    } else if (pd.type === 'selectHand_retToIngDeck' || pd.type === 'selectHand_retToRecDeck') {
+      const cands = pd.candidates || p.hand;
+      chosen = rnd(cands);
+    } else if (pd.type === 'selectOppZone_trash' || pd.type === 'selectOppZone_deck' || pd.type === 'selectOppZone_searchSame') {
+      const opp = s.players[1 - pd.pi];
+      chosen = rnd(opp.ingZone);
+    } else if (pd.type === 'pork_step1') {
+      const cands = pd.candidates || p.ingZone;
+      const picked = shuffle([...cands]).slice(0, 2);
+      chosen = picked.length >= 2 ? picked.map(c => c._uid) : ['skip'];
+    } else if (pd.type === 'pork_step2') {
+      const cards = (pd.uids || []).map(u => p.ingZone.find(c => c._uid === u)).filter(Boolean);
+      chosen = cards.length ? [cards[0]._uid] : ['skip'];
+    } else if (pd.type === 'searchIngDeck') {
+      const cands = pd.candidates || p.ingDeck;
+      chosen = rnd(cands);
+    } else if (pd.type === 'searchRecDeck') {
+      const cands = pd.candidates || p.recDeck;
+      chosen = rnd(cands);
+    } else if (pd.type === 'markIngZone') {
+      chosen = rnd(p.ingZone);
+    }
+
+    const prev = s;
+    s = resumeBlocks(s, chosen);
+    // resumeBlocksで変化がない場合は強制クリア
+    if (s === prev || s.pending === prev.pending) {
+      s = { ...s, pending: null };
+      break;
+    }
+  }
+
+  if (s.pending) s = { ...s, pending: null };
+
+  // ドローフェーズで時間切れの場合、食材山札から1枚自動ドロー
+  if (s.phase === 'draw') {
+    const p = s.players[pi];
+    if (p.ingDeck && p.ingDeck.length > 0) {
+      const drawn = p.ingDeck[0];
+      s = ovP(s, pi, { ingDeck: p.ingDeck.slice(1), hand: [...p.hand, drawn] });
+      s = addLog(s, `P${pi + 1}: 時間切れ - 食材を1枚自動ドロー`);
+    }
+  }
+
+  s = checkWin(endTurn(s));
+  return { G: s };
+}
+
 const _exports = {
   ING_DEFS, REC_DEFS, ING_MAP, REC_MAP,
   ING_BLOCKS, REC_BLOCKS,
@@ -965,6 +1050,7 @@ const _exports = {
   doDrawCard, doPlaceCard, doReturnCard,
   doActivate, doServeRecipe, doDiscard,
   doNextPhase, doResolveChoice,
+  doForceEndTurn,
   initPlayer,
 };
 if(typeof module !== 'undefined' && module.exports) {

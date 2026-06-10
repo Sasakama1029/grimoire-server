@@ -2516,7 +2516,6 @@ const REC_BLOCKS={
   // ペペロンチーノ: 相手手札全公開 → その後 ごみ箱から食材→手札
   peperoncino:[
     {type:'revealOpp'},
-    {type:'recoverTrash',filter:c=>!c._isRec,title:'ごみ箱から食材を手札へ回収'},
   ],
 
   // ジャーマンポテト: 手札の脂質1枚ごみ箱（任意）→そうしたなら食材山札1枚ドロー
@@ -2568,7 +2567,7 @@ const REC_BLOCKS={
 
   // ハンバーグ: 食材3ドロー → 次ターン料理提供不可
   hamburg:[
-    {type:'drawIng',n:3},
+    {type:'drawIng',n:4},
     {type:'setDebuff',key:'noServe',val:1},
   ],
 
@@ -2578,12 +2577,12 @@ const REC_BLOCKS={
   okonomiyaki:[], yasaiItame:[],
 
   // カルボナーラ: 手札全山札戻し→食材4+レシピ3ドロー
-  carbonara:[{type:'retAllHand',ing:4,rec:3}],
+  carbonara:[{type:'retAllHand',ing:5,rec:2}],
 
-  // 豚汁: 食材2ドロー → その後 自満腹-4
+  // 豚汁: 食材2ドロー → その後 自満腹-3
   butajiru:[
     {type:'drawIng',n:2},
-    {type:'redSelfSat',n:4},
+    {type:'redSelfSat',n:3},
   ],
 
   // 肉じゃが: ごみ箱からレシピ→手札 → その後 手札1枚ごみ箱
@@ -2603,10 +2602,10 @@ const REC_BLOCKS={
   // ミートソースパスタ: 手札全山札戻し→食材を相手食材ゾーン枚数分ドロー
   meatSauce:[{type:'retAllDrawByOpp'}],
 
-  // ミネストローネ: ごみ箱から食材2枚まとめて選んで手札へ → その後 自満腹-4
+  // ミネストローネ: ごみ箱から食材2枚まとめて選んで手札へ → その後 自満腹-2
   minestrone:[
     {type:'recoverTrash2',n:2,filter:c=>!c._isRec,title:'ごみ箱から食材カードを2枚選んで手札へ'},
-    {type:'redSelfSat',n:4},
+    {type:'redSelfSat',n:2},
   ],
 
   // クリームシチュー: レシピ2ドロー
@@ -4107,6 +4106,15 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
         Audio.se('se_serve');
       }
     }
+    // 自分の料理完成検出（オンライン：サーバーからの状態更新で発火）
+    if(currMe.recZone.length>prevMe.recZone.length){
+      const newRec=currMe.recZone[currMe.recZone.length-1];
+      if(newRec&&isOnline){
+        setServeAnim({name:newRec.name,sat:newRec.sat,icon:newRec.icon||'🍽️',id:newRec.id});
+        setTimeout(()=>setServeAnim(null),1500);
+        Audio.se('se_serve');
+      }
+    }
     // 自分の満腹度増加検出
     if(currMe.satiety>prevMe.satiety){
       const gain=currMe.satiety-prevMe.satiety;
@@ -4123,6 +4131,17 @@ function GameScreen({initG,isAI,aiPi=1,isOnline=false,myOnlinePi=null,onAction=n
       setDrawAnim({name:'？',_isRec:false,_hidden:true});
       setTimeout(()=>setDrawAnim(null),550);
       Audio.se('se_draw');
+    }
+    // 自分のドロー検出（オンライン：サーバーからの状態更新で発火）
+    if(isOnline){
+      const prevMeHandLen=Array.isArray(prevMe.hand)?prevMe.hand.length:0;
+      const currMeHandLen=Array.isArray(currMe.hand)?currMe.hand.length:0;
+      if(currMeHandLen>prevMeHandLen){
+        const newCard=currMe.hand[currMe.hand.length-1];
+        setDrawAnim(newCard||{name:'？',_isRec:false,_hidden:true});
+        setTimeout(()=>setDrawAnim(null),550);
+        Audio.se('se_draw');
+      }
     }
   },[G]);
 

@@ -2126,10 +2126,12 @@ function execBlock(G,pi,blk,cardId){
         filter:filter3,filterKey:blk.filterKey||null,candidates:cands3,source:'trash',multi:n3});
     }
     case 'markSelf':{
-      if(!cardId||typeof cardId==='string')return G; // cardオブジェクトが必要
+      if(!cardId||typeof cardId==='string')return G;
+      const target=p.ingZone.find(z=>z._uid===cardId._uid);
+      if(!target)return G;
       const buffVal=blk.n||1;
-      const iz=p.ingZone.map(z=>z._uid===cardId._uid?{...z,_satBuff:(z._satBuff||0)+buffVal}:z);
-      return addLog(ovP(G,pi,{ingZone:iz}),`P${pi+1}: ${cardId.name}に満腹バフ+${buffVal}付与`);
+      const iz=p.ingZone.map(z=>z._uid===cardId._uid?{...z,_satBuff:buffVal}:z);
+      return addLog(ovP(G,pi,{ingZone:iz}),`P${pi+1}: ${target.name}に満腹バフ+${buffVal}付与`);
     }
     case 'markIngZone':{
       if(!p.ingZone.length)return addLog(G,`P${pi+1}: 食材ゾーンが空`);

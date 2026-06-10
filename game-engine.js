@@ -474,6 +474,18 @@ function execBlock(G, pi, blk, cardId) {
       if (!p.ingZone.length) return addLog(G, '食材ゾーンが空');
       return mkPending(G, { type: 'markIngZone', pi });
     }
+    case 'markSelf': {
+      if (!cardId) return G;
+      const targetUid = cardId && cardId._uid ? cardId._uid : null;
+      const targetId = cardId && cardId.id ? cardId.id : cardId;
+      const target = targetUid
+        ? p.ingZone.find(c => c._uid === targetUid)
+        : p.ingZone.find(c => c.id === targetId);
+      if (!target) return G;
+      const buffVal = blk.n || 1;
+      const iz = p.ingZone.map(z => z._uid === target._uid ? { ...z, _satBuff: buffVal } : z);
+      return addLog(ovP(G, pi, { ingZone: iz }), `P${pi + 1}: ${target.name}に満腹バフ+${buffVal}付与`);
+    }
     default: return G;
   }
 }
